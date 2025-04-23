@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="ur5e_with_robotiq85">
+    <xacro:arg name="initial_positions_file" default="initial_positions.yaml" />
+
+    <!-- Import ur5e_with_robotiq85 urdf file -->
+    <xacro:include filename="$(find cr_hw_configuration)/urdf/ur5e_with_robotiq85.urdf" />
+
+    <!-- Import control_xacro -->
+    <xacro:include filename="ur5e_with_robotiq85.ros2_control.xacro" />
+
+
+    <xacro:ur5e_with_robotiq85_ros2_control name="FakeSystem" initial_positions_file="$(arg initial_positions_file)"/>
+
+    <!-- Lab Table -->
+    <!-- <link name="lab_table">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+                <mesh filename="package://coppelia_description/meshes/lab_table_mesh.stl" />
+            </geometry>
+        </visual>
+        <collision>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+                <mesh filename="package://coppelia_description/meshes/lab_table_mesh.stl" />
+            </geometry>
+        </collision>
+        <inertial>
+            <mass value="50.0" />
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <inertia ixx="10" ixy="0" ixz="0" iyy="10" iyz="0" izz="10" />
+        </inertial>
+    </link>
+
+    <joint name="lab_table_joint" type="fixed">
+        <parent link="world" />
+        <child link="lab_table" />
+        <origin xyz="0 0 0" rpy="0 0 0" />
+    </joint> -->
+
+</robot>

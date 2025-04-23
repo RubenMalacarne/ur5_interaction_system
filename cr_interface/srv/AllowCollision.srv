@@ -1,0 +1,4 @@
+string object_id
+bool is_allowed
+---
+bool success

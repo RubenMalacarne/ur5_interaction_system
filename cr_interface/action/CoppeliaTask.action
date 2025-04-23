@@ -1,0 +1,10 @@
+# Goal
+int32 task_number
+float64[] params
+---
+# Result
+bool success
+---
+# Feedback
+int32 percentage
+geometry_msgs/Pose current_pose

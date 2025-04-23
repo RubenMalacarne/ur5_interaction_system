@@ -1,0 +1,4 @@
+string object_id
+bool attach
+---
+bool success

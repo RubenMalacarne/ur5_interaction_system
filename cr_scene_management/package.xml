@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>cr_scene_management</name>
+  <version>0.0.0</version>
+  <description>Package per la gestione della planning scene (static scene publisher e planning scene modifier per MoveIt).</description>
+  <maintainer email="vincosabri@gmail.com">sabri</maintainer>
+  <license>TODO: License declaration</license>
+
+  <!-- Dipendenze di build -->
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <!-- Dipendenze per la compilazione ed esecuzione -->
+  <depend>geometric_shapes</depend>
+  <depend>cr_interface</depend>
+  <depend>moveit_msgs</depend>
+  <depend>moveit_core</depend>
+  <depend>moveit_ros_planning</depend>
+  <depend>moveit_ros_planning_interface</depend>
+  <depend>rclcpp</depend>
+  <depend>rclcpp_components</depend>
+  <depend>shape_msgs</depend>
+
+  <!-- Dipendenze per i test (opzionali) -->
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

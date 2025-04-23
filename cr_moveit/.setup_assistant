@@ -1,0 +1,25 @@
+moveit_setup_assistant_config:
+  urdf:
+    package: cr_hw_configuration
+    relative_path: urdf/ur5e_with_robotiq85.urdf
+  srdf:
+    relative_path: config/ur5e_with_robotiq85.srdf
+  package_settings:
+    author_name: ruby
+    author_email: ruby.m@gmai.com
+    generated_timestamp: 1742923202
+  control_xacro:
+    command:
+      - position
+    state:
+      - position
+      - velocity
+  modified_urdf:
+    xacros:
+      - control_xacro
+  control_xacro:
+    command:
+      - position
+    state:
+      - position
+      - velocity

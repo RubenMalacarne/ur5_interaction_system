@@ -1,0 +1,9 @@
+<library path="cr_hw_configuration">
+  <class name="cr_hw_configuration/CoppeliaSimHardwareInterface"
+         type="cr_hw_configuration::CoppeliaSimHardwareInterface"
+         base_class_type="hardware_interface::SystemInterface">
+    <description>
+      Implementazione custom dell'hardware interface per CoppeliaSim
+    </description>
+  </class>
+</library>

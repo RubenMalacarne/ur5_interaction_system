@@ -1,0 +1,25 @@
+# Ignora cartelle specifiche del tuo progetto
+/ur_description/
+/sim_ros2_interface/
+/robotiq_description/
+/cr_vision/data/
+# File temporanei generici
+*.log
+*.pyc
+__pycache__/
+
+# Cartelle build/install di ROS 2
+/build/
+/install/
+/log/
+
+# File di backup o temporanei di editor
+*~
+*.swp
+*.swo
+.DS_Store
+.vscode/
+.idea/
+
+# File di sistema
+Thumbs.db

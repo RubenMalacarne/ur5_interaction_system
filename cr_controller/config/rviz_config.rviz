@@ -1,0 +1,17 @@
+Visualization Manager:
+  Displays:
+    - Name: Robot Model
+      Class: rviz_default_plugins/RobotModel
+      Enabled: true
+      Robot Description: /robot_description
+    - Name: TF
+      Class: rviz_default_plugins/TF
+      Enabled: true
+      Marker Scale: 0.5
+      Update Interval: 0.1
+    - Name: Grid
+      Class: rviz_default_plugins/Grid
+      Enabled: true
+      Plane: XY
+  Global Options:
+    Fixed Frame: world
