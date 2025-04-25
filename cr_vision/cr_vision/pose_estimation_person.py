@@ -16,7 +16,7 @@ class PoseEstimationNode(Node):
         # Load pre-trained yolov8n-pose model for pose estimation 
         
         package_share_directory = get_package_share_directory('cr_vision')
-        model_path = os.path.join(package_share_directory, 'data', 'yolov8n-pose.pt')
+        model_path = os.path.join(package_share_directory, 'data', 'yolo11n-pose.pt')
 
         self.subscription = self.create_subscription(
             Image,
