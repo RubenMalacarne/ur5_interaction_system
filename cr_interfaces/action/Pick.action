@@ -1,5 +1,4 @@
-cr_interface/ObjectInfo object_info
-geometry_msgs/Point target_position
+cr_interfaces/ObjectInfo object_info
 ---
 bool success
 string result_msg

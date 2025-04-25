@@ -15,27 +15,29 @@ namespace scene_management {
         planning_scene_pub_ = this->create_publisher<moveit_msgs::msg::PlanningScene>("planning_scene", 10);
 
         // Subscriber su /object_info
-        object_info_sub_ = this->create_subscription<cr_interface::msg::ObjectInfo>(
+        object_info_sub_ = this->create_subscription<cr_interfaces::msg::ObjectInfo>(
             "/object_info", 10,
             std::bind(&PlanningSceneModifier::spawnObject, this, std::placeholders::_1));
 
         // Servizio per allow collision
-        allow_collision_srv_ = this->create_service<cr_interface::srv::AllowCollision>(
+        allow_collision_srv_ = this->create_service<cr_interfaces::srv::AllowCollision>(
             "/allow_collision",
             std::bind(&PlanningSceneModifier::allowCollision, this,
                         std::placeholders::_1, std::placeholders::_2));
 
         // Servizio per attach
-        attach_object_srv_ = this->create_service<cr_interface::srv::AttachObject>(
+        attach_object_srv_ = this->create_service<cr_interfaces::srv::AttachObject>(
             "/attach_object",
             std::bind(&PlanningSceneModifier::attachObject, this,
                         std::placeholders::_1, std::placeholders::_2));
 
-        RCLCPP_INFO(get_logger(), "PlanningSceneModifier avviato.");
+        RCLCPP_INFO(get_logger(), "PlanningSceneModifier is ready.");
     }
 
-    void PlanningSceneModifier::spawnObject(const cr_interface::msg::ObjectInfo::SharedPtr object_info)
+    void PlanningSceneModifier::spawnObject(const cr_interfaces::msg::ObjectInfo::SharedPtr object_info)
     {
+        RCLCPP_INFO(get_logger(), "Ricevuto oggetto da spawnare");
+
         moveit_msgs::msg::CollisionObject collision_object;
         collision_object.id = object_info->id;
         collision_object.header.frame_id = "world";
@@ -64,19 +66,21 @@ namespace scene_management {
     }
 
     void PlanningSceneModifier::allowCollision(
-        const std::shared_ptr<cr_interface::srv::AllowCollision::Request> request,
-        std::shared_ptr<cr_interface::srv::AllowCollision::Response> response)
+        const std::shared_ptr<cr_interfaces::srv::AllowCollision::Request> request,
+        std::shared_ptr<cr_interfaces::srv::AllowCollision::Response> response)
     {
         auto& manager = cr::scene_management::SceneManager::instance(shared_from_this());
         auto psm = manager.getPlanningSceneMonitor();
     
         if (!psm) {
             RCLCPP_ERROR(get_logger(), "[allowCollision] PlanningSceneMonitor è nullo.");
+            response->success = false;
             return;
         }
     
         if (!psm->getPlanningScene()) {
             RCLCPP_ERROR(get_logger(), "[allowCollision] PlanningScene non disponibile!");
+            response->success = false;
             return;
         }
     
@@ -113,6 +117,7 @@ namespace scene_management {
         // Check if publisher is ready
         if (!planning_scene_pub_) {
             RCLCPP_ERROR(get_logger(), "[allowCollision] planning_scene_pub_ non inizializzato!");
+            response->success = false;
             return;
         }
     
@@ -120,11 +125,12 @@ namespace scene_management {
         RCLCPP_INFO(get_logger(), "[allowCollision] Pubblicata nuova ACM per '%s'. Collisioni %s con i link del gripper.",
                     request->object_id.c_str(),
                     request->is_allowed ? "PERMESSE" : "VIETATE");
+        response->success = true;
     }
     
     void PlanningSceneModifier::attachObject(
-        const std::shared_ptr<cr_interface::srv::AttachObject::Request> request,
-        std::shared_ptr<cr_interface::srv::AttachObject::Response> response)
+        const std::shared_ptr<cr_interfaces::srv::AttachObject::Request> request,
+        std::shared_ptr<cr_interfaces::srv::AttachObject::Response> response)
     {
         if(request->attach)
         {

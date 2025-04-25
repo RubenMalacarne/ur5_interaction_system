@@ -2,7 +2,7 @@
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
-from coppelia_msgs.msg import ObjectDetectionResult
+from cr_interfaces.msg import ObjectDetectionResult
 
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge

@@ -17,7 +17,7 @@ import tf2_geometry_msgs
 from ultralytics import YOLO
 from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy
 
-from coppelia_msgs.msg import ObjectDetectionBox, ObjectDetectionResult
+from cr_interfaces.msg import ObjectDetectionBox, ObjectDetectionResult
 
 
 class ObjectDetectionNode(Node):

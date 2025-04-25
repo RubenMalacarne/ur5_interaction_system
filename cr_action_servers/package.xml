@@ -1,22 +1,21 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>cr_interface</name>
+  <name>cr_action_servers</name>
   <version>0.0.0</version>
   <description>TODO: Package description</description>
-  <maintainer email="ruben.malacarne@gmail.com">ruben</maintainer>
+  <maintainer email="vincosabri@gmail.com">sabri</maintainer>
   <license>TODO: License declaration</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
-  <build_depend>rosidl_default_generators</build_depend>
 
-  <depend>std_msgs</depend>
-  <depend>action_msgs</depend>
   <depend>geometry_msgs</depend>
-  
-  <exec_depend>rosidl_default_runtime</exec_depend>
-
-  <member_of_group>rosidl_interface_packages</member_of_group>
+  <depend>cr_interfaces</depend>
+  <depend>moveit_core</depend>
+  <depend>moveit_msgs</depend>
+  <depend>moveit_ros_planning_interface</depend>
+  <depend>rclcpp</depend>
+  <depend>rclcpp_action</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

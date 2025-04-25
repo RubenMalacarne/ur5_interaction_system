@@ -1,0 +1,5 @@
+place_action_server:
+  ros__parameters:
+    approach_distance: 0.11  # [m]
+    pre_place_height: 1.50 # [m]
+    table_height: 0.866 # [m]

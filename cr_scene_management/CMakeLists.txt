@@ -14,7 +14,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(ament_index_cpp REQUIRED)
 find_package(geometric_shapes REQUIRED)
-find_package(cr_interface REQUIRED)
+find_package(cr_interfaces REQUIRED)
 find_package(moveit_msgs REQUIRED)
 find_package(moveit_core REQUIRED)
 find_package(moveit_ros_planning REQUIRED)
@@ -53,7 +53,7 @@ ament_target_dependencies(${PROJECT_NAME}_components
   moveit_ros_planning_interface
   geometric_shapes
   shape_msgs
-  cr_interface
+  cr_interfaces
 )
 
 # Registrazione dei nodi componenti (assicurarsi che i namespace e nomi dei plugin coincidano con quelli definiti nei file sorgenti)
