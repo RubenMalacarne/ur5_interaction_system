@@ -27,7 +27,7 @@ def generate_launch_description():
     nodes = [
         cr_mirror_node,
         cr_obj_detection_node,
-        # cr_obj_selection_node
+        cr_obj_selection_node
     ]
 
     return launch.LaunchDescription(nodes)

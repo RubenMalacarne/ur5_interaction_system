@@ -9,15 +9,20 @@ namespace cr {
 namespace scene_management {
 
     PlanningSceneModifier::PlanningSceneModifier(const rclcpp::NodeOptions& options)
-    : Node("planning_scene_modifier", options)
+        : Node("planning_scene_modifier", options)
     {
         // Publisher su "planning_scene" se vuoi inviare diff a mano
         planning_scene_pub_ = this->create_publisher<moveit_msgs::msg::PlanningScene>("planning_scene", 10);
 
+        rclcpp::QoS qos_profile(rclcpp::QoSInitialization::from_rmw(rmw_qos_profile_default));
+        qos_profile.reliable();
+        qos_profile.history(rclcpp::HistoryPolicy::KeepLast);
+        qos_profile.keep_last(10);
+
         // Subscriber su /object_info
-        object_info_sub_ = this->create_subscription<cr_interfaces::msg::ObjectInfo>(
-            "/object_info", 10,
-            std::bind(&PlanningSceneModifier::spawnObject, this, std::placeholders::_1));
+        obj_detection_result_sub_ = this->create_subscription<cr_interfaces::msg::ObjectDetectionResult>(
+            "cr_vision/object_selection_results", qos_profile,
+            std::bind(&PlanningSceneModifier::spawnObjects, this, std::placeholders::_1));
 
         // Servizio per allow collision
         allow_collision_srv_ = this->create_service<cr_interfaces::srv::AllowCollision>(
@@ -34,35 +39,42 @@ namespace scene_management {
         RCLCPP_INFO(get_logger(), "PlanningSceneModifier is ready.");
     }
 
-    void PlanningSceneModifier::spawnObject(const cr_interfaces::msg::ObjectInfo::SharedPtr object_info)
+    void PlanningSceneModifier::spawnObjects(const cr_interfaces::msg::ObjectDetectionResult::SharedPtr detected_objects)
     {
-        RCLCPP_INFO(get_logger(), "Ricevuto oggetto da spawnare");
-
-        moveit_msgs::msg::CollisionObject collision_object;
-        collision_object.id = object_info->id;
-        collision_object.header.frame_id = "world";
-
-        geometry_msgs::msg::Pose pose;
-        pose.position.x = object_info->center.x;
-        pose.position.y = object_info->center.y;
-        pose.position.z = object_info->center.z;
-
-        shape_msgs::msg::SolidPrimitive primitive;
-        primitive.type = primitive.BOX;
-        primitive.dimensions.resize(3);
-        primitive.dimensions[0] = object_info->size.x;
-        primitive.dimensions[1] = object_info->size.y;
-        primitive.dimensions[2] = object_info->size.z;
-
-        collision_object.primitives.push_back(primitive);
-        collision_object.primitive_poses.push_back(pose);
-        collision_object.operation = collision_object.ADD;
+        RCLCPP_INFO(this->get_logger(), "Received objects to spawn.");
 
         moveit_msgs::msg::PlanningScene planning_scene;
-        planning_scene.world.collision_objects.push_back(collision_object);
+
+        for (const auto& box : detected_objects->boxes) {
+
+            RCLCPP_INFO(this->get_logger(), "Adding object %d to planning scene msg...", box.id);
+
+            moveit_msgs::msg::CollisionObject collision_object;
+            collision_object.id = box.id;
+            collision_object.header.frame_id = "world";
+
+            geometry_msgs::msg::Pose pose;
+            pose.position.x = box.world_x;
+            pose.position.y = box.world_y;
+            pose.position.z = box.world_z;
+
+            shape_msgs::msg::SolidPrimitive primitive;
+            primitive.type = primitive.BOX;
+            primitive.dimensions.resize(3);
+            primitive.dimensions[0] = 0.05;
+            primitive.dimensions[1] = 0.05;
+            primitive.dimensions[2] = 0.05;
+
+            collision_object.primitives.push_back(primitive);
+            collision_object.primitive_poses.push_back(pose);
+            collision_object.operation = collision_object.ADD;
+
+            planning_scene.world.collision_objects.push_back(collision_object);
+        }
+
         planning_scene.is_diff = true;
         planning_scene_pub_->publish(planning_scene);
-        RCLCPP_INFO(this->get_logger(), "Object spawned in the scene.");
+        RCLCPP_INFO(this->get_logger(), "Objects spawned in the scene.");
     }
 
     void PlanningSceneModifier::allowCollision(

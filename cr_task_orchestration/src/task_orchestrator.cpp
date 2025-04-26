@@ -7,19 +7,63 @@ namespace task_orchestration {
     TaskOrchestrator::TaskOrchestrator(const rclcpp::NodeOptions &options)
         : Node("task_orchestrator", options)
     {
+        using namespace std::placeholders;
+
         this->pick_client_ptr_ = rclcpp_action::create_client<Pick>(this, "cr/pick_action");
         this->place_client_ptr_ = rclcpp_action::create_client<Place>(this, "cr/place_action");
 
-        // Da qualche parte bisogna specificare quando partire l'esecuzione del task e per quale oggetto
-        send_pick_goal();
+        this->execute_workflow_server_ptr_ = rclcpp_action::create_server<cr_interfaces::action::ExecuteWorkflow>(
+            this,
+            "cr/execute_workflow",
+            std::bind(&TaskOrchestrator::handle_goal, this, _1, _2),
+            std::bind(&TaskOrchestrator::handle_cancel, this, _1),
+            std::bind(&TaskOrchestrator::handle_accepted, this, _1)
+        );
+    }
+
+    //////////////////////////////////////////////////////
+    //                  PARTE SERVER                    //
+    //////////////////////////////////////////////////////
+
+    rclcpp_action::GoalResponse TaskOrchestrator::handle_goal(const rclcpp_action::GoalUUID & uuid, std::shared_ptr<const ExecuteWorkflow::Goal> goal)
+    {
+        RCLCPP_INFO(this->get_logger(), "Received new workflow execution request: object_id=%s", goal->object_id.c_str());
+        (void)uuid;
+
+        if(is_busy_){
+            RCLCPP_WARN(this->get_logger(), "Cannot accept new goal, busy executing another workflow.");
+            return rclcpp_action::GoalResponse::REJECT;
+        } else {
+            is_busy_ = true;
+            RCLCPP_INFO(this->get_logger(), "Goal accepted.");
+            return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
+        }
+    }
+
+    rclcpp_action::CancelResponse TaskOrchestrator::handle_cancel(const std::shared_ptr<GoalHandleExecuteWorkflow> goal_handle)
+    {
+        RCLCPP_INFO(this->get_logger(), "Received request to cancel goal");
+        (void)goal_handle;
+        is_busy_ = false;
+        return rclcpp_action::CancelResponse::ACCEPT;
+    }
+
+    void  TaskOrchestrator::handle_accepted(const std::shared_ptr<GoalHandleExecuteWorkflow> goal_handle)
+    {
+        using namespace std::placeholders;
+        // this needs to return quickly to avoid blocking the executor, so spin up a new thread
+        std::thread{std::bind(&TaskOrchestrator::send_pick_goal, this, goal_handle)}.detach();
+
     }
 
     //////////////////////////////////////////////////////
     //                      PICK                        //
     //////////////////////////////////////////////////////
-    void TaskOrchestrator::send_pick_goal()
+    void TaskOrchestrator::send_pick_goal(const std::shared_ptr<GoalHandleExecuteWorkflow> goal_handle)
     {
         using namespace std::placeholders;
+
+        current_object_id_ = goal_handle->get_goal()->object_id;
 
         if(!this->pick_client_ptr_->wait_for_action_server())
         {
@@ -29,13 +73,16 @@ namespace task_orchestration {
 
         // TODO: tutto questo poi dovrà essere preso in automatico - al momento è hard coded
         cr_interfaces::msg::ObjectInfo object_info;
-        object_info.id = "object";
-        object_info.center.x = 0.899;
-        object_info.center.y = 0.625;
-        object_info.center.z = 0.939;
+        object_info.id = current_object_id_;
+        // object_info.center.x = 0.899;
+        // object_info.center.y = 0.625;
+        // object_info.center.z = 0.939;
+        object_info.center.x = 0.500;
+        object_info.center.y = 0.300;
+        object_info.center.z = 0.425;
         object_info.size.x = 0.05; // [m]
         object_info.size.y = 0.05; // [m]
-        object_info.size.z = 0.15; // [m]
+        object_info.size.z = 0.05; // [m]
 
         auto pick_goal_msg = Pick::Goal();
         pick_goal_msg.object_info = object_info;
@@ -101,13 +148,13 @@ namespace task_orchestration {
 
         // TODO: tutto questo poi dovrà essere preso in automatico - al momento è hard coded
         cr_interfaces::msg::ObjectInfo object_info;
-        object_info.id = "object";
+        object_info.id = current_object_id_;
         object_info.center.x = 0.899;
         object_info.center.y = 0.625;
         object_info.center.z = 0.939;
         object_info.size.x = 0.05; // [m]
         object_info.size.y = 0.05; // [m]
-        object_info.size.z = 0.15; // [m]
+        object_info.size.z = 0.05; // [m]
 
         auto place_goal_msg = Place::Goal();
         place_goal_msg.object_info = object_info;
@@ -146,6 +193,7 @@ namespace task_orchestration {
         switch (result.code) {
             case rclcpp_action::ResultCode::SUCCEEDED:
                 RCLCPP_ERROR(this->get_logger(), "Place goal succeeded!");
+                is_busy_ = false;
                 return;
             case rclcpp_action::ResultCode::ABORTED:
                 RCLCPP_ERROR(this->get_logger(), "Place goal was aborted");

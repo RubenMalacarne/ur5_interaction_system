@@ -2,6 +2,7 @@
 #include <rclcpp_action/rclcpp_action.hpp>
 #include <cr_interfaces/action/pick.hpp>
 #include <cr_interfaces/action/place.hpp>
+#include <cr_interfaces/action/execute_workflow.hpp>
 
 namespace cr {
 namespace task_orchestration {
@@ -9,23 +10,36 @@ namespace task_orchestration {
     class TaskOrchestrator : public rclcpp::Node {
     
     public:
-        
-        explicit TaskOrchestrator(const rclcpp::NodeOptions &options = rclcpp::NodeOptions());
 
-        void send_pick_goal();
-        void send_place_goal();
-
-    private:
+        using ExecuteWorkflow = cr_interfaces::action::ExecuteWorkflow;
+        using GoalHandleExecuteWorkflow = rclcpp_action::ServerGoalHandle<ExecuteWorkflow>;
 
         using Pick = cr_interfaces::action::Pick;
         using GoalHandlePick = rclcpp_action::ClientGoalHandle<Pick>;
         
         using Place = cr_interfaces::action::Place;
         using GoalHandlePlace = rclcpp_action::ClientGoalHandle<Place>;
+        
+        explicit TaskOrchestrator(const rclcpp::NodeOptions &options = rclcpp::NodeOptions());
 
+        void send_pick_goal(const std::shared_ptr<GoalHandleExecuteWorkflow> goal_handle);
+        void send_place_goal();
+
+    private:
+
+        rclcpp_action::Server<ExecuteWorkflow>::SharedPtr execute_workflow_server_ptr_;
         rclcpp_action::Client<Pick>::SharedPtr pick_client_ptr_;
         rclcpp_action::Client<Place>::SharedPtr place_client_ptr_;
 
+        bool is_busy_ = false;
+        std::string current_object_id_;
+
+        // Callbacks lato server
+        rclcpp_action::GoalResponse handle_goal(const rclcpp_action::GoalUUID & uuid, std::shared_ptr<const ExecuteWorkflow::Goal> goal);
+        rclcpp_action::CancelResponse handle_cancel(const std::shared_ptr<GoalHandleExecuteWorkflow> goal_handle);
+        void handle_accepted(const std::shared_ptr<GoalHandleExecuteWorkflow> goal_handle);
+
+        // Callbacks lato client
         // Callback per gestione della risposta dal server
         void pick_goal_response_callback(const GoalHandlePick::SharedPtr & goal_handle);
         void place_goal_response_callback(const GoalHandlePlace::SharedPtr & goal_handle);
