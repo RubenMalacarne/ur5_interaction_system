@@ -21,7 +21,7 @@ namespace scene_management {
 
         // Subscriber su /object_info
         obj_detection_result_sub_ = this->create_subscription<cr_interfaces::msg::ObjectInfoArray>(
-            "cr_vision/object_selection_results", qos_profile,
+            "cr/scene_objects", qos_profile,
             std::bind(&PlanningSceneModifier::spawnObjects, this, std::placeholders::_1));
 
         // Servizio per allow collision

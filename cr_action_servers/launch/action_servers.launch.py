@@ -28,7 +28,7 @@ def generate_launch_description():
     ])
 
     moveit_config = (
-        MoveItConfigsBuilder(robot_name="arm_manipulator", package_name="coppelia_moveit")
+        MoveItConfigsBuilder(robot_name="arm_manipulator", package_name="cr_moveit")
         .robot_description()
         .robot_description_semantic()
         .trajectory_execution()

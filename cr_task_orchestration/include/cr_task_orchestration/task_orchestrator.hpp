@@ -3,6 +3,9 @@
 #include <cr_interfaces/action/pick.hpp>
 #include <cr_interfaces/action/place.hpp>
 #include <cr_interfaces/action/execute_workflow.hpp>
+#include <cr_interfaces/srv/get_object_info.hpp>
+#include <cr_interfaces/msg/object_info.hpp>
+#include <cr_interfaces/msg/freeze_scene.hpp>
 
 namespace cr {
 namespace task_orchestration {
@@ -22,17 +25,24 @@ namespace task_orchestration {
         
         explicit TaskOrchestrator(const rclcpp::NodeOptions &options = rclcpp::NodeOptions());
 
-        void send_pick_goal(const std::shared_ptr<GoalHandleExecuteWorkflow> goal_handle);
-        void send_place_goal();
-
     private:
 
         rclcpp_action::Server<ExecuteWorkflow>::SharedPtr execute_workflow_server_ptr_;
         rclcpp_action::Client<Pick>::SharedPtr pick_client_ptr_;
         rclcpp_action::Client<Place>::SharedPtr place_client_ptr_;
 
+        rclcpp::Client<cr_interfaces::srv::GetObjectInfo>::SharedPtr get_object_info_client_;
+
+        rclcpp::Publisher<cr_interfaces::msg::FreezeScene>::SharedPtr freeze_scene_pub_;
+
         bool is_busy_ = false;
-        uint8_t current_object_id_;
+        cr_interfaces::msg::ObjectInfo target_object_;
+
+        // Metodo per richiedere le informazioni di uno specifico oggetto
+        void get_object_info(const std::shared_ptr<GoalHandleExecuteWorkflow> goal_handle);
+
+        void send_pick_goal();
+        void send_place_goal();
 
         // Callbacks lato server
         rclcpp_action::GoalResponse handle_goal(const rclcpp_action::GoalUUID & uuid, std::shared_ptr<const ExecuteWorkflow::Goal> goal);

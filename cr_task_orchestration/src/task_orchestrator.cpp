@@ -12,6 +12,10 @@ namespace task_orchestration {
         this->pick_client_ptr_ = rclcpp_action::create_client<Pick>(this, "cr/pick_action");
         this->place_client_ptr_ = rclcpp_action::create_client<Place>(this, "cr/place_action");
 
+        this->get_object_info_client_ = this->create_client<cr_interfaces::srv::GetObjectInfo>("cr/get_object_info");
+
+        this->freeze_scene_pub_ = this->create_publisher<cr_interfaces::msg::FreezeScene>("cr/freeze_scene", 10);
+
         this->execute_workflow_server_ptr_ = rclcpp_action::create_server<cr_interfaces::action::ExecuteWorkflow>(
             this,
             "cr/execute_workflow",
@@ -20,6 +24,7 @@ namespace task_orchestration {
             std::bind(&TaskOrchestrator::handle_accepted, this, _1)
         );
     }
+
 
     //////////////////////////////////////////////////////
     //                  PARTE SERVER                    //
@@ -34,6 +39,12 @@ namespace task_orchestration {
             RCLCPP_WARN(this->get_logger(), "Cannot accept new goal, busy executing another workflow.");
             return rclcpp_action::GoalResponse::REJECT;
         } else {
+            
+            // Avvisiamo che la scena deve essere freezata
+            cr_interfaces::msg::FreezeScene msg;
+            msg.freeze = true;
+            freeze_scene_pub_->publish(msg);
+
             is_busy_ = true;
             RCLCPP_INFO(this->get_logger(), "Goal accepted.");
             return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
@@ -44,6 +55,12 @@ namespace task_orchestration {
     {
         RCLCPP_INFO(this->get_logger(), "Received request to cancel goal");
         (void)goal_handle;
+
+        // Avvisiamo che la scena non deve più essere freezata
+        cr_interfaces::msg::FreezeScene msg;
+        msg.freeze = false;
+        freeze_scene_pub_->publish(msg);
+
         is_busy_ = false;
         return rclcpp_action::CancelResponse::ACCEPT;
     }
@@ -52,18 +69,48 @@ namespace task_orchestration {
     {
         using namespace std::placeholders;
         // this needs to return quickly to avoid blocking the executor, so spin up a new thread
-        std::thread{std::bind(&TaskOrchestrator::send_pick_goal, this, goal_handle)}.detach();
+        std::thread{std::bind(&TaskOrchestrator::get_object_info, this, goal_handle)}.detach();
 
+    }
+
+    //////////////////////////////////////////////////////
+    //                  OBJECT_INFO                     //
+    //////////////////////////////////////////////////////
+    void TaskOrchestrator::get_object_info(const std::shared_ptr<GoalHandleExecuteWorkflow> goal_handle){
+        auto request = std::make_shared<cr_interfaces::srv::GetObjectInfo::Request>();
+        request->id = goal_handle->get_goal()->object_id;
+    
+        auto future = get_object_info_client_->async_send_request(request,
+            [this, goal_handle](rclcpp::Client<cr_interfaces::srv::GetObjectInfo>::SharedFuture result_future)
+            {
+                if (result_future.get()->success)
+                {
+                    this->target_object_ = result_future.get()->object_info;
+                    RCLCPP_INFO(this->get_logger(), "Received object info. Sending Pick goal.");
+                    this->send_pick_goal();
+                }
+                else
+                {
+                    RCLCPP_ERROR(this->get_logger(), "Object info not found. Aborting workflow.");
+
+                    // Avvisiamo che la scena non deve più essere freezata
+                    cr_interfaces::msg::FreezeScene msg;
+                    msg.freeze = false;
+                    freeze_scene_pub_->publish(msg);
+
+                    is_busy_ = false;
+                    goal_handle->abort(std::make_shared<ExecuteWorkflow::Result>());
+                }
+            }
+        );
     }
 
     //////////////////////////////////////////////////////
     //                      PICK                        //
     //////////////////////////////////////////////////////
-    void TaskOrchestrator::send_pick_goal(const std::shared_ptr<GoalHandleExecuteWorkflow> goal_handle)
+    void TaskOrchestrator::send_pick_goal()
     {
         using namespace std::placeholders;
-
-        current_object_id_ = goal_handle->get_goal()->object_id;
 
         if(!this->pick_client_ptr_->wait_for_action_server())
         {
@@ -71,21 +118,8 @@ namespace task_orchestration {
             // TODO: deve in qualche modo fallire
         }
 
-        // TODO: tutto questo poi dovrà essere preso in automatico - al momento è hard coded
-
-        // Le info dell'oggetto vanno chieste ad un apposito servizio
-
-        cr_interfaces::msg::ObjectInfo object_info;
-        object_info.id = current_object_id_;
-        object_info.center.x = 0.500;
-        object_info.center.y = 0.300;
-        object_info.center.z = 0.425;
-        object_info.size.x = 0.05; // [m]
-        object_info.size.y = 0.05; // [m]
-        object_info.size.z = 0.05; // [m]
-
         auto pick_goal_msg = Pick::Goal();
-        pick_goal_msg.object_info = object_info;
+        pick_goal_msg.object_info = target_object_;
 
         RCLCPP_INFO(this->get_logger(), "Sending pick goal...");
 
@@ -103,6 +137,7 @@ namespace task_orchestration {
             RCLCPP_ERROR(this->get_logger(), "Pick goal was rejected by server");
         } else {
             RCLCPP_INFO(this->get_logger(), "Pick goal accepted by server, waiting for result");
+            // TODO: Gestire il fatto che non è più busy e sbloccare la scena 
         }
     }
 
@@ -146,18 +181,8 @@ namespace task_orchestration {
             // TODO: deve in qualche modo fallire
         }
 
-        // TODO: tutto questo poi dovrà essere preso in automatico - al momento è hard coded
-        cr_interfaces::msg::ObjectInfo object_info;
-        object_info.id = current_object_id_;
-        object_info.center.x = 0.899;
-        object_info.center.y = 0.625;
-        object_info.center.z = 0.939;
-        object_info.size.x = 0.05; // [m]
-        object_info.size.y = 0.05; // [m]
-        object_info.size.z = 0.05; // [m]
-
         auto place_goal_msg = Place::Goal();
-        place_goal_msg.object_info = object_info;
+        place_goal_msg.object_info = target_object_;
         place_goal_msg.target_position.x = 0.300;
         place_goal_msg.target_position.y = 0.625;
         place_goal_msg.target_position.z = 0.866;
@@ -192,20 +217,33 @@ namespace task_orchestration {
     {
         switch (result.code) {
             case rclcpp_action::ResultCode::SUCCEEDED:
+            {
                 RCLCPP_ERROR(this->get_logger(), "Place goal succeeded!");
+                
+                cr_interfaces::msg::FreezeScene msg;
+                msg.freeze = false;
+                freeze_scene_pub_->publish(msg);
+    
                 is_busy_ = false;
                 return;
+            }
             case rclcpp_action::ResultCode::ABORTED:
+            {
                 RCLCPP_ERROR(this->get_logger(), "Place goal was aborted");
                 return;
+            }
             case rclcpp_action::ResultCode::CANCELED:
+            {
                 RCLCPP_ERROR(this->get_logger(), "Place goal was canceled");
                 return;
+            }
             default:
+            {
                 RCLCPP_ERROR(this->get_logger(), "Unknown result code");
                 return;
-          }
-    }
+            }
+        }
+    }    
 
 } // namespace task_orchestation
 } // namespace cr
