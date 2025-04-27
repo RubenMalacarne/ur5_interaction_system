@@ -17,7 +17,7 @@
   <depend>geometry_msgs</depend>
   <depend>sensor_msgs</depend>
   
-  <depend>coppelia_msgs</depend>
+  <depend>cr_interfaces</depend>
 
   <exec_depend>cv_bridge</exec_depend>
   <exec_depend>numpy</exec_depend>

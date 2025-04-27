@@ -18,6 +18,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
 
   "msg/DetectedSurfaces.msg"
   "msg/DetectedObjects.msg"
+  "msg/FreezeScene.msg"
   "msg/InferenceResult.msg"
   "msg/Yolov8Inference.msg"
   "msg/PoseKeypoint.msg"
@@ -32,6 +33,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
 
   "srv/AllowCollision.srv"
   "srv/AttachObject.srv"
+  "srv/GetObjectInfo.srv"
   DEPENDENCIES builtin_interfaces geometry_msgs std_msgs
 )
 

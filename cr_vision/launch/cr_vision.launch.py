@@ -32,11 +32,18 @@ def generate_launch_description():
         output='screen',
         parameters=[obj_selection_config]
     )
+    cr_obj_state_manager_node = launch_ros.actions.Node(
+        package='cr_vision',
+        executable='object_state_manager',  
+        name='object_state_manager',
+        output='screen'
+    )
 
     nodes = [
         cr_mirror_node,
         cr_obj_detection_node,
-        cr_obj_selection_node
+        cr_obj_selection_node,
+        cr_obj_state_manager_node
     ]
 
     return launch.LaunchDescription(nodes)

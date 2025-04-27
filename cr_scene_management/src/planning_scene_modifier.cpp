@@ -115,9 +115,10 @@ namespace scene_management {
         };
     
         for (const auto& link : link_names) {
-            acm.setEntry(link, request->object_id, request->is_allowed);
-            RCLCPP_DEBUG(get_logger(), "[allowCollision] Set entry: [%s] <-> [%s] = %s",
-                         link.c_str(), request->object_id.c_str(),
+            std::string object_id_str = std::to_string(request->object_id);
+            acm.setEntry(link, object_id_str, request->is_allowed);
+            RCLCPP_DEBUG(get_logger(), "[allowCollision] Set entry: [%s] <-> [%d] = %s",
+                         link.c_str(), request->object_id,
                          request->is_allowed ? "ALLOWED" : "NOT ALLOWED");
         }
     
@@ -134,8 +135,8 @@ namespace scene_management {
         }
     
         planning_scene_pub_->publish(scene_msg);
-        RCLCPP_INFO(get_logger(), "[allowCollision] Pubblicata nuova ACM per '%s'. Collisioni %s con i link del gripper.",
-                    request->object_id.c_str(),
+        RCLCPP_INFO(get_logger(), "[allowCollision] Pubblicata nuova ACM per '%d'. Collisioni %s con i link del gripper.",
+                    request->object_id,
                     request->is_allowed ? "PERMESSE" : "VIETATE");
         response->success = true;
     }

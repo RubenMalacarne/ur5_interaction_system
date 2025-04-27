@@ -27,7 +27,7 @@ namespace task_orchestration {
 
     rclcpp_action::GoalResponse TaskOrchestrator::handle_goal(const rclcpp_action::GoalUUID & uuid, std::shared_ptr<const ExecuteWorkflow::Goal> goal)
     {
-        RCLCPP_INFO(this->get_logger(), "Received new workflow execution request: object_id=%s", goal->object_id.c_str());
+        RCLCPP_INFO(this->get_logger(), "Received new workflow execution request: object_id=%d", goal->object_id);
         (void)uuid;
 
         if(is_busy_){
