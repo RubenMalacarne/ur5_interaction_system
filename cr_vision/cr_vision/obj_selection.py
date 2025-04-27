@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import rclpy
 from rclpy.node import Node
-from cr_interface.msg import ObjectDetectionResult
+from cr_interfaces.msg import ObjectDetectionResult
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
 import cv2
