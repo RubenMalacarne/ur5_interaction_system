@@ -35,7 +35,7 @@ class ObjectDetectionNode(Node):
         self.lable_name = "knife"
         
         package_share_directory = get_package_share_directory('cr_vision')
-        model_path = os.path.join(package_share_directory, 'data', 'yolo11x.pt')
+        model_path = os.path.join(package_share_directory, 'data', 'yolo_cubi.pt')
         
         self.model = YOLO(model_path)
         

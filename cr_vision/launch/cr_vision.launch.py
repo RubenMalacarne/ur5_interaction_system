@@ -1,7 +1,16 @@
 import launch
 import launch_ros
+from launch.substitutions import PathJoinSubstitution
+from launch_ros.substitutions import FindPackageShare
 
 def generate_launch_description():
+
+    obj_selection_config = PathJoinSubstitution([
+        FindPackageShare("cr_vision"),
+        "config",
+        "obj_selection.yaml"
+    ])
+
     cr_mirror_node = launch_ros.actions.Node(
         package='cr_vision',
         executable='mirror_scena.py', 
@@ -21,7 +30,7 @@ def generate_launch_description():
         executable='obj_selection.py',  
         name='obj_selection_node',
         output='screen',
-        # parameters=[{'param_name': 'param_value'}]
+        parameters=[obj_selection_config]
     )
 
     nodes = [

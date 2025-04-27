@@ -28,6 +28,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/ObjectDetectionResult.msg"
   "msg/ObjectCount.msg"
   "msg/ObjectInfo.msg"
+  "msg/ObjectInfoArray.msg"
 
   "srv/AllowCollision.srv"
   "srv/AttachObject.srv"

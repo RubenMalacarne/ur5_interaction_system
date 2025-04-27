@@ -23,7 +23,7 @@ install(
 )
 
 install(
-  DIRECTORY launch config 
+  DIRECTORY launch config data
   DESTINATION share/${PROJECT_NAME}
 )
 
