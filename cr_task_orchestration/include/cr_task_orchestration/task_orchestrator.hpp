@@ -32,7 +32,7 @@ namespace task_orchestration {
         rclcpp_action::Client<Place>::SharedPtr place_client_ptr_;
 
         bool is_busy_ = false;
-        std::string current_object_id_;
+        uint8_t current_object_id_;
 
         // Callbacks lato server
         rclcpp_action::GoalResponse handle_goal(const rclcpp_action::GoalUUID & uuid, std::shared_ptr<const ExecuteWorkflow::Goal> goal);

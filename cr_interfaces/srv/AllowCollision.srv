@@ -1,4 +1,4 @@
-string object_id
+uint8 object_id
 bool is_allowed
 ---
 bool success

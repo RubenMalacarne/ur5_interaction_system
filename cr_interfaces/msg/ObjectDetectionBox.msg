@@ -1,4 +1,4 @@
-int32 id
+uint8 id
 string label
 float32 confidence
 float32 x_min

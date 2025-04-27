@@ -20,7 +20,7 @@ namespace scene_management {
         qos_profile.keep_last(10);
 
         // Subscriber su /object_info
-        obj_detection_result_sub_ = this->create_subscription<cr_interfaces::msg::ObjectDetectionResult>(
+        obj_detection_result_sub_ = this->create_subscription<cr_interfaces::msg::ObjectInfoArray>(
             "cr_vision/object_selection_results", qos_profile,
             std::bind(&PlanningSceneModifier::spawnObjects, this, std::placeholders::_1));
 
@@ -39,31 +39,31 @@ namespace scene_management {
         RCLCPP_INFO(get_logger(), "PlanningSceneModifier is ready.");
     }
 
-    void PlanningSceneModifier::spawnObjects(const cr_interfaces::msg::ObjectDetectionResult::SharedPtr detected_objects)
+    void PlanningSceneModifier::spawnObjects(const cr_interfaces::msg::ObjectInfoArray::SharedPtr detected_objects)
     {
-        RCLCPP_INFO(this->get_logger(), "Received objects to spawn.");
+        RCLCPP_INFO(this->get_logger(), "Received %lu objects to spawn.", detected_objects->objects.size());
 
         moveit_msgs::msg::PlanningScene planning_scene;
 
-        for (const auto& box : detected_objects->boxes) {
+        for (const auto& obj : detected_objects->objects) {
 
-            RCLCPP_INFO(this->get_logger(), "Adding object %d to planning scene msg...", box.id);
+            RCLCPP_INFO(this->get_logger(), "Adding object %d to planning scene msg...", obj.id);
 
             moveit_msgs::msg::CollisionObject collision_object;
-            collision_object.id = box.id;
+            collision_object.id = obj.id;
             collision_object.header.frame_id = "world";
 
             geometry_msgs::msg::Pose pose;
-            pose.position.x = box.world_x;
-            pose.position.y = box.world_y;
-            pose.position.z = box.world_z;
+            pose.position.x = obj.center.x;
+            pose.position.y = obj.center.y;
+            pose.position.z = obj.center.z;
 
             shape_msgs::msg::SolidPrimitive primitive;
             primitive.type = primitive.BOX;
             primitive.dimensions.resize(3);
-            primitive.dimensions[0] = 0.05;
-            primitive.dimensions[1] = 0.05;
-            primitive.dimensions[2] = 0.05;
+            primitive.dimensions[0] = obj.size.x;
+            primitive.dimensions[1] = obj.size.y;
+            primitive.dimensions[2] = obj.size.z;
 
             collision_object.primitives.push_back(primitive);
             collision_object.primitive_poses.push_back(pose);

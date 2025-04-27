@@ -72,11 +72,11 @@ namespace task_orchestration {
         }
 
         // TODO: tutto questo poi dovrà essere preso in automatico - al momento è hard coded
+
+        // Le info dell'oggetto vanno chieste ad un apposito servizio
+
         cr_interfaces::msg::ObjectInfo object_info;
         object_info.id = current_object_id_;
-        // object_info.center.x = 0.899;
-        // object_info.center.y = 0.625;
-        // object_info.center.z = 0.939;
         object_info.center.x = 0.500;
         object_info.center.y = 0.300;
         object_info.center.z = 0.425;

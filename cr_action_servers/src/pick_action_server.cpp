@@ -282,7 +282,7 @@ namespace action_servers {
 
         // // Consentiamo la collisione tra il gripper e l'oggetto
         auto request = std::make_shared<cr_interfaces::srv::AllowCollision::Request>();
-        request->object_id = "object";
+        request->object_id = object_info.id;
         request->is_allowed = true;
 
         // Aspetta che il service sia disponibile

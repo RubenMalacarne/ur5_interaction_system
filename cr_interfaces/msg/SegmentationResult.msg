@@ -1,4 +1,4 @@
-int64 class_id
+uint8 class_id
 string class_name
 float64 x
 float64 y
