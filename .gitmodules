@@ -1,0 +1,3 @@
+[submodule "yolo_pipline_customdata_basic"]
+	path = yolo_pipline_customdata_basic
+	url = https://github.com/RubenMalacarne/yolo_pipline_customdata_basic.git
