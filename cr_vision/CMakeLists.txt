@@ -18,8 +18,8 @@ find_package(cr_interfaces REQUIRED)
 # Executable
 # -------------------------------------------------------------------
 add_executable(object_state_manager
-  cr_vision/object_state_manager_main.cpp
-  cr_vision/object_state_manager.cpp
+src/object_state_manager_main.cpp
+  src/object_state_manager.cpp
 )
 
 target_include_directories(object_state_manager PUBLIC

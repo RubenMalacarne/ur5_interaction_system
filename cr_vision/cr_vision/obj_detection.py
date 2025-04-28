@@ -102,10 +102,10 @@ class ObjectDetectionNode(Node):
                     cx, cy, x_min, y_max, annotated_frame, rgb_data
                 )
 
-                self.get_logger().info(
-                    f"Objects[{i}]: label={label}, conf={conf:.2f}, bbox=({x_min:.1f},{y_min:.1f},{x_max:.1f},{y_max:.1f}), "
-                    f"center=({cx},{cy}), distance={distance:.3f}, 3D_cam=({x_3d},{y_3d},{z_3d})"
-                )
+                # self.get_logger().info(
+                #     f"Objects[{i}]: label={label}, conf={conf:.2f}, bbox=({x_min:.1f},{y_min:.1f},{x_max:.1f},{y_max:.1f}), "
+                #     f"center=({cx},{cy}), distance={distance:.3f}, 3D_cam=({x_3d},{y_3d},{z_3d})"
+                # )
 
                 cv2.circle(annotated_frame, (cx, cy), 5, (0, 255, 0), -1)
 
