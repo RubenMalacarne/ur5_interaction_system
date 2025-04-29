@@ -149,7 +149,7 @@ namespace scene_management {
         {
             // Remove object from world
             moveit_msgs::msg::CollisionObject remove_object;
-            remove_object.id = request->object_id;
+            remove_object.id = std::to_string(request->object_id);
             remove_object.header.frame_id = "world";
             remove_object.operation = remove_object.REMOVE;
 
@@ -157,7 +157,7 @@ namespace scene_management {
             moveit_msgs::msg::AttachedCollisionObject attached_object;
             attached_object.link_name = "tool0";
             attached_object.object.header.frame_id = "tool0";
-            attached_object.object.id = request->object_id; 
+            attached_object.object.id = std::to_string(request->object_id);
 
             attached_object.touch_links = std::vector<std::string>{
                 "robotiq_85_base_link",
@@ -188,7 +188,7 @@ namespace scene_management {
         {
             // Stacchiamo l'oggetto dal robot
             moveit_msgs::msg::AttachedCollisionObject detach_object;
-            detach_object.object.id = request->object_id;
+            detach_object.object.id = std::to_string(request->object_id);
             detach_object.link_name = "tool0";
             detach_object.object.operation = detach_object.object.REMOVE;
 
