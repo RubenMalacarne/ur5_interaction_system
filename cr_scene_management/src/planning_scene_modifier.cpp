@@ -50,7 +50,7 @@ namespace scene_management {
             RCLCPP_INFO(this->get_logger(), "Adding object %d to planning scene msg...", obj.id);
 
             moveit_msgs::msg::CollisionObject collision_object;
-            collision_object.id = obj.id;
+            collision_object.id = std::to_string(obj.id);
             collision_object.header.frame_id = "world";
 
             geometry_msgs::msg::Pose pose;
