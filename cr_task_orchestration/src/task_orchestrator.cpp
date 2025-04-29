@@ -68,6 +68,7 @@ namespace task_orchestration {
     void  TaskOrchestrator::handle_accepted(const std::shared_ptr<GoalHandleExecuteWorkflow> goal_handle)
     {
         using namespace std::placeholders;
+        this->current_goal_handle_ = goal_handle;
         // this needs to return quickly to avoid blocking the executor, so spin up a new thread
         std::thread{std::bind(&TaskOrchestrator::get_object_info, this, goal_handle)}.detach();
 
@@ -223,8 +224,17 @@ namespace task_orchestration {
                 cr_interfaces::msg::FreezeScene msg;
                 msg.freeze = false;
                 freeze_scene_pub_->publish(msg);
-    
+            
                 is_busy_ = false;
+            
+                if (current_goal_handle_) {
+                    auto result = std::make_shared<ExecuteWorkflow::Result>();
+                    result->success = true;
+                    result->msg = "Workflow completed successfully";
+                    current_goal_handle_->succeed(result);
+                    current_goal_handle_.reset();
+                }
+            
                 return;
             }
             case rclcpp_action::ResultCode::ABORTED:

@@ -37,6 +37,7 @@ namespace task_orchestration {
 
         bool is_busy_ = false;
         cr_interfaces::msg::ObjectInfo target_object_;
+        std::shared_ptr<GoalHandleExecuteWorkflow> current_goal_handle_;
 
         // Metodo per richiedere le informazioni di uno specifico oggetto
         void get_object_info(const std::shared_ptr<GoalHandleExecuteWorkflow> goal_handle);
