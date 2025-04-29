@@ -1,4 +1,4 @@
-# 🤖 UR5 Pick and Place Project
+# 🤖 Projects SDCR
 
 Welcome to the **UR5 Pick and Place** project!  
 This project involves controlling a **UR5 robotic arm** equipped with a **2F-85 Robotiq gripper** to autonomously pick, place and scanning objects based on visual detection.
