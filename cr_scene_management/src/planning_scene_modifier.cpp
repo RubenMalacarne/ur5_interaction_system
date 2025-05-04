@@ -9,74 +9,90 @@ namespace cr {
 namespace scene_management {
 
     PlanningSceneModifier::PlanningSceneModifier(const rclcpp::NodeOptions& options)
-    : Node("planning_scene_modifier", options)
+        : Node("planning_scene_modifier", options)
     {
         // Publisher su "planning_scene" se vuoi inviare diff a mano
         planning_scene_pub_ = this->create_publisher<moveit_msgs::msg::PlanningScene>("planning_scene", 10);
 
+        rclcpp::QoS qos_profile(rclcpp::QoSInitialization::from_rmw(rmw_qos_profile_default));
+        qos_profile.reliable();
+        qos_profile.history(rclcpp::HistoryPolicy::KeepLast);
+        qos_profile.keep_last(10);
+
         // Subscriber su /object_info
-        object_info_sub_ = this->create_subscription<cr_interface::msg::ObjectInfo>(
-            "/object_info", 10,
-            std::bind(&PlanningSceneModifier::spawnObject, this, std::placeholders::_1));
+        obj_detection_result_sub_ = this->create_subscription<cr_interfaces::msg::ObjectInfoArray>(
+            "cr/scene_objects", qos_profile,
+            std::bind(&PlanningSceneModifier::spawnObjects, this, std::placeholders::_1));
 
         // Servizio per allow collision
-        allow_collision_srv_ = this->create_service<cr_interface::srv::AllowCollision>(
+        allow_collision_srv_ = this->create_service<cr_interfaces::srv::AllowCollision>(
             "/allow_collision",
             std::bind(&PlanningSceneModifier::allowCollision, this,
                         std::placeholders::_1, std::placeholders::_2));
 
         // Servizio per attach
-        attach_object_srv_ = this->create_service<cr_interface::srv::AttachObject>(
+        attach_object_srv_ = this->create_service<cr_interfaces::srv::AttachObject>(
             "/attach_object",
             std::bind(&PlanningSceneModifier::attachObject, this,
                         std::placeholders::_1, std::placeholders::_2));
 
-        RCLCPP_INFO(get_logger(), "PlanningSceneModifier avviato.");
+        RCLCPP_INFO(get_logger(), "PlanningSceneModifier is ready.");
     }
 
-    void PlanningSceneModifier::spawnObject(const cr_interface::msg::ObjectInfo::SharedPtr object_info)
+    void PlanningSceneModifier::spawnObjects(const cr_interfaces::msg::ObjectInfoArray::SharedPtr detected_objects)
     {
-        moveit_msgs::msg::CollisionObject collision_object;
-        collision_object.id = object_info->id;
-        collision_object.header.frame_id = "world";
-
-        geometry_msgs::msg::Pose pose;
-        pose.position.x = object_info->center.x;
-        pose.position.y = object_info->center.y;
-        pose.position.z = object_info->center.z;
-
-        shape_msgs::msg::SolidPrimitive primitive;
-        primitive.type = primitive.BOX;
-        primitive.dimensions.resize(3);
-        primitive.dimensions[0] = object_info->size.x;
-        primitive.dimensions[1] = object_info->size.y;
-        primitive.dimensions[2] = object_info->size.z;
-
-        collision_object.primitives.push_back(primitive);
-        collision_object.primitive_poses.push_back(pose);
-        collision_object.operation = collision_object.ADD;
+        RCLCPP_INFO(this->get_logger(), "Received %lu objects to spawn.", detected_objects->objects.size());
 
         moveit_msgs::msg::PlanningScene planning_scene;
-        planning_scene.world.collision_objects.push_back(collision_object);
+
+        for (const auto& obj : detected_objects->objects) {
+
+            RCLCPP_INFO(this->get_logger(), "Adding object %d to planning scene msg...", obj.id);
+
+            moveit_msgs::msg::CollisionObject collision_object;
+            collision_object.id = std::to_string(obj.id);
+            collision_object.header.frame_id = "world";
+
+            geometry_msgs::msg::Pose pose;
+            pose.position.x = obj.center.x;
+            pose.position.y = obj.center.y;
+            pose.position.z = obj.center.z;
+
+            shape_msgs::msg::SolidPrimitive primitive;
+            primitive.type = primitive.BOX;
+            primitive.dimensions.resize(3);
+            primitive.dimensions[0] = obj.size.x;
+            primitive.dimensions[1] = obj.size.y;
+            primitive.dimensions[2] = obj.size.z;
+
+            collision_object.primitives.push_back(primitive);
+            collision_object.primitive_poses.push_back(pose);
+            collision_object.operation = collision_object.ADD;
+
+            planning_scene.world.collision_objects.push_back(collision_object);
+        }
+
         planning_scene.is_diff = true;
         planning_scene_pub_->publish(planning_scene);
-        RCLCPP_INFO(this->get_logger(), "Object spawned in the scene.");
+        RCLCPP_INFO(this->get_logger(), "Objects spawned in the scene.");
     }
 
     void PlanningSceneModifier::allowCollision(
-        const std::shared_ptr<cr_interface::srv::AllowCollision::Request> request,
-        std::shared_ptr<cr_interface::srv::AllowCollision::Response> response)
+        const std::shared_ptr<cr_interfaces::srv::AllowCollision::Request> request,
+        std::shared_ptr<cr_interfaces::srv::AllowCollision::Response> response)
     {
         auto& manager = cr::scene_management::SceneManager::instance(shared_from_this());
         auto psm = manager.getPlanningSceneMonitor();
     
         if (!psm) {
             RCLCPP_ERROR(get_logger(), "[allowCollision] PlanningSceneMonitor è nullo.");
+            response->success = false;
             return;
         }
     
         if (!psm->getPlanningScene()) {
             RCLCPP_ERROR(get_logger(), "[allowCollision] PlanningScene non disponibile!");
+            response->success = false;
             return;
         }
     
@@ -99,9 +115,10 @@ namespace scene_management {
         };
     
         for (const auto& link : link_names) {
-            acm.setEntry(link, request->object_id, request->is_allowed);
-            RCLCPP_DEBUG(get_logger(), "[allowCollision] Set entry: [%s] <-> [%s] = %s",
-                         link.c_str(), request->object_id.c_str(),
+            std::string object_id_str = std::to_string(request->object_id);
+            acm.setEntry(link, object_id_str, request->is_allowed);
+            RCLCPP_DEBUG(get_logger(), "[allowCollision] Set entry: [%s] <-> [%d] = %s",
+                         link.c_str(), request->object_id,
                          request->is_allowed ? "ALLOWED" : "NOT ALLOWED");
         }
     
@@ -113,24 +130,26 @@ namespace scene_management {
         // Check if publisher is ready
         if (!planning_scene_pub_) {
             RCLCPP_ERROR(get_logger(), "[allowCollision] planning_scene_pub_ non inizializzato!");
+            response->success = false;
             return;
         }
     
         planning_scene_pub_->publish(scene_msg);
-        RCLCPP_INFO(get_logger(), "[allowCollision] Pubblicata nuova ACM per '%s'. Collisioni %s con i link del gripper.",
-                    request->object_id.c_str(),
+        RCLCPP_INFO(get_logger(), "[allowCollision] Pubblicata nuova ACM per '%d'. Collisioni %s con i link del gripper.",
+                    request->object_id,
                     request->is_allowed ? "PERMESSE" : "VIETATE");
+        response->success = true;
     }
     
     void PlanningSceneModifier::attachObject(
-        const std::shared_ptr<cr_interface::srv::AttachObject::Request> request,
-        std::shared_ptr<cr_interface::srv::AttachObject::Response> response)
+        const std::shared_ptr<cr_interfaces::srv::AttachObject::Request> request,
+        std::shared_ptr<cr_interfaces::srv::AttachObject::Response> response)
     {
         if(request->attach)
         {
             // Remove object from world
             moveit_msgs::msg::CollisionObject remove_object;
-            remove_object.id = request->object_id;
+            remove_object.id = std::to_string(request->object_id);
             remove_object.header.frame_id = "world";
             remove_object.operation = remove_object.REMOVE;
 
@@ -138,7 +157,7 @@ namespace scene_management {
             moveit_msgs::msg::AttachedCollisionObject attached_object;
             attached_object.link_name = "tool0";
             attached_object.object.header.frame_id = "tool0";
-            attached_object.object.id = request->object_id; 
+            attached_object.object.id = std::to_string(request->object_id);
 
             attached_object.touch_links = std::vector<std::string>{
                 "robotiq_85_base_link",
@@ -169,7 +188,7 @@ namespace scene_management {
         {
             // Stacchiamo l'oggetto dal robot
             moveit_msgs::msg::AttachedCollisionObject detach_object;
-            detach_object.object.id = request->object_id;
+            detach_object.object.id = std::to_string(request->object_id);
             detach_object.link_name = "tool0";
             detach_object.object.operation = detach_object.object.REMOVE;
 

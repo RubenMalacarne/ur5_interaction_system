@@ -17,7 +17,7 @@ import tf2_geometry_msgs
 from ultralytics import YOLO
 from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy
 
-from coppelia_msgs.msg import ObjectDetectionBox, ObjectDetectionResult
+from cr_interfaces.msg import ObjectDetectionBox, ObjectDetectionResult
 
 
 class ObjectDetectionNode(Node):
@@ -35,7 +35,7 @@ class ObjectDetectionNode(Node):
         self.lable_name = "knife"
         
         package_share_directory = get_package_share_directory('cr_vision')
-        model_path = os.path.join(package_share_directory, 'data', 'yolo11x.pt')
+        model_path = os.path.join(package_share_directory, 'data', 'yolo_cubi.pt')
         
         self.model = YOLO(model_path)
         
@@ -102,10 +102,10 @@ class ObjectDetectionNode(Node):
                     cx, cy, x_min, y_max, annotated_frame, rgb_data
                 )
 
-                self.get_logger().info(
-                    f"Objects[{i}]: label={label}, conf={conf:.2f}, bbox=({x_min:.1f},{y_min:.1f},{x_max:.1f},{y_max:.1f}), "
-                    f"center=({cx},{cy}), distance={distance:.3f}, 3D_cam=({x_3d},{y_3d},{z_3d})"
-                )
+                # self.get_logger().info(
+                #     f"Objects[{i}]: label={label}, conf={conf:.2f}, bbox=({x_min:.1f},{y_min:.1f},{x_max:.1f},{y_max:.1f}), "
+                #     f"center=({cx},{cy}), distance={distance:.3f}, 3D_cam=({x_3d},{y_3d},{z_3d})"
+                # )
 
                 cv2.circle(annotated_frame, (cx, cy), 5, (0, 255, 0), -1)
 

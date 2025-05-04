@@ -1,0 +1,6 @@
+uint8 object_id
+---
+bool success
+string msg
+---
+string msg

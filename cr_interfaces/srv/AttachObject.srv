@@ -1,0 +1,4 @@
+uint8 object_id
+bool attach
+---
+bool success

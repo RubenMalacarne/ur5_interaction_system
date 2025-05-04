@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import rclpy
 from rclpy.node import Node
-from cr_interface.msg import ObjectDetectionResult
+from cr_interfaces.msg import ObjectDetectionResult, ObjectInfoArray, ObjectInfo
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
 import cv2
@@ -9,11 +9,23 @@ import cv2
 class ObjSelectionNode(Node):
     def __init__(self):
         super().__init__('obj_selection_node')
+
+        # Dichiarazione parametri - recuperati da file di configurazione
+        self.declare_parameters(
+            namespace='',
+            parameters=[
+                ('target_label', 'green_cube'),
+                ('target_size_x', 0.05),
+                ('target_size_y', 0.05),
+                ('target_size_z', 0.05)
+            ]
+        )
         
-        # Dichiarazione parametro per la label da cercare
-        self.declare_parameter('target_label', 'green_cube')
         self.target_label = self.get_parameter('target_label').get_parameter_value().string_value
-        
+        self.target_size_x = self.get_parameter('target_size_x').get_parameter_value().double_value
+        self.target_size_y = self.get_parameter('target_size_y').get_parameter_value().double_value
+        self.target_size_z = self.get_parameter('target_size_z').get_parameter_value().double_value
+
         # Subscriber ai detection results
         self.subscription = self.create_subscription(
             ObjectDetectionResult,
@@ -31,7 +43,7 @@ class ObjSelectionNode(Node):
         )
         
         self.obj_selected_pub_ = self.create_publisher(
-            ObjectDetectionResult,
+            ObjectInfoArray,
             'cr_vision/object_selection_results',
             10
         )
@@ -58,7 +70,7 @@ class ObjSelectionNode(Node):
             self.get_logger().warn("Nessuna immagine disponibile, impossibile annotare.")
             return
         
-        selected_boxes = [] 
+        selected_objects = [] # Array di ObjectInfo
         annotated_image = self.bridge.imgmsg_to_cv2(self.latest_image, "bgr8")
 
         for box in detection_msg.boxes:
@@ -67,16 +79,26 @@ class ObjSelectionNode(Node):
 
             if label == self.target_label:
                 self.get_logger().info(f"Rilevato '{label}' con id={obj_id}.")
-                selected_boxes.append(box)
+
+                obj = ObjectInfo()
+                obj.id = obj_id
+                obj.center.x = box.world_x
+                obj.center.y = box.world_y
+                obj.center.z = box.world_z
+                obj.size.x =  self.target_size_x
+                obj.size.y = self.target_size_y
+                obj.size.z = self.target_size_z
+
+                selected_objects.append(obj)
 
                 x_min, y_min, x_max, y_max = int(box.x_min), int(box.y_min), int(box.x_max), int(box.y_max)
                 cv2.rectangle(annotated_image, (x_min, y_min), (x_max, y_max), (0, 255, 0), 2)
                 cv2.putText(annotated_image, label, (x_min, y_min - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
-        if selected_boxes:
-            selected_msg = ObjectDetectionResult()
+        if selected_objects:
+            selected_msg = ObjectInfoArray()
             selected_msg.header = detection_msg.header  
-            selected_msg.boxes = selected_boxes  
+            selected_msg.objects = selected_objects  
 
             self.obj_selected_pub_.publish(selected_msg)
 

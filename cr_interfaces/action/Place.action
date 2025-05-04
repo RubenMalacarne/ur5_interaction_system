@@ -1,0 +1,8 @@
+cr_interfaces/ObjectInfo object_info
+geometry_msgs/Point target_position
+---
+bool success
+string result_msg
+---
+float32 percentage
+string feedback_msg

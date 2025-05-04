@@ -6,7 +6,7 @@ import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
-from coppelia_msgs.msg import PoseKeypoint, PoseResult
+from cr_interfaces.msg import PoseKeypoint, PoseResult
 import numpy as np
 from typing import List
 

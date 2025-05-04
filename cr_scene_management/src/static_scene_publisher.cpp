@@ -12,7 +12,6 @@ namespace scene_management {
     StaticScenePublisher::StaticScenePublisher(const rclcpp::NodeOptions& options)
     : Node("static_scene_publisher", options)
     {
-
         planning_scene_pub_ = create_publisher<moveit_msgs::msg::PlanningScene>("planning_scene", 10);
 
         timer_ = create_wall_timer(

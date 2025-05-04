@@ -1,0 +1,7 @@
+cr_interfaces/ObjectInfo object_info
+---
+bool success
+string result_msg
+---
+float32 percentage
+string feedback_msg

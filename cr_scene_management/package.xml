@@ -12,7 +12,7 @@
 
   <!-- Dipendenze per la compilazione ed esecuzione -->
   <depend>geometric_shapes</depend>
-  <depend>cr_interface</depend>
+  <depend>cr_interfaces</depend>
   <depend>moveit_msgs</depend>
   <depend>moveit_core</depend>
   <depend>moveit_ros_planning</depend>
