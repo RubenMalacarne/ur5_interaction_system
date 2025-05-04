@@ -22,6 +22,27 @@ You can view the full ROS 2 package architecture by clicking the link below:
 🔗 [View ROS 2 System Map](https://app.diagrams.net/#G1d35rVPIo2uMd6x9BIGAX8NVfY-hrPb3q#%7B%22pageId%22%3A%22MBEQydd_YOxhgCBZd9wA%22%7D)
 
 ---
+---
+
+## 🔗 Step to prepare NGROK
+
+Ngrok is used to expose a local server to the internet. This is particularly useful for enabling Alexa or other external services to communicate with your local application.
+
+setp sono : 
+
+- [download Ngrok](https://dashboard.ngrok.com/get-started/setup/linux)
+- copy your toke inside your pc: token about Ngrok is [here](https://dashboard.ngrok.com/get-started/your-authtoken)
+- put your token in the following command: 
+```bash
+ngrok config add-authtoken <il_tuo_token>
+```
+- in the end run the followint code: 
+```bash
+ngrok http 6000
+```
+---
+
+
 
 ## 🚀 Technologies Used
 

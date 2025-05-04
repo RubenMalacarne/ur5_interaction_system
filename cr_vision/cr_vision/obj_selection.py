@@ -14,14 +14,14 @@ class ObjSelectionNode(Node):
         self.declare_parameters(
             namespace='',
             parameters=[
-                ('target_label', 'green_cube'),
+                ('target_labels', ["green_cube", "red_cube"]),
                 ('target_size_x', 0.05),
                 ('target_size_y', 0.05),
                 ('target_size_z', 0.05)
             ]
         )
         
-        self.target_label = self.get_parameter('target_label').get_parameter_value().string_value
+        self.target_labels = self.get_parameter('target_labels').get_parameter_value().string_array_value
         self.target_size_x = self.get_parameter('target_size_x').get_parameter_value().double_value
         self.target_size_y = self.get_parameter('target_size_y').get_parameter_value().double_value
         self.target_size_z = self.get_parameter('target_size_z').get_parameter_value().double_value
@@ -57,7 +57,7 @@ class ObjSelectionNode(Node):
         self.bridge = CvBridge()
         self.latest_image = None
         
-        self.get_logger().info(f"obj_selection_node avviato. Target da selezionare: '{self.target_label}'.")
+        self.get_logger().info(f"obj_selection_node avviato. Target da selezionare: '{self.target_labels}'.")
 
     def image_callback(self, msg):
         self.latest_image = msg
@@ -77,11 +77,12 @@ class ObjSelectionNode(Node):
             label = box.label
             obj_id = box.id
 
-            if label == self.target_label:
+            if label in self.target_labels:
                 self.get_logger().info(f"Rilevato '{label}' con id={obj_id}.")
 
                 obj = ObjectInfo()
                 obj.id = obj_id
+                obj.label = label
                 obj.center.x = box.world_x
                 obj.center.y = box.world_y
                 obj.center.z = box.world_z
@@ -92,8 +93,8 @@ class ObjSelectionNode(Node):
                 selected_objects.append(obj)
 
                 x_min, y_min, x_max, y_max = int(box.x_min), int(box.y_min), int(box.x_max), int(box.y_max)
-                cv2.rectangle(annotated_image, (x_min, y_min), (x_max, y_max), (0, 255, 0), 2)
-                cv2.putText(annotated_image, label, (x_min, y_min - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+                cv2.rectangle(annotated_image, (x_min, y_min), (x_max, y_max), (255, 0, 255), 2)
+                cv2.putText(annotated_image, label, (x_min, y_min - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 255), 2)
 
         if selected_objects:
             selected_msg = ObjectInfoArray()
