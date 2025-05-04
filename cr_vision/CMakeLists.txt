@@ -13,12 +13,13 @@ find_package(std_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(cv_bridge REQUIRED)
 find_package(cr_interfaces REQUIRED)
+find_package(tf2_ros REQUIRED)
 
 # -------------------------------------------------------------------
 # Executable
 # -------------------------------------------------------------------
 add_executable(object_state_manager
-src/object_state_manager_main.cpp
+  src/object_state_manager_main.cpp
   src/object_state_manager.cpp
 )
 
@@ -34,6 +35,24 @@ ament_target_dependencies(object_state_manager
   cr_interfaces
 )
 
+add_executable(human_proximity_monitor
+  src/human_proximity_monitor_main.cpp
+  src/human_proximity_monitor.cpp
+)
+
+target_include_directories(human_proximity_monitor PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+)
+
+
+ament_target_dependencies(human_proximity_monitor
+  ament_cmake
+  rclcpp
+  geometry_msgs
+  std_msgs
+  tf2_ros
+)
 
 # -------------------------------------------------------------------
 # Install
@@ -53,6 +72,7 @@ install(DIRECTORY include/
 
 install(TARGETS 
   object_state_manager
+  human_proximity_monitor
   DESTINATION lib/${PROJECT_NAME}
 )
 
