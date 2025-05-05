@@ -31,7 +31,6 @@ class AlexaNode(Node):
     def object_callback(self, msg):
         self.latest_objects = msg.objects
 
-# action_client = ActionClient(Node("alexa interface"))
 alexa_node = AlexaNode()
 action_client = ActionClient(alexa_node, ExecuteWorkflow, '/cr/execute_workflow')
 
@@ -44,7 +43,7 @@ def get_lowest_id_by_label(objects, target_label):
 
 app = Flask(__name__)
 
-
+# first function --> used when the skill is launched
 class LaunchRequestHandler(AbstractRequestHandler):
     def can_handle(self, handler_input):
         return is_request_type("LaunchRequest")(handler_input)
@@ -57,7 +56,7 @@ class LaunchRequestHandler(AbstractRequestHandler):
         
         return handler_input.response_builder.response
 
-
+# second function --> used when the user asks to pick a green cube
 class PickGreenIntentHandler(AbstractRequestHandler):
     def can_handle(self, handler_input):
         return is_intent_name("PrendiCuboVerdeIntent")(handler_input)
@@ -88,7 +87,7 @@ class PickGreenIntentHandler(AbstractRequestHandler):
 
         return handler_input.response_builder.response
     
-    
+# second function --> used when the user asks to pick a red cube    
 class PickRedIntentHandler(AbstractRequestHandler):
     def can_handle(self, handler_input):
         return is_intent_name("PrendiCuboRossoIntent")(handler_input)
@@ -118,47 +117,59 @@ class PickRedIntentHandler(AbstractRequestHandler):
             SimpleCard("Pick", speech_text)).set_should_end_session(True)
 
         return handler_input.response_builder.response
-       
+
 class StopIntentHandler(AbstractRequestHandler):
     def can_handle(self, handler_input):
-        # type: (HandlerInput) -> bool
         return is_intent_name("StopIntent")(handler_input)
 
     def handle(self, handler_input):
-        # type: (HandlerInput) -> Response
-        speech_text = "robot fermo"
+        speech_text = "il robot si sta per fermare"
 
+        # def ros_action():
+        #     rclpy.spin_once(alexa_node, timeout_sec=1.0)
+        #     confirmation_text = None
+        #     # inviare il comando di stop CORRETTO ##
+        #     # goal = ExecuteWorkflow.Goal()
+        #     # action_client.send_goal_async(goal)
+        #     # if feedback_goal:
+        #     #     confirmation_text= "il robot si é fermato"
+        #     #     alexa_node.get_logger().info(confirmation_text)
+        #     # else:
+        #     #     confirmation_text= "il robot non si è fermato, ATTENZIONE!!"
+        #     #     alexa_node.get_logger().error(confirmation_text)
+            
+        # threading.Thread(target=ros_action).start()
+        
         handler_input.response_builder.speak(speech_text).set_card(
-            SimpleCard("Stop", speech_text)).set_should_end_session(
-            True)
+            SimpleCard("Stop", speech_text)).set_should_end_session(True)
         return handler_input.response_builder.response
 
 class ResumeIntentHandler(AbstractRequestHandler):
     def can_handle(self, handler_input):
-        # type: (HandlerInput) -> bool
         return is_intent_name("ResumeIntent")(handler_input)
 
     def handle(self, handler_input):
         # type: (HandlerInput) -> Response
         speech_text = "il robot si muove, riparte dall'ultima esecuzione"
+        
+        # def ros_action():
+        #     rclpy.spin_once(alexa_node, timeout_sec=1.0)
+        #     confirmation_text = None
+            
+        # threading.Thread(target=ros_action).start()
 
         handler_input.response_builder.speak(speech_text).set_card(
-            SimpleCard("Resume", speech_text)).set_should_end_session(
-            True)
+            SimpleCard("Resume", speech_text)).set_should_end_session(True)
         return handler_input.response_builder.response
 
 class AllExceptionHandler(AbstractExceptionHandler):
-
     def can_handle(self, handler_input, exception):
-        # type: (HandlerInput, Exception) -> bool
         return True
 
     def handle(self, handler_input, exception):
-        # type: (HandlerInput, Exception) -> Response
-        # Log the exception in CloudWatch Logs
         print(exception)
 
-        speech = "accipicchia, non sono GPT4, e se finito per darmi il comando sbagliato!!"
+        speech = "accipicchia, non ho capito bene!!"
         handler_input.response_builder.speak(speech).ask(speech)
         return handler_input.response_builder.response
 
@@ -171,8 +182,14 @@ skill_builder.add_request_handler(ResumeIntentHandler())
 skill_builder.add_exception_handler(AllExceptionHandler())
 # Register your intent handlers to the skill_builder object
 
+
+SKILL_ID = "amzn1.ask.skill.3ad3dd7c-03cb-4a11-94af-0ac3b027efe2"
+
 skill_adapter = SkillAdapter(
-    skill=skill_builder.create(), skill_id="amzn1.ask.skill.3ad3dd7c-03cb-4a11-94af-0ac3b027efe2", app=app)
+    skill=skill_builder.create(), 
+    skill_id=SKILL_ID, 
+    app=app
+)
 
 @app.route("/")
 def invoke_skill():
