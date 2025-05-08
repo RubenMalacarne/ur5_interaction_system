@@ -8,6 +8,7 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(rclcpp_action REQUIRED)
 find_package(behaviortree_cpp REQUIRED)
 find_package(behaviortree_ros2 REQUIRED)
 find_package(cr_interfaces REQUIRED)
@@ -17,18 +18,19 @@ include_directories(
   include
 )
 
-add_executable(bt_runner_node src/bt_runner.cpp src/custom_bt_nodes.cpp)
-ament_target_dependencies(bt_runner_node
+add_executable(task_planner src/task_planner.cpp src/custom_bt_nodes.cpp src/task_planner_main.cpp)
+ament_target_dependencies(task_planner
   rclcpp
   behaviortree_cpp
   cr_interfaces
   ament_index_cpp
+  rclcpp_action
   # behaviortree_ros2
 )
 
 # --- Installazione ---
 install(TARGETS
-  bt_runner_node
+  task_planner
   DESTINATION lib/${PROJECT_NAME}
 )
 
