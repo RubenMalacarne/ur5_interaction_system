@@ -25,7 +25,7 @@ ament_target_dependencies(task_planner
   cr_interfaces
   ament_index_cpp
   rclcpp_action
-  # behaviortree_ros2
+  behaviortree_ros2
 )
 
 # --- Installazione ---
