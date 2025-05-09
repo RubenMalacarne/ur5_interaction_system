@@ -67,14 +67,16 @@ class PickGreenIntentHandler(AbstractRequestHandler):
 
         # Esegui il resto in background
         def ros_action():
+            nonlocal speech_text #usato per aggiornare quello che deve dire alexa
             rclpy.spin_once(alexa_node, timeout_sec=1.0)
             object_id = get_lowest_id_by_label(alexa_node.latest_objects, "green_cube")
             if object_id is None:
+                speech_text = "Nessun cubetto verde trovato."
                 alexa_node.get_logger().error("Nessun cubetto verde trovato.")
                 return
 
-            confirmation_text = f"Il robot andrà a prendere il cubetto verde con id {object_id}."
-            alexa_node.get_logger().info(confirmation_text)
+            speech_text = f"Il robot andrà a prendere il cubetto verde con id {object_id}."
+            alexa_node.get_logger().info(speech_text)
 
             goal = ExecuteWorkflow.Goal()
             goal.object_id = object_id
@@ -98,14 +100,16 @@ class PickRedIntentHandler(AbstractRequestHandler):
 
         # Esegui il resto in background
         def ros_action():
+            nonlocal speech_text #usato per aggiornare quello che deve dire alexa
             rclpy.spin_once(alexa_node, timeout_sec=1.0)
             object_id = get_lowest_id_by_label(alexa_node.latest_objects, "red_cube")
             if object_id is None:
+                speech_text = "Nessun cubetto rosso trovato."
                 alexa_node.get_logger().error("Nessun cubetto rosso trovato.")
                 return
 
-            confirmation_text = f"Il robot andrà a prendere il cubetto rosso con id {object_id}."
-            alexa_node.get_logger().info(confirmation_text)
+            speech_text = f"Il robot andrà a prendere il cubetto rosso con id {object_id}."
+            alexa_node.get_logger().info(speech_text)
 
             goal = ExecuteWorkflow.Goal()
             goal.object_id = object_id

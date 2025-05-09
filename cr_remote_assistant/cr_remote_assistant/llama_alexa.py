@@ -51,7 +51,6 @@ class CommandIntentHandler(AbstractRequestHandler):
             .set_card(SimpleCard("Intent", parsed_intent)) \
             .set_should_end_session(True)
 
-        # se serve, qui puoi chiamare un’API del tuo robot con 'parsed_intent'
         return handler_input.response_builder.response
 
 class SessionEndedRequestHandler(AbstractRequestHandler):
