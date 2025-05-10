@@ -1,15 +1,26 @@
 <root BTCPP_format="4" main_tree_to_execute="SimplePickAndPlace">
 	<BehaviorTree ID="SimplePickAndPlace">
-		<Sequence name="MainSequence">
-			<Action ID="GetObjectInfo"
-				object_id="{object_id}"
-				object_info="{object_info}" />
 
-			<Action ID="ExecutePick" object_info="{object_info}" />
+		<Fallback name  ="CheckHumanPresence">
 
-			<Action ID="ExecutePlace" object_info="{object_info}" />
+			<Sequence name="MainSequence">
 
-			<Action ID="LogSuccess" message="Simple Pick and Place completato!" />
-		</Sequence>
+        		<Condition ID="CheckHumanPresence" />
+        		<!-- <Condition ID="CheckHumanPresence" human_detected="{human_detected}" /> -->
+
+				<Action ID="GetObjectInfo"
+					object_id="{object_id}"
+					object_info="{object_info}" />
+
+				<Action ID="ExecutePick" object_info="{object_info}" />
+
+				<Action ID="ExecutePlace" object_info="{object_info}" />
+
+				<Action ID="LogSuccess" message="Simple Pick and Place completato!" />
+			</Sequence>
+			<Action ID="PauseRobot" />
+		</Fallback>
 	</BehaviorTree>
 </root>
+
+

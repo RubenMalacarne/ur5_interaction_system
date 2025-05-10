@@ -3,6 +3,8 @@
 
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_action/rclcpp_action.hpp>
+#include "std_msgs/msg/bool.hpp"
+
 #include <cr_interfaces/action/execute_workflow.hpp>
 #include <ament_index_cpp/get_package_share_directory.hpp>
 
@@ -20,6 +22,12 @@
 #include <chrono>
 #include <string>
 
+#include <cr_interfaces/action/pick.hpp>
+#include <cr_interfaces/action/place.hpp>
+#include <cr_interfaces/srv/get_object_info.hpp>
+#include <cr_interfaces/msg/object_info.hpp>
+#include <cr_interfaces/msg/freeze_scene.hpp>
+
 namespace cr
 {
 namespace bt_orchestrator
@@ -31,16 +39,41 @@ public:
   explicit BtOrchestratorNode(const rclcpp::NodeOptions &options = rclcpp::NodeOptions());
 
 private:
+
+  bool is_busy_ = false;
   // Action server per ExecuteWorkflow
   using ExecuteWorkflow = cr_interfaces::action::ExecuteWorkflow;
   using GoalHandleExecuteWorkflow = rclcpp_action::ServerGoalHandle<ExecuteWorkflow>;
+  using Pick = cr_interfaces::action::Pick;
+  using GoalHandlePick = rclcpp_action::ClientGoalHandle<Pick>;
+
+  rclcpp::Publisher<cr_interfaces::msg::FreezeScene>::SharedPtr freeze_scene_pub_;
+  
+  rclcpp::Client<cr_interfaces::srv::GetObjectInfo>::SharedPtr get_object_info_client_;
+  rclcpp_action::Client<Pick>::SharedPtr pick_client_ptr_;
   rclcpp_action::Server<ExecuteWorkflow>::SharedPtr execute_workflow_server_;
+
+  cr_interfaces::msg::ObjectInfo target_object_;
+
   rclcpp_action::GoalResponse handle_goal(
     const rclcpp_action::GoalUUID &uuid,
     std::shared_ptr<const ExecuteWorkflow::Goal> goal);
   rclcpp_action::CancelResponse handle_cancel(
     const std::shared_ptr<GoalHandleExecuteWorkflow> goal_handle);
   void execute(const std::shared_ptr<GoalHandleExecuteWorkflow> goal_handle);
+  void get_object_info(const std::shared_ptr<GoalHandleExecuteWorkflow> goal_handle);
+  
+  //pick elements:
+  void send_pick_goal();
+  void send_place_goal();
+  void pick_goal_response_callback(const GoalHandlePick::SharedPtr & goal_handle);
+  void pick_feedback_callback(GoalHandlePick::SharedPtr, const std::shared_ptr<const Pick::Feedback> feedback);
+  // Callback per la gestione dei result
+  void pick_result_callback(const GoalHandlePick::WrappedResult & result);
+
+  //pause behavior
+  std::atomic_bool pause_requested_{false};
+  rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr pause_sub_;
 
   // BehaviorTree
   BT::BehaviorTreeFactory factory_;
@@ -48,6 +81,7 @@ private:
   BT::Blackboard::Ptr         blackboard_;
   std::unique_ptr<BT::StdCoutLogger> stdout_logger_;
   std::unique_ptr<BT::FileLogger2>    groot_logger_;
+
 
   // Setup post‐costruttore
   void setupBT();

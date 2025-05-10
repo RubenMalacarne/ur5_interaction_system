@@ -8,6 +8,8 @@
 #include <cr_interfaces/srv/get_object_info.hpp>
 #include <behaviortree_ros2/bt_service_node.hpp>
 
+
+//nodi foglia dell'albero
 namespace cr
 {
 	namespace bt_nodes
@@ -31,7 +33,7 @@ namespace cr
 			BT::NodeStatus onResponseReceived(const typename cr_interfaces::srv::GetObjectInfo::Response::SharedPtr &response) override;
 		};
 
-		// Nodo dedicato all'azione di Pick - chiama l'action server
+		// Nodo di Azione: dedicato all'azione di Pick - chiama l'action server
 		class ExecutePick : public BT::SyncActionNode
 		{
 		public:
@@ -46,7 +48,7 @@ namespace cr
 			BT::NodeStatus tick() override;
 		};
 
-		// Nodo dedicato all'azione di Place - chiama l'action server
+		// Nodo di Azione: dedicato all'azione di Place - chiama l'action server
 		class ExecutePlace : public BT::SyncActionNode
 		{
 		public:
@@ -61,7 +63,7 @@ namespace cr
 			BT::NodeStatus tick() override;
 		};
 
-		// Nodo dedicato al logging
+		// Nodo di Azione: dedicato al logging
 		class LogMessage : public BT::SyncActionNode
 		{
 		public:
@@ -86,6 +88,37 @@ namespace cr
 				return BT::NodeStatus::SUCCESS;
 			}
 		};
+
+		//Nodo di condizione:  dedicato alla presenza dell'umano
+		class CheckHumanPresence : public BT::SyncActionNode
+		{
+			public: 
+				CheckHumanPresence(const std::string &name, const BT::NodeConfiguration &config)
+					: BT::SyncActionNode(name, config) {}
+					
+				static BT::PortsList providedPorts()
+				{
+					return {BT::InputPort<bool>("human_present")};
+				}
+
+				BT::NodeStatus tick() override;
+		};
+
+		//Nodo di Azione: metti in pausa il robot
+		class PauseRobot : public BT::SyncActionNode
+		{
+			public: 
+				PauseRobot(const std::string &name, const BT::NodeConfiguration &config)
+					: BT::SyncActionNode(name, config) {}
+					
+				static BT::PortsList providedPorts()
+				{
+					return {};
+				}
+
+				BT::NodeStatus tick() override;
+		};
+	
 
 	} // namespace bt_nodes
 } // namespace cr

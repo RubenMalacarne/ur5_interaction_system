@@ -41,9 +41,7 @@ namespace action_servers {
 
     }
 
-    rclcpp_action::GoalResponse PickActionServer::handle_goal(
-        const rclcpp_action::GoalUUID & uuid,
-        std::shared_ptr<const Pick::Goal> goal)
+    rclcpp_action::GoalResponse PickActionServer::handle_goal(const rclcpp_action::GoalUUID & uuid,std::shared_ptr<const Pick::Goal> goal)
     {
         RCLCPP_INFO(this->get_logger(),
             "Received goal request:\n - Center: [x: %.3f, y: %.3f, z: %.3f]\n - Size: [x: %.3f, y: %.3f, z: %.3f]",

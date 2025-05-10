@@ -32,8 +32,7 @@ namespace cr
 			}
 		  
 			return true;
-		}
-		  
+		}  
 
 		BT::NodeStatus GetObjectInfo::onResponseReceived(const typename cr_interfaces::srv::GetObjectInfo::Response::SharedPtr &response)
 		{
@@ -56,7 +55,6 @@ namespace cr
 		
 			return BT::NodeStatus::SUCCESS;
 		}
-
 
 		BT::NodeStatus ExecutePick::tick()
 		{
@@ -96,5 +94,31 @@ namespace cr
 			return BT::NodeStatus::SUCCESS;
 		}
 
+		BT::NodeStatus CheckHumanPresence::tick()
+		{
+			bool human_present = true; // Simulazione della presenza umana
+			RCLCPP_INFO(rclcpp::get_logger("CheckHumanNode"), "human_detected = %s", human_present ? "true" : "false");
+			if (human_present)
+			{
+				RCLCPP_INFO(rclcpp::get_logger("CheckHumanPresenceNode"),
+							"Human presence detected.");
+				return BT::NodeStatus::FAILURE;
+			}
+			else
+			{
+				RCLCPP_INFO(rclcpp::get_logger("CheckHumanPresenceNode"),
+							"No human presence detected.");
+				return BT::NodeStatus::SUCCESS;
+			}
+		}
+
+		BT::NodeStatus PauseRobot::tick()
+		{
+			RCLCPP_INFO(rclcpp::get_logger("PauseRobot"),
+						"Simulating StopRobot action");
+			return BT::NodeStatus::SUCCESS;
+		}
+	
+	
 	} // namespace bt_nodes
 } // namespace cr
