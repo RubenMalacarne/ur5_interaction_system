@@ -3,4 +3,4 @@ obj_selection_node:
     target_label: green_cube
     target_size_x: 0.05 # [m]
     target_size_y: 0.05 # [m]
-    target_size_z: 0.05 # [m]
+    target_size_z: 0.15 # [m]

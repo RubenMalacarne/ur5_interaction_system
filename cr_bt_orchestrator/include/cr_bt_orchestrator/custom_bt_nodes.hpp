@@ -6,15 +6,23 @@
 #include <behaviortree_cpp/bt_factory.h>
 #include <cr_interfaces/msg/object_info.hpp>
 #include <cr_interfaces/srv/get_object_info.hpp>
+#include <cr_interfaces/srv/freeze_scene.hpp>
+#include <cr_interfaces/action/pick.hpp>
+#include <cr_interfaces/action/place.hpp>
 #include <behaviortree_ros2/bt_service_node.hpp>
+#include <behaviortree_ros2/bt_action_node.hpp>
 
-
-//nodi foglia dell'albero
 namespace cr
 {
 	namespace bt_nodes
 	{
-		// Service Wrapper
+		#define BT_ACTION_LOG_INFO(fmt, ...)  RCLCPP_INFO(logger(),  "[%s] " fmt, this->name().c_str(), ##__VA_ARGS__)
+		#define BT_ACTION_LOG_WARN(fmt, ...)  RCLCPP_WARN(logger(),  "[%s] " fmt, this->name().c_str(), ##__VA_ARGS__)
+    	#define BT_ACTION_LOG_ERROR(fmt, ...) RCLCPP_ERROR(logger(), "[%s] " fmt, this->name().c_str(), ##__VA_ARGS__)
+
+		// ------------------------------------------------------------------------------------------------------------------
+		//                                       Service Wrapper - GET OBJECT INFO
+		// ------------------------------------------------------------------------------------------------------------------
 		class GetObjectInfo : public BT::RosServiceNode<cr_interfaces::srv::GetObjectInfo>
 		{
 		public:
@@ -33,37 +41,57 @@ namespace cr
 			BT::NodeStatus onResponseReceived(const typename cr_interfaces::srv::GetObjectInfo::Response::SharedPtr &response) override;
 		};
 
-		// Nodo di Azione: dedicato all'azione di Pick - chiama l'action server
-		class ExecutePick : public BT::SyncActionNode
+
+		// ------------------------------------------------------------------------------------------------------------------
+		//                                       Service Wrapper - FREEZE SCENE
+		// ------------------------------------------------------------------------------------------------------------------
+		class FreezeScene : public BT::RosServiceNode<cr_interfaces::srv::FreezeScene>
 		{
 		public:
-			ExecutePick(const std::string &name, const BT::NodeConfiguration &config)
-				: BT::SyncActionNode(name, config) {}
+			FreezeScene(const std::string &instance_name, const BT::NodeConfig &conf, const BT::RosNodeParams &params)
+				: BT::RosServiceNode<cr_interfaces::srv::FreezeScene>(instance_name, conf, params) {}
 
-			static BT::PortsList providedPorts()
-			{
-				return {BT::InputPort<cr_interfaces::msg::ObjectInfo>("object_info")};
-			}
-
-			BT::NodeStatus tick() override;
+			bool setRequest(typename Request::SharedPtr& request) override;
+			BT::NodeStatus onResponseReceived(const typename Response::SharedPtr &response) override;
 		};
 
-		// Nodo di Azione: dedicato all'azione di Place - chiama l'action server
-		class ExecutePlace : public BT::SyncActionNode
+		// ------------------------------------------------------------------------------------------------------------------
+		//                                       Action Wrapper - EXECUTE PICK
+		// ------------------------------------------------------------------------------------------------------------------
+		class ExecutePick : public BT::RosActionNode<cr_interfaces::action::Pick>
 		{
 		public:
-			ExecutePlace(const std::string &name, const BT::NodeConfiguration &config)
-				: BT::SyncActionNode(name, config) {}
+			ExecutePick(const std::string &instance_name, const BT::NodeConfig &conf, const BT::RosNodeParams &params)
+				: BT::RosActionNode<cr_interfaces::action::Pick>(instance_name, conf, params) {}
 
-			static BT::PortsList providedPorts()
-			{
-				return {BT::InputPort<cr_interfaces::msg::ObjectInfo>("object_info")};
-			}
+			static BT::PortsList providedPorts();
 
-			BT::NodeStatus tick() override;
+			bool setGoal(Goal & goal) override;
+			BT::NodeStatus onResultReceived(const WrappedResult& result) override;
+			BT::NodeStatus onFeedback(const std::shared_ptr<const Feedback> feedback) override;
+			BT::NodeStatus onFailure(BT::ActionNodeErrorCode error) override;
 		};
 
-		// Nodo di Azione: dedicato al logging
+
+		// ------------------------------------------------------------------------------------------------------------------
+		//                                       Action Wrapper - EXECUTE PLACE
+		// ------------------------------------------------------------------------------------------------------------------
+		class ExecutePlace : public BT::RosActionNode<cr_interfaces::action::Place>
+		{
+		public:
+			ExecutePlace(const std::string &instance_name, const BT::NodeConfig &conf, const BT::RosNodeParams &params)
+				: BT::RosActionNode<cr_interfaces::action::Place>(instance_name, conf, params) {}
+
+			static BT::PortsList providedPorts();
+
+			bool setGoal(Goal & goal) override;
+			BT::NodeStatus onResultReceived(const WrappedResult& result) override;
+			BT::NodeStatus onFeedback(const std::shared_ptr<const Feedback> feedback) override;
+			BT::NodeStatus onFailure(BT::ActionNodeErrorCode error) override;
+		};
+
+
+		// Nodo dedicato al logging
 		class LogMessage : public BT::SyncActionNode
 		{
 		public:

@@ -4,121 +4,262 @@ namespace cr
 {
 	namespace bt_nodes
 	{
-
-		bool GetObjectInfo::setRequest(typename cr_interfaces::srv::GetObjectInfo::Request::SharedPtr & request)
+		// ----------------------------------------------------------------------------------------------
+		//                                  Service Wrapper - GetObjectInfo
+		// ----------------------------------------------------------------------------------------------
+		bool GetObjectInfo::setRequest(typename cr_interfaces::srv::GetObjectInfo::Request::SharedPtr &request)
 		{
-			// Recupero di object_id come stringa dalla blackboard
 			std::string object_id_str;
-			if (!getInput("object_id", object_id_str)) {
-			  RCLCPP_ERROR(logger(), "Missing input [object_id]");
-			  return false;
+			if (!getInput("object_id", object_id_str))
+			{
+				RCLCPP_ERROR(logger(), "Missing input [object_id]");
+				return false;
 			}
 
-			// Conversione object_id da stringa a uint8_t, con gestione errori
-			try {
-			  int tmp = std::stoi(object_id_str);
-			  if (tmp < 0 || tmp > std::numeric_limits<uint8_t>::max()) {
-				RCLCPP_ERROR(logger(),
-							 "object_id out of range [0..%u]", 
-							 static_cast<unsigned>(std::numeric_limits<uint8_t>::max()));
-				return false;
-			  }
-			  request->id = static_cast<uint8_t>(tmp);
-			} catch (const std::exception & e) {
-			  RCLCPP_ERROR(logger(),
-						   "Invalid object_id '%s': %s",
-						   object_id_str.c_str(), e.what());
-			  return false;
+			try
+			{
+				int tmp = std::stoi(object_id_str);
+				if (tmp < 0 || tmp > std::numeric_limits<uint8_t>::max())
+				{
+					RCLCPP_ERROR(logger(),
+								 "object_id out of range [0..%u]",
+								 static_cast<unsigned>(std::numeric_limits<uint8_t>::max()));
+					return false;
+				}
+				request->id = static_cast<uint8_t>(tmp);
 			}
-		  
+			catch (const std::exception &e)
+			{
+				RCLCPP_ERROR(logger(),
+							 "Invalid object_id '%s': %s",
+							 object_id_str.c_str(), e.what());
+				return false;
+			}
 			return true;
-		}  
+		}
 
 		BT::NodeStatus GetObjectInfo::onResponseReceived(const typename cr_interfaces::srv::GetObjectInfo::Response::SharedPtr &response)
 		{
-			if (!response) {
+			if (!response)
+			{
 				RCLCPP_ERROR(logger(), "Service call failed (empty response)");
 				return BT::NodeStatus::FAILURE;
 			}
-		
-			if (!response->success) {
+			if (!response->success)
+			{
 				RCLCPP_ERROR(logger(), "Service returned failure");
 				return BT::NodeStatus::FAILURE;
 			}
-		
-			// Impostazione porta di output "object_info" con dati ricevuti
 			setOutput("object_info", response->object_info);
-		
-			RCLCPP_INFO(logger(), "Received object info: center=[%.2f, %.2f, %.2f]",
-						response->object_info.center.x, response->object_info.center.y,
+			RCLCPP_INFO(logger(),
+						"Received object info: center=[%.2f, %.2f, %.2f]",
+						response->object_info.center.x,
+						response->object_info.center.y,
 						response->object_info.center.z);
-		
 			return BT::NodeStatus::SUCCESS;
 		}
 
-		BT::NodeStatus ExecutePick::tick()
-		{
-			auto object_info = getInput<cr_interfaces::msg::ObjectInfo>("object_info");
 
-			if (!object_info)
+		// ------------------------------------------------------------------------------------------------------------------
+		//                                       Service Wrapper - FREEZE SCENE
+		// ------------------------------------------------------------------------------------------------------------------
+		bool FreezeScene::setRequest(typename Request::SharedPtr& request) 
+		{
+			request->freeze = true;
+			return true;
+		}
+
+		BT::NodeStatus FreezeScene::onResponseReceived(const typename Response::SharedPtr &response)
+		{
+			if (!response)
 			{
-				RCLCPP_ERROR(rclcpp::get_logger("ExecutePickNode"),
-							 "Missing required input ports for ExecutePick");
+				RCLCPP_ERROR(logger(), "Service call failed (empty response)");
 				return BT::NodeStatus::FAILURE;
 			}
-
-			RCLCPP_INFO(rclcpp::get_logger("ExecutePickNode"),
-						"Simulating ExecutePick for object");
-
-			RCLCPP_INFO(rclcpp::get_logger("ExecutePickNode"),
-						"Pick successful (simulated).");
-			return BT::NodeStatus::SUCCESS;
-		}
-
-		BT::NodeStatus ExecutePlace::tick()
-		{
-			auto object_info = getInput<cr_interfaces::msg::ObjectInfo>("object_info");
-
-			if (!object_info)
+			if (!response->success)
 			{
-				RCLCPP_ERROR(rclcpp::get_logger("ExecutePlaceNode"),
-							 "Missing required input ports for ExecutePlace");
+				RCLCPP_ERROR(logger(), "Service returned failure");
 				return BT::NodeStatus::FAILURE;
 			}
-
-			RCLCPP_INFO(rclcpp::get_logger("ExecutePlaceNode"),
-						"Simulating ExecutePlace for object");
-
-			RCLCPP_INFO(rclcpp::get_logger("ExecutePlaceNode"),
-						"Place successful (simulated).");
+			RCLCPP_INFO(logger(), "The planning scene was successfully frozen.");
 			return BT::NodeStatus::SUCCESS;
 		}
 
-		BT::NodeStatus CheckHumanPresence::tick()
+		// ----------------------------------------------------------------------------------------------
+		//                                       Action Wrapper - EXECUTE PICK
+		// ----------------------------------------------------------------------------------------------
+		BT::PortsList ExecutePick::providedPorts()
 		{
-			bool human_present = true; // Simulazione della presenza umana
-			RCLCPP_INFO(rclcpp::get_logger("CheckHumanNode"), "human_detected = %s", human_present ? "true" : "false");
-			if (human_present)
+			return BT::RosActionNode<cr_interfaces::action::Pick>::providedBasicPorts({BT::InputPort<cr_interfaces::msg::ObjectInfo>("object_info")});
+		}
+
+		bool ExecutePick::setGoal(Goal &goal)
+		{
+			cr_interfaces::msg::ObjectInfo obj;
+			if (!getInput<cr_interfaces::msg::ObjectInfo>("object_info", obj))
 			{
-				RCLCPP_INFO(rclcpp::get_logger("CheckHumanPresenceNode"),
-							"Human presence detected.");
+				BT_ACTION_LOG_ERROR("missing required input [object_info]");
+				return false;
+			}
+			goal.object_info = obj;
+			BT_ACTION_LOG_INFO("goal populated");
+			return true;
+		}
+
+		BT::NodeStatus ExecutePick::onFailure(BT::ActionNodeErrorCode error)
+		{
+			switch (error)
+			{
+			case BT::ActionNodeErrorCode::SERVER_UNREACHABLE:
+				BT_ACTION_LOG_ERROR("server unreachable");
+				break;
+			case BT::ActionNodeErrorCode::SEND_GOAL_TIMEOUT:
+				BT_ACTION_LOG_ERROR("send-goal timeout");
+				break;
+			case BT::ActionNodeErrorCode::GOAL_REJECTED_BY_SERVER:
+				BT_ACTION_LOG_ERROR("goal rejected by server");
+				break;
+			case BT::ActionNodeErrorCode::ACTION_ABORTED:
+				BT_ACTION_LOG_ERROR("action aborted by server");
+				break;
+			case BT::ActionNodeErrorCode::ACTION_CANCELLED:
+				BT_ACTION_LOG_WARN("action cancelled");
+				break;
+			case BT::ActionNodeErrorCode::INVALID_GOAL:
+				BT_ACTION_LOG_ERROR("invalid goal");
+				break;
+			default:
+				BT_ACTION_LOG_ERROR("unknown error code [%d]", static_cast<int>(error));
+				break;
+			}
+			return BT::NodeStatus::FAILURE;
+		}
+
+		BT::NodeStatus ExecutePick::onFeedback(const std::shared_ptr<const Feedback> fb)
+		{
+			float pct = fb->percentage;
+			BT_ACTION_LOG_INFO("progress %.1f%%", pct);
+			return BT::NodeStatus::RUNNING;
+		}
+
+		BT::NodeStatus ExecutePick::onResultReceived(const WrappedResult &result)
+		{
+			switch (result.code)
+			{
+			case rclcpp_action::ResultCode::SUCCEEDED:
+				if (result.result->success)
+				{
+					BT_ACTION_LOG_INFO("succeeded");
+					return BT::NodeStatus::SUCCESS;
+				}
+				BT_ACTION_LOG_WARN("completed with failure");
+				return BT::NodeStatus::FAILURE;
+
+			case rclcpp_action::ResultCode::ABORTED:
+				BT_ACTION_LOG_ERROR("aborted by server");
+				return BT::NodeStatus::FAILURE;
+
+			case rclcpp_action::ResultCode::CANCELED:
+				BT_ACTION_LOG_WARN("cancelled");
+				return BT::NodeStatus::FAILURE;
+
+			default:
+				BT_ACTION_LOG_ERROR("unknown result code");
 				return BT::NodeStatus::FAILURE;
 			}
-			else
+		}
+
+		// ----------------------------------------------------------------------------------------------
+		//                                       Action Wrapper - EXECUTE PLACE
+		// ----------------------------------------------------------------------------------------------
+		BT::PortsList ExecutePlace::providedPorts()
+		{
+			return BT::RosActionNode<cr_interfaces::action::Place>::providedBasicPorts({BT::InputPort<cr_interfaces::msg::ObjectInfo>("object_info"),
+																						BT::InputPort<geometry_msgs::msg::Point>("target_position")});
+		}
+
+		bool ExecutePlace::setGoal(Goal &goal)
+		{
+			cr_interfaces::msg::ObjectInfo obj;
+			geometry_msgs::msg::Point pt;
+			if (!getInput<cr_interfaces::msg::ObjectInfo>("object_info", obj))
 			{
-				RCLCPP_INFO(rclcpp::get_logger("CheckHumanPresenceNode"),
-							"No human presence detected.");
-				return BT::NodeStatus::SUCCESS;
+				BT_ACTION_LOG_ERROR("missing required input [object_info]");
+				return false;
+			}
+			if (!getInput<geometry_msgs::msg::Point>("target_position", pt))
+			{
+				BT_ACTION_LOG_ERROR("missing required input [target_position]");
+				return false;
+			}
+			goal.object_info = obj;
+			goal.target_position = pt;
+			BT_ACTION_LOG_INFO("goal populated (target: %.2f, %.2f, %.2f)", pt.x, pt.y, pt.z);
+			return true;
+		}
+
+		BT::NodeStatus ExecutePlace::onFailure(BT::ActionNodeErrorCode error)
+		{
+			switch (error)
+			{
+			case BT::ActionNodeErrorCode::SERVER_UNREACHABLE:
+				BT_ACTION_LOG_ERROR("server unreachable");
+				break;
+			case BT::ActionNodeErrorCode::SEND_GOAL_TIMEOUT:
+				BT_ACTION_LOG_ERROR("send-goal timeout");
+				break;
+			case BT::ActionNodeErrorCode::GOAL_REJECTED_BY_SERVER:
+				BT_ACTION_LOG_ERROR("goal rejected by server");
+				break;
+			case BT::ActionNodeErrorCode::ACTION_ABORTED:
+				BT_ACTION_LOG_ERROR("action aborted by server");
+				break;
+			case BT::ActionNodeErrorCode::ACTION_CANCELLED:
+				BT_ACTION_LOG_WARN("action cancelled");
+				break;
+			case BT::ActionNodeErrorCode::INVALID_GOAL:
+				BT_ACTION_LOG_ERROR("invalid goal");
+				break;
+			default:
+				BT_ACTION_LOG_ERROR("unknown error code [%d]", static_cast<int>(error));
+				break;
+			}
+			return BT::NodeStatus::FAILURE;
+		}
+
+		BT::NodeStatus ExecutePlace::onFeedback(const std::shared_ptr<const Feedback> fb)
+		{
+			float pct = fb->percentage;
+			BT_ACTION_LOG_INFO("progress %.1f%%", pct);
+			return BT::NodeStatus::RUNNING;
+		}
+
+		BT::NodeStatus ExecutePlace::onResultReceived(const WrappedResult &result)
+		{
+			switch (result.code)
+			{
+			case rclcpp_action::ResultCode::SUCCEEDED:
+				if (result.result->success)
+				{
+					BT_ACTION_LOG_INFO("succeeded: %s", result.result->result_msg.c_str());
+					return BT::NodeStatus::SUCCESS;
+				}
+				BT_ACTION_LOG_WARN("completed with failure: %s", result.result->result_msg.c_str());
+				return BT::NodeStatus::FAILURE;
+
+			case rclcpp_action::ResultCode::ABORTED:
+				BT_ACTION_LOG_ERROR("aborted by server");
+				return BT::NodeStatus::FAILURE;
+
+			case rclcpp_action::ResultCode::CANCELED:
+				BT_ACTION_LOG_WARN("cancelled");
+				return BT::NodeStatus::FAILURE;
+
+			default:
+				BT_ACTION_LOG_ERROR("unknown result code");
+				return BT::NodeStatus::FAILURE;
 			}
 		}
 
-		BT::NodeStatus PauseRobot::tick()
-		{
-			RCLCPP_INFO(rclcpp::get_logger("PauseRobot"),
-						"Simulating StopRobot action");
-			return BT::NodeStatus::SUCCESS;
-		}
-	
-	
 	} // namespace bt_nodes
 } // namespace cr

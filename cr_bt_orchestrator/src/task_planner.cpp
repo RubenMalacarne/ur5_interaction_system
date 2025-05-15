@@ -6,7 +6,6 @@ namespace cr
 {
     namespace bt_orchestrator
     {
-
         BtOrchestratorNode::BtOrchestratorNode(const rclcpp::NodeOptions &options)
             : Node("bt_orchestrator_node", options)
         {
@@ -59,15 +58,38 @@ namespace cr
             setup_timer_->cancel();
 
             // A) registra i nodi custom, incluso il servizio
-            BT::RosNodeParams params;
-            params.nh = shared_from_this();
-            params.default_port_value = "cr/get_object_info";
+            // –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
 
-            factory_.registerNodeType<cr::bt_nodes::GetObjectInfo>("GetObjectInfo", params);
-            factory_.registerNodeType<cr::bt_nodes::ExecutePick>("ExecutePick");
-            factory_.registerNodeType<cr::bt_nodes::ExecutePlace>("ExecutePlace");
-            factory_.registerNodeType<cr::bt_nodes::CheckHumanPresence>("CheckHumanPresence");
-            factory_.registerNodeType<cr::bt_nodes::PauseRobot>("PauseRobot");
+            // Service: FreezeScene
+            BT::RosNodeParams freeze_params;
+            freeze_params.nh = shared_from_this();
+            // nome del servizio
+            freeze_params.default_port_value = "cr/freeze_scene";
+            factory_.registerNodeType<cr::bt_nodes::FreezeScene>("FreezeScene", freeze_params);
+
+
+            // Service: GetObjectInfo
+            BT::RosNodeParams service_params;
+            service_params.nh = shared_from_this();
+            // nome del servizio
+            service_params.default_port_value = "cr/get_object_info";
+            factory_.registerNodeType<cr::bt_nodes::GetObjectInfo>("GetObjectInfo", service_params);
+
+            // Action: ExecutePick
+            BT::RosNodeParams pick_params;
+            pick_params.nh = shared_from_this();
+            // nome dell'action server per il pick
+            pick_params.default_port_value = "cr/pick_action";
+            factory_.registerNodeType<cr::bt_nodes::ExecutePick>("ExecutePick", pick_params);
+
+            // Action: ExecutePlace
+            BT::RosNodeParams place_params;
+            place_params.nh = shared_from_this();
+            // nome dell'action server per il place
+            place_params.default_port_value = "cr/place_action";
+            factory_.registerNodeType<cr::bt_nodes::ExecutePlace>("ExecutePlace", place_params);
+
+            // Nodo di logging (SyncActionNode non ha params)
             factory_.registerNodeType<cr::bt_nodes::LogMessage>("LogSuccess");
 
             // B) carica l’XML
@@ -76,25 +98,22 @@ namespace cr
             RCLCPP_INFO(get_logger(), "Loading BT from: %s", bt_xml.c_str());
 
             blackboard_ = BT::Blackboard::create();
-            // metti anche il nodo ROS a disposizione dei BT‐nodes
             blackboard_->set<rclcpp::Node::SharedPtr>("ros_node", shared_from_this());
-
             tree_ = factory_.createTreeFromFile(bt_xml, blackboard_);
 
             // C) logger
             stdout_logger_ = std::make_unique<BT::StdCoutLogger>(tree_);
             const auto log_path = pkg_share + "/bt_trace.btlog";
             FILE *f = fopen(log_path.c_str(), "w");
-            if (f)
-            {
-                fclose(f);
-            }
+            if (f) { fclose(f); }
             groot_logger_ = std::make_unique<BT::FileLogger2>(tree_, log_path);
 
             RCLCPP_INFO(get_logger(), "BT Orchestrator Node initialized. Ready to execute.");
         }
 
-        rclcpp_action::GoalResponse BtOrchestratorNode::handle_goal(const rclcpp_action::GoalUUID &uuid,
+
+        rclcpp_action::GoalResponse BtOrchestratorNode::handle_goal(
+            const rclcpp_action::GoalUUID &uuid,
             std::shared_ptr<const ExecuteWorkflow::Goal> goal)
         {
             RCLCPP_INFO(get_logger(), "Received goal request for object %d", goal->object_id);
@@ -145,6 +164,14 @@ namespace cr
                 "object_id",
                 std::to_string(goal_handle->get_goal()->object_id));
 
+            geometry_msgs::msg::Point target_position;
+            target_position.x = 0.150; 
+            target_position.y = 0.625;
+            target_position.z = 0.939;
+            blackboard_->set<geometry_msgs::msg::Point>(
+                "target_position",
+                target_position);
+
             // loop di tick
             BT::NodeStatus status = BT::NodeStatus::RUNNING;
             while (rclcpp::ok() && status == BT::NodeStatus::RUNNING)
@@ -176,110 +203,6 @@ namespace cr
                 RCLCPP_ERROR(get_logger(), "Workflow failed");
                 goal_handle->abort(result);
             }
-            
-            RCLCPP_INFO(get_logger(), "APPERTURA THREAD PER L-ESECUZIONE");
-            std::thread{std::bind(&BtOrchestratorNode::get_object_info, this,goal_handle)}.detach();
         }
-
-    //////////////////////////////////////////////////////
-    //                  OBJECT_INFO                     //
-    //////////////////////////////////////////////////////
-    void BtOrchestratorNode::get_object_info(const std::shared_ptr<GoalHandleExecuteWorkflow> goal_handle){
-        auto request = std::make_shared<cr_interfaces::srv::GetObjectInfo::Request>();
-        request->id = goal_handle->get_goal()->object_id;
-    
-        auto future = get_object_info_client_->async_send_request(request,
-            [this, goal_handle](rclcpp::Client<cr_interfaces::srv::GetObjectInfo>::SharedFuture result_future)
-            {
-                if (result_future.get()->success)
-                {
-                    this->target_object_ = result_future.get()->object_info;
-                    RCLCPP_INFO(this->get_logger(), "Received object info. Sending Pick goal.");
-                    this->send_pick_goal();
-                }
-                else
-                {
-                    RCLCPP_ERROR(this->get_logger(), "Object info not found. Aborting workflow.");
-
-                    // Avvisiamo che la scena non deve più essere freezata
-                    cr_interfaces::msg::FreezeScene msg;
-                    msg.freeze = false;
-                    freeze_scene_pub_->publish(msg);
-
-                    is_busy_ = false;
-                    goal_handle->abort(std::make_shared<ExecuteWorkflow::Result>());
-                }
-            }
-        );
-    }
-
-    
-    //////////////////////////////////////////////////////
-    //                      PICK                        //
-    //////////////////////////////////////////////////////
-    void BtOrchestratorNode::send_pick_goal()
-    {
-        using namespace std::placeholders;
-
-        if(!this->pick_client_ptr_->wait_for_action_server())
-        {
-            RCLCPP_ERROR(this->get_logger(), "Pick Action Server not available after waiting");
-            // TODO: deve in qualche modo fallire
-        }
-
-        auto pick_goal_msg = Pick::Goal();
-        pick_goal_msg.object_info = target_object_;
-
-        RCLCPP_INFO(this->get_logger(), "Sending pick goal...");
-
-        auto send_pick_goal_options = rclcpp_action::Client<Pick>::SendGoalOptions();
-        send_pick_goal_options.goal_response_callback = std::bind(&BtOrchestratorNode::pick_goal_response_callback, this, _1);
-        send_pick_goal_options.feedback_callback = std::bind(&BtOrchestratorNode::pick_feedback_callback, this, _1, _2);
-        send_pick_goal_options.result_callback = std::bind(&BtOrchestratorNode::pick_result_callback, this, _1);
-        this->pick_client_ptr_->async_send_goal(pick_goal_msg, send_pick_goal_options);
-    }
-
-    void BtOrchestratorNode::pick_goal_response_callback(const GoalHandlePick::SharedPtr & goal_handle)
-    {
-        if(!goal_handle)
-        {
-            RCLCPP_ERROR(this->get_logger(), "Pick goal was rejected by server");
-        } else {
-            RCLCPP_INFO(this->get_logger(), "Pick goal accepted by server, waiting for result");
-            // TODO: Gestire il fatto che non è più busy e sbloccare la scena 
-        }
-    }
-
-    void BtOrchestratorNode::pick_feedback_callback(
-        GoalHandlePick::SharedPtr, 
-        const std::shared_ptr<const Pick::Feedback> feedback)
-    {
-        RCLCPP_INFO(this->get_logger(), "[Pick Feedback] Percentage: %.2f | Message: %s", feedback->percentage, feedback->feedback_msg.c_str());
-    }
-
-    void BtOrchestratorNode::pick_result_callback(const GoalHandlePick::WrappedResult & result)
-    {
-        switch (result.code) {
-            case rclcpp_action::ResultCode::SUCCEEDED:
-                RCLCPP_ERROR(this->get_logger(), "Pick goal succeeded!");
-                send_place_goal();
-                return;
-            case rclcpp_action::ResultCode::ABORTED:
-                RCLCPP_ERROR(this->get_logger(), "Pick goal was aborted");
-                return;
-            case rclcpp_action::ResultCode::CANCELED:
-                RCLCPP_ERROR(this->get_logger(), "Pick goal was canceled");
-                return;
-            default:
-                RCLCPP_ERROR(this->get_logger(), "Unknown result code");
-                return;
-          }
-    }
-
-    void BtOrchestratorNode::send_place_goal()
-    {
-        RCLCPP_INFO(this->get_logger(), "Placeholder for send_place_goal");
-        // TODO: Implement the logic for sending the place goal
-    }
     } // namespace bt_orchestrator
 } // namespace cr
