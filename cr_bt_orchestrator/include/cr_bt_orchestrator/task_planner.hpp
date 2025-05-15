@@ -22,40 +22,40 @@
 
 namespace cr
 {
-namespace bt_orchestrator
-{
+	namespace bt_orchestrator
+	{
 
-class BtOrchestratorNode : public rclcpp::Node
-{
-public:
-  explicit BtOrchestratorNode(const rclcpp::NodeOptions &options = rclcpp::NodeOptions());
+		class BtOrchestratorNode : public rclcpp::Node
+		{
+		public:
+			explicit BtOrchestratorNode(const rclcpp::NodeOptions &options = rclcpp::NodeOptions());
 
-private:
-  // Action server per ExecuteWorkflow
-  using ExecuteWorkflow = cr_interfaces::action::ExecuteWorkflow;
-  using GoalHandleExecuteWorkflow = rclcpp_action::ServerGoalHandle<ExecuteWorkflow>;
-  rclcpp_action::Server<ExecuteWorkflow>::SharedPtr execute_workflow_server_;
-  rclcpp_action::GoalResponse handle_goal(
-    const rclcpp_action::GoalUUID &uuid,
-    std::shared_ptr<const ExecuteWorkflow::Goal> goal);
-  rclcpp_action::CancelResponse handle_cancel(
-    const std::shared_ptr<GoalHandleExecuteWorkflow> goal_handle);
-  void execute(const std::shared_ptr<GoalHandleExecuteWorkflow> goal_handle);
+		private:
+			// Action server per ExecuteWorkflow
+			using ExecuteWorkflow = cr_interfaces::action::ExecuteWorkflow;
+			using GoalHandleExecuteWorkflow = rclcpp_action::ServerGoalHandle<ExecuteWorkflow>;
+			rclcpp_action::Server<ExecuteWorkflow>::SharedPtr execute_workflow_server_;
+			rclcpp_action::GoalResponse handle_goal(
+				const rclcpp_action::GoalUUID &uuid,
+				std::shared_ptr<const ExecuteWorkflow::Goal> goal);
+			rclcpp_action::CancelResponse handle_cancel(
+				const std::shared_ptr<GoalHandleExecuteWorkflow> goal_handle);
+			void execute(const std::shared_ptr<GoalHandleExecuteWorkflow> goal_handle);
 
-  // BehaviorTree
-  BT::BehaviorTreeFactory factory_;
-  BT::Tree                    tree_;
-  BT::Blackboard::Ptr         blackboard_;
-  std::unique_ptr<BT::StdCoutLogger> stdout_logger_;
-  std::unique_ptr<BT::FileLogger2>    groot_logger_;
+			// BehaviorTree
+			BT::BehaviorTreeFactory factory_;
+			BT::Tree tree_;
+			BT::Blackboard::Ptr blackboard_;
+			std::unique_ptr<BT::StdCoutLogger> stdout_logger_;
+			std::unique_ptr<BT::FileLogger2> groot_logger_;
 
-  // Setup post‐costruttore
-  void setupBT();
-  rclcpp::TimerBase::SharedPtr setup_timer_;
-  bool bt_initialized_{false};
-};
+			// Setup post‐costruttore
+			void setupBT();
+			rclcpp::TimerBase::SharedPtr setup_timer_;
+			bool bt_initialized_{false};
+		};
 
-}  // namespace bt_orchestrator
-}  // namespace cr
+	} // namespace bt_orchestrator
+} // namespace cr
 
 #endif // CR_BT_ORCHESTRATOR_TASK_PLANNER_HPP_
