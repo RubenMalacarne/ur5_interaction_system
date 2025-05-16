@@ -38,12 +38,19 @@ def generate_launch_description():
         name='object_state_manager',
         output='screen'
     )
+    cr_human_proximity_monitor_node = launch_ros.actions.Node(
+        package='cr_vision',
+        executable='human_proximity_monitor',  
+        name='human_proximity_monitor',
+        output='screen'
+    )
 
     nodes = [
         cr_mirror_node,
         cr_obj_detection_node,
         cr_obj_selection_node,
-        cr_obj_state_manager_node
+        cr_obj_state_manager_node,
+        cr_human_proximity_monitor_node
     ]
 
     return launch.LaunchDescription(nodes)
