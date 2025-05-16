@@ -7,6 +7,12 @@
 #include <cr_interfaces/msg/object_info.hpp>
 #include <cr_interfaces/msg/freeze_scene.hpp>
 
+#include <std_msgs/msg/string.hpp>
+#include <chrono>
+#include <memory>
+#include <vector>
+#include <functional>
+#include <optional>
 namespace cr {
 namespace task_orchestration {
 
@@ -25,11 +31,28 @@ namespace task_orchestration {
         
         explicit TaskOrchestrator(const rclcpp::NodeOptions &options = rclcpp::NodeOptions());
 
+        void set_task_list(const std::vector<int>& tasks);
     private:
 
         rclcpp_action::Server<ExecuteWorkflow>::SharedPtr execute_workflow_server_ptr_;
         rclcpp_action::Client<Pick>::SharedPtr pick_client_ptr_;
         rclcpp_action::Client<Place>::SharedPtr place_client_ptr_;
+        //---------
+        rclcpp::Subscription<std_msgs::msg::String>::SharedPtr sub_command_;
+
+        std::vector<int> task_list_;
+        bool is_paused_;
+        size_t current_task_index_;
+        void command_callback(const std_msgs::msg::String::SharedPtr msg);
+        void run_next_task();
+        void send_goal_async(int task_number, std::function<void(bool)> completion_callback);
+        enum class Stage { NONE, PICK, PLACE };
+        //---------
+        // Add these members inside your class definition
+        std::optional<GoalHandlePick::SharedPtr> current_pick_goal_handle_;
+        std::optional<GoalHandlePlace::SharedPtr> current_place_goal_handle_;
+        Stage current_stage_ = Stage::NONE;
+
 
         rclcpp::Client<cr_interfaces::srv::GetObjectInfo>::SharedPtr get_object_info_client_;
 
@@ -41,7 +64,8 @@ namespace task_orchestration {
 
         // Metodo per richiedere le informazioni di uno specifico oggetto
         void get_object_info(const std::shared_ptr<GoalHandleExecuteWorkflow> goal_handle);
-
+        void get_object_info(int object_id);
+        
         void send_pick_goal();
         void send_place_goal();
 

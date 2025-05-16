@@ -117,37 +117,6 @@ namespace cr
 			}
 		};
 
-		//Nodo di condizione:  dedicato alla presenza dell'umano
-		class CheckHumanPresence : public BT::SyncActionNode
-		{
-			public: 
-				CheckHumanPresence(const std::string &name, const BT::NodeConfiguration &config)
-					: BT::SyncActionNode(name, config) {}
-					
-				static BT::PortsList providedPorts()
-				{
-					return {BT::InputPort<bool>("human_present")};
-				}
-
-				BT::NodeStatus tick() override;
-		};
-
-		//Nodo di Azione: metti in pausa il robot
-		class PauseRobot : public BT::SyncActionNode
-		{
-			public: 
-				PauseRobot(const std::string &name, const BT::NodeConfiguration &config)
-					: BT::SyncActionNode(name, config) {}
-					
-				static BT::PortsList providedPorts()
-				{
-					return {};
-				}
-
-				BT::NodeStatus tick() override;
-		};
-	
-
 	} // namespace bt_nodes
 } // namespace cr
 

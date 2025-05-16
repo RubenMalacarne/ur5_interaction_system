@@ -38,7 +38,9 @@ namespace action_servers
         RCLCPP_INFO(this->get_logger(), "PlaceActionServer Started.");
     }
 
-    rclcpp_action::GoalResponse PlaceActionServer::handle_goal(const rclcpp_action::GoalUUID & uuid,std::shared_ptr<const Place::Goal> goal)
+    rclcpp_action::GoalResponse PlaceActionServer::handle_goal(
+        const rclcpp_action::GoalUUID & uuid,
+        std::shared_ptr<const Place::Goal> goal)
     {
         RCLCPP_INFO(this->get_logger(),
             "Received goal request:\n - Target Position: [x: %.3f, y: %.3f, z: %.3f]",
@@ -50,7 +52,12 @@ namespace action_servers
 
     rclcpp_action::CancelResponse PlaceActionServer::handle_cancel(const std::shared_ptr<GoalHandlePlace> goal_handle)
     {
-        RCLCPP_INFO(this->get_logger(), "Received request to cancel goal");
+        RCLCPP_INFO(get_logger(), "Received reqeust to cancel goal");
+        if (arm_group_)
+            arm_group_->stop();
+        if (gripper_group_)
+            gripper_group_->stop();
+            
         (void)goal_handle;
         return rclcpp_action::CancelResponse::ACCEPT;
     }
@@ -60,6 +67,7 @@ namespace action_servers
         std::thread{std::bind(&PlaceActionServer::execute, this, _1), goal_handle}.detach();
     }
 
+    // Execution of the main logic
     void PlaceActionServer::execute(const std::shared_ptr<GoalHandlePlace> goal_handle)
     {
         if (!arm_group_)
@@ -137,6 +145,7 @@ namespace action_servers
         goal_handle->succeed(result);
 
     }
+
 
     bool PlaceActionServer::lift_from_table(){
         geometry_msgs::msg::Pose start_pose = arm_group_->getCurrentPose().pose;

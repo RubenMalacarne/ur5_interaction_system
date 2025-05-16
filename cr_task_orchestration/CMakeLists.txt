@@ -14,6 +14,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(cr_interfaces REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(std_msgs REQUIRED)
 find_package(rclcpp_action REQUIRED)
 
 # -------------------------------------------------------------------
@@ -33,7 +34,8 @@ target_include_directories(task_orchestrator PUBLIC
 ament_target_dependencies(task_orchestrator
   cr_interfaces
   rclcpp
-  rclcpp_action
+  rclcpp_action  
+  std_msgs
 )
 
 # -------------------------------------------------------------------

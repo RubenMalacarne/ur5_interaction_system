@@ -29,6 +29,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/ObjectCount.msg"
   "msg/ObjectInfo.msg"
   "msg/ObjectInfoArray.msg"
+  "msg/FreezeScene.msg"
 
   "srv/AllowCollision.srv"
   "srv/AttachObject.srv"

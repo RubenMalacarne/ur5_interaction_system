@@ -23,6 +23,12 @@ namespace task_orchestration {
             std::bind(&TaskOrchestrator::handle_cancel, this, _1),
             std::bind(&TaskOrchestrator::handle_accepted, this, _1)
         );
+
+        this->sub_command_ = this->create_subscription<std_msgs::msg::String>(
+            "cr/pause_command",
+            10,
+            std::bind(&TaskOrchestrator::command_callback, this, _1)
+        );
     }
 
 
@@ -70,7 +76,10 @@ namespace task_orchestration {
         using namespace std::placeholders;
         this->current_goal_handle_ = goal_handle;
         // this needs to return quickly to avoid blocking the executor, so spin up a new thread
-        std::thread{std::bind(&TaskOrchestrator::get_object_info, this, goal_handle)}.detach();
+        std::thread([this, goal_handle]() {
+            this->get_object_info(goal_handle);
+        }).detach();
+
 
     }
 
@@ -106,12 +115,107 @@ namespace task_orchestration {
         );
     }
 
+    void TaskOrchestrator::get_object_info(int object_id)
+    {
+      auto request = std::make_shared<cr_interfaces::srv::GetObjectInfo::Request>();
+      request->id = object_id;
+
+      auto future = get_object_info_client_->async_send_request(
+        request,
+        [this](rclcpp::Client<cr_interfaces::srv::GetObjectInfo>::SharedFuture result_future)
+        {
+          if (result_future.get()->success)
+          {
+            this->target_object_ = result_future.get()->object_info;
+            RCLCPP_INFO(this->get_logger(), "✅ Info oggetto ricevute – invio Pick");
+            this->send_pick_goal();
+          }
+          else
+          {
+            RCLCPP_ERROR(this->get_logger(), "❌ Info oggetto non trovate – task saltato");
+
+            cr_interfaces::msg::FreezeScene msg;
+            msg.freeze = false;
+            freeze_scene_pub_->publish(msg);
+
+            is_busy_ = false;
+
+            // Prosegui con il prossimo task se non in pausa
+            if (!is_paused_)
+              run_next_task();
+          }
+        });
+    }
+
+
+    //////////////////////////////////////////////////////
+    //                      COMMAND                     //
+    //////////////////////////////////////////////////////
+    void TaskOrchestrator::set_task_list(const std::vector<int> &tasks) {     
+      task_list_            = tasks;
+      current_task_index_   = 0;
+      is_paused_            = false;
+      RCLCPP_INFO(get_logger(), "Caricata task-list di %zu elementi", task_list_.size());
+    }
+    
+    void TaskOrchestrator::command_callback(const std_msgs::msg::String::SharedPtr msg)
+      {
+        const auto &cmd = msg->data;
+        if (cmd == "pause") {
+          if (!is_paused_) {
+            RCLCPP_INFO(get_logger(), "⏸️  Comando PAUSA ricevuto");
+            is_paused_ = true;
+
+            if (current_pick_goal_handle_) {
+              pick_client_ptr_->async_cancel_goal(current_pick_goal_handle_.value());
+              RCLCPP_INFO(get_logger(), "Richiesta cancellazione Pick in corso");
+            }
+            if (current_place_goal_handle_) {
+              place_client_ptr_->async_cancel_goal(current_place_goal_handle_.value());
+              RCLCPP_INFO(get_logger(), "Richiesta cancellazione Place in corso");
+            }
+          }
+        } else if (cmd == "resume") {
+          if (is_paused_) {
+            RCLCPP_INFO(get_logger(), "▶️  Comando RIPRENDI ricevuto");
+            is_paused_ = false;
+
+            /* riprendi dallo stage in cui eravamo */
+            if (current_stage_ == Stage::PICK) {
+              send_pick_goal();
+            } else if (current_stage_ == Stage::PLACE) {
+              send_place_goal();
+            } else {
+              run_next_task(); 
+            }
+          }
+        }
+      }                                      
+
+    
+      void TaskOrchestrator::run_next_task()
+    {
+      if (is_paused_) return;
+      if (current_task_index_ >= task_list_.size()) {
+        RCLCPP_INFO(get_logger(), "🎉 Sequenza interna completata.");
+        return;
+      }
+      int object_id = task_list_[current_task_index_];
+      RCLCPP_INFO(get_logger(), "------ [Task %zu] Avvio workflow interno per oggetto id=%d ------",
+                  current_task_index_, object_id);
+
+      get_object_info(object_id); 
+      ++current_task_index_;
+    }
     //////////////////////////////////////////////////////
     //                      PICK                        //
     //////////////////////////////////////////////////////
+    
     void TaskOrchestrator::send_pick_goal()
     {
         using namespace std::placeholders;
+        if (is_paused_) return;                                
+        current_stage_ = Stage::PICK;    
 
         if(!this->pick_client_ptr_->wait_for_action_server())
         {
@@ -128,18 +232,15 @@ namespace task_orchestration {
         send_pick_goal_options.goal_response_callback = std::bind(&TaskOrchestrator::pick_goal_response_callback, this, _1);
         send_pick_goal_options.feedback_callback = std::bind(&TaskOrchestrator::pick_feedback_callback, this, _1, _2);
         send_pick_goal_options.result_callback = std::bind(&TaskOrchestrator::pick_result_callback, this, _1);
+        RCLCPP_INFO(get_logger(), "🚀 Invio goal Pick");
         this->pick_client_ptr_->async_send_goal(pick_goal_msg, send_pick_goal_options);
     }
 
     void TaskOrchestrator::pick_goal_response_callback(const GoalHandlePick::SharedPtr & goal_handle)
     {
-        if(!goal_handle)
-        {
-            RCLCPP_ERROR(this->get_logger(), "Pick goal was rejected by server");
-        } else {
-            RCLCPP_INFO(this->get_logger(), "Pick goal accepted by server, waiting for result");
-            // TODO: Gestire il fatto che non è più busy e sbloccare la scena 
-        }
+      current_pick_goal_handle_ = goal_handle;                          
+      if (!goal_handle) RCLCPP_ERROR(get_logger(), "Goal Pick rifiutato");
+      else     RCLCPP_INFO (get_logger(), "Goal Pick accettato");
     }
 
     void TaskOrchestrator::pick_feedback_callback(
@@ -151,6 +252,7 @@ namespace task_orchestration {
 
     void TaskOrchestrator::pick_result_callback(const GoalHandlePick::WrappedResult & result)
     {
+        current_pick_goal_handle_.reset();      
         switch (result.code) {
             case rclcpp_action::ResultCode::SUCCEEDED:
                 RCLCPP_ERROR(this->get_logger(), "Pick goal succeeded!");
@@ -174,6 +276,8 @@ namespace task_orchestration {
     //////////////////////////////////////////////////////
     void TaskOrchestrator::send_place_goal()
     {
+        if (is_paused_) return;                                
+        current_stage_ = Stage::PLACE;        
         using namespace std::placeholders;
 
         if(!this->place_client_ptr_->wait_for_action_server())
@@ -199,12 +303,9 @@ namespace task_orchestration {
 
     void TaskOrchestrator::place_goal_response_callback(const GoalHandlePlace::SharedPtr & goal_handle)
     {
-        if(!goal_handle)
-        {
-            RCLCPP_ERROR(this->get_logger(), "Place goal was rejected by server");
-        } else {
-            RCLCPP_INFO(this->get_logger(), "Place goal accepted by server, waiting for result");
-        }
+        current_place_goal_handle_ = goal_handle;                       
+        if (!goal_handle) RCLCPP_ERROR(get_logger(), "Goal Place rifiutato");
+        else     RCLCPP_INFO (get_logger(), "Goal Place accettato");
     }
 
     void TaskOrchestrator::place_feedback_callback(
@@ -216,6 +317,7 @@ namespace task_orchestration {
 
     void TaskOrchestrator::place_result_callback(const GoalHandlePlace::WrappedResult & result)
     {
+        current_place_goal_handle_.reset();
         switch (result.code) {
             case rclcpp_action::ResultCode::SUCCEEDED:
             {
@@ -226,14 +328,16 @@ namespace task_orchestration {
                 freeze_scene_pub_->publish(msg);
             
                 is_busy_ = false;
+                current_stage_  = Stage::NONE;
             
-                if (current_goal_handle_) {
-                    auto result = std::make_shared<ExecuteWorkflow::Result>();
-                    result->success = true;
-                    result->msg = "Workflow completed successfully";
-                    current_goal_handle_->succeed(result);
-                    current_goal_handle_.reset();
-                }
+                // if (current_goal_handle_) {
+                //     auto result = std::make_shared<ExecuteWorkflow::Result>();
+                //     result->success = true;
+                //     result->msg = "Workflow completed successfully";
+                //     current_goal_handle_->succeed(result);
+                //     current_goal_handle_.reset();
+                // }
+                if (!is_paused_) run_next_task();
             
                 return;
             }

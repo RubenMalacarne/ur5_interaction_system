@@ -10,7 +10,7 @@ namespace cr
             : Node("bt_orchestrator_node", options)
         {
             RCLCPP_INFO(get_logger(), "Initializing BT Orchestrator Node");
-            pick_client_ptr_ = rclcpp_action::create_client<Pick>(this, "cr/pick_action");  
+
             // 1) Action server
             execute_workflow_server_ = rclcpp_action::create_server<ExecuteWorkflow>(
                 this,
@@ -18,29 +18,6 @@ namespace cr
                 std::bind(&BtOrchestratorNode::handle_goal, this, std::placeholders::_1, std::placeholders::_2),
                 std::bind(&BtOrchestratorNode::handle_cancel, this, std::placeholders::_1),
                 std::bind(&BtOrchestratorNode::execute, this, std::placeholders::_1));
-
-
-            // 2) Pause behavior
-            pause_sub_ = create_subscription<std_msgs::msg::Bool>(
-                "cr/pause_robot",
-                10,
-                [this](const std_msgs::msg::Bool::SharedPtr msg) {
-                    if (msg->data)
-                    {
-                        RCLCPP_INFO(get_logger(), "Pause requested");
-                        pause_requested_ = true;
-                    }
-                    else
-                    {
-                        RCLCPP_INFO(get_logger(), "Resume requested");
-                        pause_requested_ = false;
-                    }
-                });
-            //get_ob_inf
-            get_object_info_client_ = this->create_client<cr_interfaces::srv::GetObjectInfo>("cr/get_object_info");
-            
-            //freeze scene: 
-            freeze_scene_pub_ = this->create_publisher<cr_interfaces::msg::FreezeScene>("cr/freeze_scene", 10);
 
             // 2) Timer a 0ms per post‐costructor setup
             setup_timer_ = create_wall_timer(
@@ -118,38 +95,16 @@ namespace cr
         {
             RCLCPP_INFO(get_logger(), "Received goal request for object %d", goal->object_id);
             (void)uuid;
-            
-            if(is_busy_){
-                RCLCPP_WARN(this->get_logger(), "Cannot accept new goal, busy executing another workflow.");
-                return rclcpp_action::GoalResponse::REJECT;
-            } else {
-            
-            // Avvisiamo che la scena deve essere freezata
-            cr_interfaces::msg::FreezeScene msg;
-            msg.freeze = true;
-            freeze_scene_pub_->publish(msg);
-
-            is_busy_ = true;
-            RCLCPP_INFO(this->get_logger(), "Goal accepted.");
             return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
-            }
         }
 
-        rclcpp_action::CancelResponse BtOrchestratorNode::handle_cancel(const std::shared_ptr<GoalHandleExecuteWorkflow> goal_handle)
+        rclcpp_action::CancelResponse BtOrchestratorNode::handle_cancel(
+            const std::shared_ptr<GoalHandleExecuteWorkflow> goal_handle)
         {
             RCLCPP_INFO(get_logger(), "Received request to cancel goal");
             (void)goal_handle;
-
-            // Avvisiamo che la scena non deve più essere freezata
-            cr_interfaces::msg::FreezeScene msg;
-            msg.freeze = false;
-            freeze_scene_pub_->publish(msg);
-
-            is_busy_ = false;
             return rclcpp_action::CancelResponse::ACCEPT;
         }
-
-
 
         void BtOrchestratorNode::execute(
             const std::shared_ptr<GoalHandleExecuteWorkflow> goal_handle)
@@ -181,12 +136,6 @@ namespace cr
                     RCLCPP_INFO(get_logger(), "Goal canceled");
                     goal_handle->canceled(result);
                     return;
-                }
-                if (pause_requested_)
-                {
-                    RCLCPP_INFO_THROTTLE(get_logger(), *this->get_clock(), 2000, "BT paused...");
-                    std::this_thread::sleep_for(100ms);
-                    continue;
                 }
                 status = tree_.tickOnce();
                 goal_handle->publish_feedback(feedback);

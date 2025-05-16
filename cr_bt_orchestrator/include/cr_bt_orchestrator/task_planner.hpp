@@ -3,8 +3,6 @@
 
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_action/rclcpp_action.hpp>
-#include "std_msgs/msg/bool.hpp"
-
 #include <cr_interfaces/action/execute_workflow.hpp>
 #include <ament_index_cpp/get_package_share_directory.hpp>
 
@@ -21,12 +19,6 @@
 #include <memory>
 #include <chrono>
 #include <string>
-
-#include <cr_interfaces/action/pick.hpp>
-#include <cr_interfaces/action/place.hpp>
-#include <cr_interfaces/srv/get_object_info.hpp>
-#include <cr_interfaces/msg/object_info.hpp>
-#include <cr_interfaces/msg/freeze_scene.hpp>
 
 namespace cr
 {

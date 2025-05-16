@@ -41,7 +41,9 @@ namespace action_servers {
 
     }
 
-    rclcpp_action::GoalResponse PickActionServer::handle_goal(const rclcpp_action::GoalUUID & uuid,std::shared_ptr<const Pick::Goal> goal)
+    rclcpp_action::GoalResponse PickActionServer::handle_goal(
+        const rclcpp_action::GoalUUID & uuid,
+        std::shared_ptr<const Pick::Goal> goal)
     {
         RCLCPP_INFO(this->get_logger(),
             "Received goal request:\n - Center: [x: %.3f, y: %.3f, z: %.3f]\n - Size: [x: %.3f, y: %.3f, z: %.3f]",
@@ -54,7 +56,12 @@ namespace action_servers {
 
     rclcpp_action::CancelResponse PickActionServer::handle_cancel(const std::shared_ptr<GoalHandlePick> goal_handle)
     {
-        RCLCPP_INFO(this->get_logger(), "Received request to cancel goal");
+        RCLCPP_INFO(get_logger(), "Received reqeust to cancel goal");
+        if (arm_group_)
+            arm_group_->stop();
+        if (gripper_group_)
+            gripper_group_->stop();
+            
         (void)goal_handle;
         return rclcpp_action::CancelResponse::ACCEPT;
     }
