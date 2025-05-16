@@ -1,22 +1,23 @@
 <root BTCPP_format="4" main_tree_to_execute="SimplePickAndPlace">
-	<BehaviorTree ID="SimplePickAndPlace">
-		<Sequence name="MainSequence">
-			<Action ID="FreezeScene"/>
+  <BehaviorTree ID="SimplePickAndPlace">
+    <Sequence name="MainSequence">
+      <Action ID="FreezeScene" />
 
-			<Action ID="GetObjectInfo"
-				object_id="{object_id}"
-				object_info="{object_info}" />
+      <Action ID="GetObjectInfo"
+              object_id="{object_id}"
+              object_info="{object_info}" />
 
-				<Action ID="ExecutePick" object_info="{object_info}" />
+      <Action ID="ExecutePick"
+              object_info="{object_info}" />
 
-			<Action ID="ExecutePlace" object_info="{object_info}"
-				target_position="{target_position}" />
+      <Action ID="ExecutePlace"
+              object_info="{object_info}"
+              target_position="{target_position}" />
 
-				<Action ID="LogSuccess" message="Simple Pick and Place completato!" />
-			</Sequence>
-			<Action ID="PauseRobot" />
-		</Fallback>
-	</BehaviorTree>
+      <Action ID="LogSuccess"
+              message="Simple Pick and Place completato!" />
+
+      <!-- <Action ID="PauseRobot" /> -->
+    </Sequence>
+  </BehaviorTree>
 </root>
-
-
