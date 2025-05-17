@@ -10,21 +10,30 @@ from ask_sdk_core.dispatch_components import AbstractExceptionHandler
 import rclpy
 from rclpy.node import Node
 from rclpy.action import ActionClient
+from std_msgs.msg import String
 import threading
 
 from cr_interfaces.msg import ObjectInfoArray
 from cr_interfaces.action import ExecuteWorkflow
+
 threading.Thread(target=lambda: rclpy.init()).start()
+
+
 
 class AlexaNode(Node):
     def __init__(self):
         super().__init__('alexa_interface')
         self.latest_objects = []
 
-        self.subscription = self.create_subscription(
+        self.subscription_id_obj = self.create_subscription(
             ObjectInfoArray,
             '/cr/scene_objects',
             self.object_callback,
+            10
+        )
+        self.publishers_cr_command = self.create_publisher(
+            String,
+            '/cr/pause_command',
             10
         )
 
@@ -49,7 +58,7 @@ class LaunchRequestHandler(AbstractRequestHandler):
         return is_request_type("LaunchRequest")(handler_input)
 
     def handle(self, handler_input):
-        speech_text = "ciao! posso prendere tutto quello che vuoi!"
+        speech_text = "cosa devo prendere?"
         handler_input.response_builder.speak(speech_text).set_card(
             SimpleCard("Hello World", speech_text)).set_should_end_session(
             False)
@@ -63,7 +72,7 @@ class PickGreenIntentHandler(AbstractRequestHandler):
 
     def handle(self, handler_input):
         # Rispondi subito ad Alexa
-        speech_text = "Ok, ora cerco il cubetto verde..."
+        speech_text = "Ok, prendo il cubetto verde..."
 
         # Esegui il resto in background
         def ros_action():
@@ -122,28 +131,53 @@ class PickRedIntentHandler(AbstractRequestHandler):
 
         return handler_input.response_builder.response
 
+class PickColorIntentHandler(AbstractRequestHandler):
+    def can_handle(self, handler_input):
+        return is_intent_name("PrendiCuboColoratoIntent")(handler_input)
+
+    def handle(self, handler_input):
+        # Rispondi subito ad Alexa
+        speech_text = "Ok, prendo il cubetto colorato..."
+
+        # Esegui il resto in background
+        def ros_action():
+            nonlocal speech_text
+            rclpy.spin_once(alexa_node, timeout_sec=1.0)
+            object_id = get_lowest_id_by_label(alexa_node.latest_objects, "red_cube")
+            if object_id is None:
+                speech_text = "Nessun cubetto colorato trovato."
+                alexa_node.get_logger().error("Nessun cubetto rosso trovato.")
+                return
+
+            speech_text = f"Il robot andrà a prendere il cubetto colorato con id {object_id}."
+            alexa_node.get_logger().info(speech_text)
+
+            goal = ExecuteWorkflow.Goal()
+            goal.object_id = object_id
+            action_client.send_goal_async(goal)
+
+        threading.Thread(target=ros_action).start()
+
+        handler_input.response_builder.speak(speech_text).set_card(
+            SimpleCard("Pick", speech_text)).set_should_end_session(True)
+
+        return handler_input.response_builder.response
+
 class StopIntentHandler(AbstractRequestHandler):
     def can_handle(self, handler_input):
         return is_intent_name("StopIntent")(handler_input)
 
     def handle(self, handler_input):
         speech_text = "il robot si sta per fermare"
-
-        # def ros_action():
-        #     rclpy.spin_once(alexa_node, timeout_sec=1.0)
-        #     confirmation_text = None
-        #     # inviare il comando di stop CORRETTO ##
-        #     # goal = ExecuteWorkflow.Goal()
-        #     # action_client.send_goal_async(goal)
-        #     # if feedback_goal:
-        #     #     confirmation_text= "il robot si é fermato"
-        #     #     alexa_node.get_logger().info(confirmation_text)
-        #     # else:
-        #     #     confirmation_text= "il robot non si è fermato, ATTENZIONE!!"
-        #     #     alexa_node.get_logger().error(confirmation_text)
-            
-        # threading.Thread(target=ros_action).start()
         
+        def ros_action():
+        
+            msg = String()
+            msg.data = 'pause'
+            alexa_node.publishers_cr_command.publish(msg)
+            alexa_node.get_logger().info('Publishing: "%s"' % msg.data)
+
+        threading.Thread(target=ros_action).start()
         handler_input.response_builder.speak(speech_text).set_card(
             SimpleCard("Stop", speech_text)).set_should_end_session(True)
         return handler_input.response_builder.response
@@ -156,12 +190,15 @@ class ResumeIntentHandler(AbstractRequestHandler):
         # type: (HandlerInput) -> Response
         speech_text = "il robot si muove, riparte dall'ultima esecuzione"
         
-        # def ros_action():
-        #     rclpy.spin_once(alexa_node, timeout_sec=1.0)
-        #     confirmation_text = None
+        def ros_action():
             
-        # threading.Thread(target=ros_action).start()
+            msg = String()
+            msg.data = 'resume'
+            alexa_node.publishers_cr_command.publish(msg)
+            alexa_node.get_logger().info('Publishing: "%s"' % msg.data)
 
+        threading.Thread(target=ros_action).start()
+        
         handler_input.response_builder.speak(speech_text).set_card(
             SimpleCard("Resume", speech_text)).set_should_end_session(True)
         return handler_input.response_builder.response
@@ -181,6 +218,7 @@ skill_builder = SkillBuilder()
 skill_builder.add_request_handler(LaunchRequestHandler())
 skill_builder.add_request_handler(PickGreenIntentHandler())
 skill_builder.add_request_handler(PickRedIntentHandler())
+skill_builder.add_request_handler(PickColorIntentHandler())
 skill_builder.add_request_handler(StopIntentHandler())
 skill_builder.add_request_handler(ResumeIntentHandler())
 skill_builder.add_exception_handler(AllExceptionHandler())
