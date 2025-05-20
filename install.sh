@@ -52,6 +52,15 @@ else
     echo "Trained model copied successfully."
 fi
 
+# Install dependencies
+echo "Installing dependencies..."
+pip install pyserial
+pip install flask
+pip install flask-ask-sdk
+pip install ask-sdk
+echo "all dependencise are installated"
+
+
 # Colcon build and source
 echo "Building the workspace..."
 cd ..
@@ -63,3 +72,6 @@ source install/setup.bash
 echo "Sourcing finished."
 
 echo "COMPLETE! NOW YOU CAN RUN THE PROJECT. ENJOY! ;)"
+
+
+
