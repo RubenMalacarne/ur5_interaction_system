@@ -1,5 +1,8 @@
 #include "cr_bt_orchestrator/task_planner.hpp"
 #include <cr_bt_orchestrator/custom_bt_nodes.hpp>
+#include <cr_bt_pick_place/set_gripper_node.hpp>
+#include <cr_motion_core/motion_commander.hpp>
+
 using namespace std::chrono_literals;
 
 namespace cr
@@ -65,6 +68,8 @@ namespace cr
             // nome dell'action server per il place
             place_params.default_port_value = "cr/place_action";
             factory_.registerNodeType<cr::bt_nodes::ExecutePlace>("ExecutePlace", place_params);
+ 
+            factory_.registerNodeType<cr::bt::pick_place::SetGripperNode>("SetGripper");
 
             // Nodo di logging (SyncActionNode non ha params)
             factory_.registerNodeType<cr::bt_nodes::LogMessage>("LogSuccess");
@@ -76,6 +81,15 @@ namespace cr
 
             blackboard_ = BT::Blackboard::create();
             blackboard_->set<rclcpp::Node::SharedPtr>("ros_node", shared_from_this());
+
+            auto motion_commander = std::make_shared<cr::motion_core::MotionCommander>(
+                shared_from_this(),  // Passa il nodo ROS
+                "arm_manipulator",      // Nome del gruppo braccio (se diverso)
+                "gripper"             // Nome del gruppo gripper (se diverso)
+            );
+
+            // Inserisci l'istanza nella blackboard
+            blackboard_->set("motion_commander", motion_commander);
             tree_ = factory_.createTreeFromFile(bt_xml, blackboard_);
 
             // C) logger

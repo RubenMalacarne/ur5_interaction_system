@@ -5,6 +5,7 @@
 #include <rclcpp_action/rclcpp_action.hpp>
 #include <cr_interfaces/action/execute_workflow.hpp>
 #include <ament_index_cpp/get_package_share_directory.hpp>
+#include <std_msgs/msg/string.hpp>
 
 // BehaviorTree.CPP
 #include <behaviortree_cpp/bt_factory.h>
@@ -53,6 +54,9 @@ namespace cr
 			void setupBT();
 			rclcpp::TimerBase::SharedPtr setup_timer_;
 			bool bt_initialized_{false};
+
+			// Logica di pause e resume
+			rclcpp::Subscription<std_msgs::msg::String>::SharedPtr pause_command_sub_;
 		};
 
 	} // namespace bt_orchestrator

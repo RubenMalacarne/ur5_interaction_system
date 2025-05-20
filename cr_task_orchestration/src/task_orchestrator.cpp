@@ -24,6 +24,7 @@ namespace task_orchestration {
             std::bind(&TaskOrchestrator::handle_accepted, this, _1)
         );
 
+        RCLCPP_INFO(this->get_logger(), "Sto per creare la subscription al pause command");
         this->sub_command_ = this->create_subscription<std_msgs::msg::String>(
             "cr/pause_command",
             10,

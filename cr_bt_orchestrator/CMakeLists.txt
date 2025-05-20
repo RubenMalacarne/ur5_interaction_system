@@ -12,6 +12,8 @@ find_package(rclcpp_action REQUIRED)
 find_package(behaviortree_cpp REQUIRED)
 find_package(behaviortree_ros2 REQUIRED)
 find_package(cr_interfaces REQUIRED)
+find_package(cr_motion_core REQUIRED)
+find_package(cr_bt_pick_place REQUIRED)
 find_package(ament_index_cpp REQUIRED)
 
 include_directories(
@@ -22,10 +24,12 @@ add_executable(task_planner src/task_planner.cpp src/custom_bt_nodes.cpp src/tas
 ament_target_dependencies(task_planner
   rclcpp
   behaviortree_cpp
+  behaviortree_ros2
   cr_interfaces
   ament_index_cpp
   rclcpp_action
-  behaviortree_ros2
+  cr_motion_core
+  cr_bt_pick_place
 )
 
 # --- Installazione ---
