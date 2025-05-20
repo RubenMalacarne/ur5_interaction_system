@@ -3,7 +3,10 @@
 
 #include <behaviortree_cpp/action_node.h>
 #include <memory>
-#include "cr_motion_core/motion_commander.hpp"
+#include <rclcpp/rclcpp.hpp> // Necessario per rclcpp::Node::SharedPtr
+#include <future> // Necessario per std::shared_future
+
+#include "cr_motion_core/motion_commander.hpp" // Necessario per MotionCommander e MotionStatus
 
 namespace cr::bt::pick_place
 {
@@ -14,16 +17,21 @@ namespace cr::bt::pick_place
         SetGripperNode(const std::string &name,
                        const BT::NodeConfiguration &config);
 
+       ~SetGripperNode() override;
+
+        // Definisce le porte di input/output del nodo
         static BT::PortsList providedPorts();
 
-    private:
-        // StatefulActionNode interface
+    protected:
+        // Implementazione dei metodi virtuali di StatefulActionNode
         BT::NodeStatus onStart() override;
         BT::NodeStatus onRunning() override;
         void onHalted() override;
 
-        // own members
-        double target_{0.0};
+        // Future per tracciare il task asincrono gestito da MotionCommander
+        std::shared_future<cr::motion_core::MotionStatus> gripper_task_future_;
+
+        rclcpp::Node::SharedPtr nh_; // Nodo ROS per logging
         std::shared_ptr<cr::motion_core::MotionCommander> commander_;
     };
 

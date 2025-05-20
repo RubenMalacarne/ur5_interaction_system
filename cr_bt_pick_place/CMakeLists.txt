@@ -13,6 +13,8 @@ find_package(cr_motion_core REQUIRED)
 # 1) Creazione libreria di plugin
 # ------------------------------------------------------------
 add_library(cr_bt_pick_place_nodes SHARED
+  src/arm_horizontal_move_node.cpp
+  src/arm_vertical_move_node.cpp
   src/set_gripper_node.cpp
 )
 
@@ -53,6 +55,3 @@ ament_export_include_directories(include)
 ament_export_libraries(cr_bt_pick_place_nodes)
 ament_export_dependencies(behaviortree_cpp cr_motion_core)
 ament_package()
-
-
-## E' importante che questa libreria sia compilata come libreria condivisa

@@ -20,7 +20,12 @@ include_directories(
   include
 )
 
-add_executable(task_planner src/task_planner.cpp src/custom_bt_nodes.cpp src/task_planner_main.cpp)
+add_executable(task_planner 
+  src/task_planner.cpp
+  src/custom_bt_nodes.cpp
+  src/compute_nodes.cpp 
+  src/task_planner_main.cpp)
+
 ament_target_dependencies(task_planner
   rclcpp
   behaviortree_cpp

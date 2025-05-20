@@ -1,6 +1,8 @@
 #include "cr_bt_orchestrator/task_planner.hpp"
 #include <cr_bt_orchestrator/custom_bt_nodes.hpp>
 #include <cr_bt_pick_place/set_gripper_node.hpp>
+#include <cr_bt_pick_place/arm_horizontal_move_node.hpp>
+#include <cr_bt_pick_place/arm_vertical_move_node.hpp>
 #include <cr_motion_core/motion_commander.hpp>
 
 using namespace std::chrono_literals;
@@ -37,71 +39,84 @@ namespace cr
             bt_initialized_ = true;
             setup_timer_->cancel();
 
-            // A) registra i nodi custom, incluso il servizio
+            // A) registra i nodi custom
             // –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
 
-            // Service: FreezeScene
+            // 1. Nodi di Servizio (FreezeScene, GetObjectInfo)
             BT::RosNodeParams freeze_params;
             freeze_params.nh = shared_from_this();
-            // nome del servizio
             freeze_params.default_port_value = "cr/freeze_scene";
             factory_.registerNodeType<cr::bt_nodes::FreezeScene>("FreezeScene", freeze_params);
 
-
-            // Service: GetObjectInfo
             BT::RosNodeParams service_params;
             service_params.nh = shared_from_this();
-            // nome del servizio
             service_params.default_port_value = "cr/get_object_info";
             factory_.registerNodeType<cr::bt_nodes::GetObjectInfo>("GetObjectInfo", service_params);
 
-            // Action: ExecutePick
+            // 2. Nodi di Azione (ExecutePick, ExecutePlace)
             BT::RosNodeParams pick_params;
             pick_params.nh = shared_from_this();
-            // nome dell'action server per il pick
             pick_params.default_port_value = "cr/pick_action";
             factory_.registerNodeType<cr::bt_nodes::ExecutePick>("ExecutePick", pick_params);
 
-            // Action: ExecutePlace
             BT::RosNodeParams place_params;
             place_params.nh = shared_from_this();
-            // nome dell'action server per il place
             place_params.default_port_value = "cr/place_action";
             factory_.registerNodeType<cr::bt_nodes::ExecutePlace>("ExecutePlace", place_params);
- 
+
+            // 3. Nodo SetGripper
             factory_.registerNodeType<cr::bt::pick_place::SetGripperNode>("SetGripper");
 
-            // Nodo di logging (SyncActionNode non ha params)
+            // 4. Nodi di Movimento del Braccio
+            factory_.registerNodeType<cr::bt::pick_place::ArmVerticalMoveNode>("ArmVerticalMove");
+            factory_.registerNodeType<cr::bt::pick_place::ArmHorizontalMoveNode>("ArmHorizontalMove");
+
+            // 5. Nodi di Calcolo
+            factory_.registerNodeType<cr::bt_nodes::ComputePreApproachZ>("ComputePreApproachZ");
+            factory_.registerNodeType<cr::bt_nodes::ComputeObjectCenterXY>("ComputeObjectCenterXY");
+            factory_.registerNodeType<cr::bt_nodes::ComputeApproachZ>("ComputeApproachZ");
+
+            // 6. Nodo di Logging (come prima)
             factory_.registerNodeType<cr::bt_nodes::LogMessage>("LogSuccess");
 
-            // B) carica l’XML
+            // B) Carica l’XML
+            // –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
+
             const auto pkg_share = ament_index_cpp::get_package_share_directory("cr_bt_orchestrator");
-            const auto bt_xml = pkg_share + "/bt_xml/simple_pick_place.xml";
+            const auto bt_xml = pkg_share + "/bt_xml/simple_pick_place.xml"; // Assicurati che questo sia il tuo nuovo XML
             RCLCPP_INFO(get_logger(), "Loading BT from: %s", bt_xml.c_str());
+
+            // C) Inizializza la Blackboard
+            // –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
 
             blackboard_ = BT::Blackboard::create();
             blackboard_->set<rclcpp::Node::SharedPtr>("ros_node", shared_from_this());
 
+            // Inizializza e inserisci MotionCommander
             auto motion_commander = std::make_shared<cr::motion_core::MotionCommander>(
-                shared_from_this(),  // Passa il nodo ROS
-                "arm_manipulator",      // Nome del gruppo braccio (se diverso)
-                "gripper"             // Nome del gruppo gripper (se diverso)
+                shared_from_this(), // Passa il nodo ROS
+                "arm_manipulator",  // Nome del gruppo braccio
+                "gripper"           // Nome del gruppo gripper
             );
-
-            // Inserisci l'istanza nella blackboard
             blackboard_->set("motion_commander", motion_commander);
+
+            // D) Crea l'Albero
+            // –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
             tree_ = factory_.createTreeFromFile(bt_xml, blackboard_);
 
-            // C) logger
+            // E) Logger (come prima)
+            // –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
             stdout_logger_ = std::make_unique<BT::StdCoutLogger>(tree_);
             const auto log_path = pkg_share + "/bt_trace.btlog";
             FILE *f = fopen(log_path.c_str(), "w");
-            if (f) { fclose(f); }
+            if (f)
+            {
+                fclose(f);
+            }
             groot_logger_ = std::make_unique<BT::FileLogger2>(tree_, log_path);
 
             RCLCPP_INFO(get_logger(), "BT Orchestrator Node initialized. Ready to execute.");
         }
-
 
         rclcpp_action::GoalResponse BtOrchestratorNode::handle_goal(
             const rclcpp_action::GoalUUID &uuid,
@@ -134,7 +149,7 @@ namespace cr
                 std::to_string(goal_handle->get_goal()->object_id));
 
             geometry_msgs::msg::Point target_position;
-            target_position.x = 0.150; 
+            target_position.x = 0.150;
             target_position.y = 0.625;
             target_position.z = 0.939;
             blackboard_->set<geometry_msgs::msg::Point>(

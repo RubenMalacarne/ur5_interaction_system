@@ -1,25 +1,54 @@
-<root BTCPP_format="4" main_tree_to_execute="SimplePickAndPlace">
-        <BehaviorTree ID="SimplePickAndPlace">
-                <Sequence name="MainSequence">
-                        <Action ID="FreezeScene" />
+<root BTCPP_format="4" main_tree_to_execute="PickAndPlace">
+    <BehaviorTree ID="PickAndPlace">
+        <Sequence name="PickAndPlaceSequence">
+            <!-- 1. Congelamento la scena -->
+            <Action ID="FreezeScene" />
 
-                        <Action ID="GetObjectInfo"
-                                object_id="{object_id}"
-                                object_info="{object_info}" />
+            <!-- 2. Ottienere informazioni sull'oggetto (posizione, dimensione, ecc.) -->
+            <Action ID="GetObjectInfo"
+                    object_id="{object_id}"
+                    object_info="{object_info}" />
 
-                        <Action ID="SetGripper" target="0.8" commander="{motion_commander}" />
+            <!-- 3. Calcolo coordinata Z per il pre-approach -->
+            <ComputePreApproachZ name="ComputePreApproachZ"
+                                  object_info="{object_info}"
+                                  pre_approach_distance="0.3" 
+                                  target_z="{pre_approach_z_coord}" />
 
-                        <!-- <Action ID="ExecutePick"
-              object_info="{object_info}" />
+            <!-- 4. Sali verso l'alto (pre-approach) -->
+            <ArmVerticalMove name="MoveToPreApproachZ"
+                             target_z="{pre_approach_z_coord}" />
 
-      <Action ID="ExecutePlace"
-              object_info="{object_info}"
-              target_position="{target_position}" /> -->
+            <!-- 5. Calcola le coordinate X e Y per allinearsi sopra l'oggetto -->
+            <ComputeObjectCenterXY name="ComputeObjectCenterXY"
+                                   object_info="{object_info}"
+                                   target_x="{object_center_x}"
+                                   target_y="{object_center_y}" />
 
-                        <Action ID="LogSuccess"
-                                message="Simple Pick and Place completato!" />
+            <!-- 6. Spostati orizzontalmente sopra l'oggetto -->
+            <ArmHorizontalMove name="AlignOverObject"
+                               target_x="{object_center_x}"
+                               target_y="{object_center_y}" />
 
-                        <!-- <Action ID="PauseRobot" /> -->
-                </Sequence>
-        </BehaviorTree>
+            <!-- 7. Apri il gripper -->
+            <SetGripper name="OpenGripper" target="0.0" />
+
+            <!-- 8. Calcola la coordinata Z per l'approach -->
+            <ComputeApproachZ name="ComputeApproachZ"
+                              object_info="{object_info}"
+                              approach_distance="0.1"
+                              target_z="{approach_z_coord}" />
+
+            <!-- 9. Scendi verso l'oggetto (approach) -->
+            <ArmVerticalMove name="MoveToApproachZ"
+                             target_z="{approach_z_coord}" />
+
+            <!-- 10. Chiudi il gripper -->
+            <SetGripper name="CloseGripper" target="0.8" />
+
+            <!-- 11. Log di successo -->
+            <Action ID="LogSuccess"
+                    message="Simple Pick and Place completato!" />
+        </Sequence>
+    </BehaviorTree>
 </root>
