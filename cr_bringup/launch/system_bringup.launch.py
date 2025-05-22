@@ -28,7 +28,7 @@ def generate_launch_description():
         include('cr_vision', 'cr_vision.launch.py', delay=4.0),
 
         # 4) Pick / Place / Scan action-servers
-        include('cr_action_servers', 'action_servers.launch.py', delay=6.0),
+        #include('cr_action_servers', 'action_servers.launch.py', delay=6.0),
 
         # 5) Task-orchestrator
         #include('cr_task_orchestration', 'task_orchestrator.launch.py', delay=8.0),

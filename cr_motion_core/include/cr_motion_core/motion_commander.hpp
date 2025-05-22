@@ -72,6 +72,7 @@ namespace cr::motion_core
         // --- METODI HELPER PER IL BRACCIO ---
         std::shared_future<MotionStatus> async_cartesian_move(const geometry_msgs::msg::Pose& target_pose);
         bool plan_cartesian_path(const geometry_msgs::msg::Pose& target_pose, moveit_msgs::msg::RobotTrajectory& trajectory);
+        bool waitForRobotState(double timeout_sec);
     };
 
 } // namespace cr::motion_core

@@ -1,0 +1,4 @@
+cr_bt_orchestrator:
+  ros__parameters:
+    gripper_open: 0.0
+    gripper_close: 0.8

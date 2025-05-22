@@ -11,6 +11,8 @@
 
   <depend>cr_motion_core</depend>
   <depend>behaviortree_cpp</depend>
+  <depend>behaviortree_ros2</depend>
+  <depend>cr_interfaces</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
