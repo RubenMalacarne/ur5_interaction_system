@@ -16,7 +16,12 @@ namespace cr
         {
             return BT::RosServiceNode<cr_interfaces::srv::GetObjectInfo>::providedBasicPorts({
                 BT::InputPort<std::string>("object_id"),
-                BT::OutputPort<cr_interfaces::msg::ObjectInfo>("object_info")
+                BT::OutputPort<double>("object_center_x"),
+                BT::OutputPort<double>("object_center_y"),
+                BT::OutputPort<double>("object_center_z"),
+                BT::OutputPort<double>("object_size_x"),
+                BT::OutputPort<double>("object_size_y"),
+                BT::OutputPort<double>("object_size_z")
             });
         }
 
@@ -63,7 +68,12 @@ namespace cr
                 RCLCPP_ERROR(logger(), "Service returned failure");
                 return BT::NodeStatus::FAILURE;
             }
-            setOutput("object_info", response->object_info);
+            setOutput("object_center_x", response->object_info.center.x);
+            setOutput("object_center_y", response->object_info.center.y);
+            setOutput("object_center_z", response->object_info.center.z);
+            setOutput("object_size_x", response->object_info.size.x);
+            setOutput("object_size_y", response->object_info.size.y);
+            setOutput("object_size_z", response->object_info.size.z);
             RCLCPP_INFO(logger(),
                         "Received object info: center=[%.2f, %.2f, %.2f]",
                         response->object_info.center.x,

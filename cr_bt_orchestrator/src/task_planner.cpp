@@ -66,7 +66,7 @@ namespace cr
             factory_.registerNodeType<cr::bt::pick_place::SetGripperNode>("SetGripper");
             factory_.registerNodeType<cr::bt::pick_place::ArmVerticalMoveNode>("ArmVerticalMove");
             factory_.registerNodeType<cr::bt::pick_place::ArmHorizontalMoveNode>("ArmHorizontalMove");
-            factory_.registerNodeType<cr::bt_nodes::LogMessage>("LogMessage"); // o LogSuccess
+            factory_.registerNodeType<cr::bt_nodes::LogMessage>("LogMessage");
 
             // B) Registra TUTTI i file XML necessari (Albero Principale e SubTrees)
             RCLCPP_INFO(get_logger(), "Registering BehaviorTree XML files...");
@@ -152,8 +152,10 @@ namespace cr
                     "object_id", std::to_string(goal_handle->get_goal()->object_id));
                 // Imposta altri valori sulla blackboard se necessario per il remapping delle porte del SubTree
                 // Esempio:
-                // thread_local_blackboard->set("pre_approach_distance_main", 0.35);
+                thread_local_blackboard->set("pre_approach_distance", 0.3);
+                thread_local_blackboard->set("approach_distance", 0.13);
                 thread_local_blackboard->set("gripper_close", 0.8);
+                thread_local_blackboard->set("gripper_open", 0.0);
 
 
                 BT::Tree local_tree;

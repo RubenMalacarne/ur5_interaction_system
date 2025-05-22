@@ -7,17 +7,31 @@
             <!-- 2. Ottienere informazioni sull'oggetto (posizione, dimensione, ecc.) -->
             <Action ID="GetObjectInfo"
                 object_id="{object_id}"
-                object_info="{object_info}" />
+                object_center_x="{object_center_x}"
+                object_center_y="{object_center_y}"
+                object_center_z="{object_center_z}"
+                object_size_x="{object_size_x}"
+                object_size_y="{object_size_y}"
+                object_size_z="{object_size_z}"
+            />
 
             <!-- 3. Pick dell'oggetto -->
             <SubTree ID="Pick"
                 ros_node="{ros_node}"
                 motion_commander="{motion_commander}"
                 gripper_open="{gripper_open}"
-                gripper_close="{gripper_close}" />
-<!-- 
-            <LogMessage ID="LogSuccess"
-                message="Simple Workflow completato!" /> -->
+                gripper_close="{gripper_close}"
+                object_id = "{object_id}"
+                object_center_x="{object_center_x}"
+                object_center_y="{object_center_y}"
+                object_center_z="{object_center_z}"
+                object_size_x="{object_size_x}"
+                object_size_y="{object_size_y}"
+                object_size_z="{object_size_z}" 
+                pre_approach_distance="{pre_approach_distance}"
+                approach_distance="{approach_distance}"/>
+
+            <LogMessage message="Simple Workflow completato!" />
         </Sequence>
     </BehaviorTree>
 </root>
