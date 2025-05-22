@@ -1,0 +1,41 @@
+<root BTCPP_format="4" main_tree_to_execute="Place">
+    <BehaviorTree ID="Place">
+        <SequenceWithMemory>
+
+            <!-- Step 1: compute how much to move upward (lift from the table) -->
+            <Script code="approach_z_coord := object_center_z + object_size_z / 2.0 + approach_distance" />
+            <Script code="place_lift_z := approach_z_coord + place_offset_z" />
+            <ArmVerticalMove name="LiftUpAfterPick"
+                             target_z="{place_lift_z}" />
+
+            <!-- Step 2: horizontal movement along the X axis by a specific offset -->
+            <Script code="place_shift_x := object_center_x - place_offset_x" />
+            <ArmHorizontalMove name="ShiftPlaceX"
+                               target_x="{place_shift_x}"
+                               target_y="{object_center_y}" />
+
+            <!-- Step 3: approach the place pose -->
+            <ArmVerticalMove name="LowerToPlace"
+                             target_z="{approach_z_coord}" />
+
+            <!-- Step 4: open the gripper -->
+            <SetGripper name="OpenGripper" target="{gripper_open}" />
+
+            <!-- Step 5: detach the object from the robot in the MoveIt scene -->
+            <SetObjectAttached name= "DetachObject"
+                        object_id="{object_id}"
+                        attach="false" />
+
+            <!-- Step 6: allow collisions again between the gripper and the object -->
+            <SetCollisionAllowed name= "EnableCollisions"
+                    object_id="{object_id}"
+                    is_allowed="false" />
+
+            <ArmVerticalMove name="CompleteTask"
+                    target_z="1.2" />
+
+            <LogMessage message="Place sequence completed!" />
+
+        </SequenceWithMemory>
+    </BehaviorTree>
+</root>

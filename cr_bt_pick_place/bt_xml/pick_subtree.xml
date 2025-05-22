@@ -23,7 +23,7 @@
                              target_z="{approach_z_coord}" />
 
             <!-- Step 7: allow collisions between the gripper and the object -->
-            <SetCollisionAllowed name= "AllowCollisions"
+            <SetCollisionAllowed name= "DisableCollisions"
                                  object_id="{object_id}"
                                  is_allowed="true" />
 

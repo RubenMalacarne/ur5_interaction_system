@@ -192,7 +192,7 @@ namespace cr::motion_core
                     "Cartesian path coverage: %.1f%%",
                     fraction * 100.0);
 
-        return fraction > 0.9;
+        return fraction > 0.85;
     }
 
     //---------------------------------------------------------------------

@@ -31,6 +31,21 @@
                 pre_approach_distance="{pre_approach_distance}"
                 approach_distance="{approach_distance}"/>
 
+            <!-- 4. Place dell'oggetto -->
+            <SubTree ID="Place"
+                ros_node="{ros_node}"
+                motion_commander="{motion_commander}"
+                gripper_open="{gripper_open}"
+                object_id = "{object_id}" 
+                place_offset_x="{place_offset_x}"
+                place_offset_z="{place_offset_z}"
+                object_center_x="{object_center_x}"
+                object_center_y="{object_center_y}"
+                object_center_z="{object_center_z}"
+                object_size_z="{object_size_z}" 
+                pre_approach_distance="{pre_approach_distance}"
+                approach_distance="{approach_distance}"/>
+
             <LogMessage message="Simple Workflow completato!" />
         </Sequence>
     </BehaviorTree>

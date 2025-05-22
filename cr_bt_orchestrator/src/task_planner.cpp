@@ -84,7 +84,10 @@ namespace cr
                 factory_.registerBehaviorTreeFromFile(pick_subtree_xml_path);
                 RCLCPP_INFO(get_logger(), "Registered Pick SubTree from: %s", pick_subtree_xml_path.c_str());
 
-                // Registra altri SubTree qui se ne hai
+                // Registra il SubTree di Place dal pacchetto cr_bt_pick_place
+                const auto place_subtree_xml_path = pick_place_pkg_share + "/bt_xml/place_subtree.xml";
+                factory_.registerBehaviorTreeFromFile(place_subtree_xml_path);
+                RCLCPP_INFO(get_logger(), "Registered Place SubTree from: %s", place_subtree_xml_path.c_str());
             }
             catch (const BT::RuntimeError &e)
             {
@@ -148,14 +151,14 @@ namespace cr
                 auto motion_commander = std::make_shared<cr::motion_core::MotionCommander>(
                     shared_from_this(), "arm_manipulator", "gripper");
                 thread_local_blackboard->set("motion_commander", motion_commander);
-                thread_local_blackboard->set<std::string>(
-                    "object_id", std::to_string(goal_handle->get_goal()->object_id));
-                // Imposta altri valori sulla blackboard se necessario per il remapping delle porte del SubTree
-                // Esempio:
-                thread_local_blackboard->set("pre_approach_distance", 0.3);
-                thread_local_blackboard->set("approach_distance", 0.13);
+                thread_local_blackboard->set<std::string>("object_id", std::to_string(goal_handle->get_goal()->object_id));
+                thread_local_blackboard->set("pre_approach_distance", 0.15);
+                thread_local_blackboard->set("approach_distance", 0.06);
                 thread_local_blackboard->set("gripper_close", 0.8);
                 thread_local_blackboard->set("gripper_open", 0.0);
+                thread_local_blackboard->set("place_offset_z", 0.1);
+                thread_local_blackboard->set("place_offset_x", 0.1);
+
 
 
                 BT::Tree local_tree;
