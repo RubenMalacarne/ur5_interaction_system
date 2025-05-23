@@ -73,3 +73,14 @@ WS_CR/
 ├── cr_moveit/
 ├── ...  
 └── cr_task_orchestration/
+
+
+
+ ## mettere questo: 
+
+sensor_msgs/msg/JointState
+rosgraph_msgs/msg/Clock
+std_msgs/msg/MultiArrayDimension
+std_msgs/msg/Float64MultiArray
+std_msgs/msg/MultiArrayLayout
+tf2_msgs/msg/TFMessage
