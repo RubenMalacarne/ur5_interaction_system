@@ -9,6 +9,7 @@
 #include <cr_interfaces/srv/freeze_scene.hpp>
 #include <cr_interfaces/action/pick.hpp>
 #include <cr_interfaces/action/place.hpp>
+#include <std_msgs/msg/bool.hpp>
 #include <geometry_msgs/msg/point.hpp> // Per geometry_msgs::msg::Point
 #include <behaviortree_ros2/bt_service_node.hpp>
 #include <behaviortree_ros2/bt_action_node.hpp>
@@ -54,41 +55,43 @@ namespace cr
 		};
 
 		// ------------------------------------------------------------------------------------------------------------------
-		//                                       Action Wrapper - EXECUTE PICK
+		//                                       Condition Node - IsAreaSafe
 		// ------------------------------------------------------------------------------------------------------------------
-		class ExecutePick : public BT::RosActionNode<cr_interfaces::action::Pick>
+		class IsAreaSafe : public BT::ConditionNode
 		{
 		public:
-			ExecutePick(const std::string &instance_name, const BT::NodeConfig &conf, const BT::RosNodeParams &params);
+			IsAreaSafe(const std::string &name, const BT::NodeConfig &config);
 
 			static BT::PortsList providedPorts();
 
-			bool setGoal(Goal &goal) override;
-			BT::NodeStatus onResultReceived(const WrappedResult &result) override;
-			BT::NodeStatus onFeedback(const std::shared_ptr<const Feedback> feedback) override;
-			BT::NodeStatus onFailure(BT::ActionNodeErrorCode error) override;
+			BT::NodeStatus tick() override;
 
-		protected:
-			rclcpp::Logger logger() { return rclcpp::get_logger(this->name()); }
+			void updateSafetyStatus(bool is_safe);
+
+		private:
+			rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr sub_;
+			std::atomic_bool human_near_{false};
 		};
 
 		// ------------------------------------------------------------------------------------------------------------------
-		//                                       Action Wrapper - EXECUTE PLACE
+		//                                       Attesa di Area Safe
 		// ------------------------------------------------------------------------------------------------------------------
-		class ExecutePlace : public BT::RosActionNode<cr_interfaces::action::Place>
-		{
+		class EnsureAreaIsSafe : public BT::CoroActionNode {
 		public:
-			ExecutePlace(const std::string &instance_name, const BT::NodeConfig &conf, const BT::RosNodeParams &params);
+			EnsureAreaIsSafe(const std::string& name, const BT::NodeConfig& config);
 
-			static BT::PortsList providedPorts();
+			static BT::PortsList providedPorts() { return {}; }
 
-			bool setGoal(Goal &goal) override;
-			BT::NodeStatus onResultReceived(const WrappedResult &result) override;
-			BT::NodeStatus onFeedback(const std::shared_ptr<const Feedback> feedback) override;
-			BT::NodeStatus onFailure(BT::ActionNodeErrorCode error) override;
+			BT::NodeStatus tick() override;
+			void halt() override; // Importante per CoroActionNode
 
-		protected:
-			rclcpp::Logger logger() { return rclcpp::get_logger(this->name()); }
+		private:
+			std::atomic<bool> area_is_currently_safe_{false}; // Inizializza come preferisci
+			rclcpp::Node::SharedPtr node_;
+			rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr safety_subscription_;
+			bool first_tick_unsafe_logged_ = false;
+
+			void safetyCallback(const std_msgs::msg::Bool::SharedPtr msg);
 		};
 
 		// ------------------------------------------------------------------------------------------------------------------
@@ -103,55 +106,6 @@ namespace cr
 
 			BT::NodeStatus tick() override;
 		};
-
-		            // ------------------------------------------------------------------------------------------------------------------
-            //                                       Utility Node - COMPUTE PRE-APPROACH Z
-            // ------------------------------------------------------------------------------------------------------------------
-            class ComputePreApproachZ : public BT::SyncActionNode
-            {
-            public:
-                ComputePreApproachZ(const std::string& name, const BT::NodeConfiguration& config);
-
-                static BT::PortsList providedPorts();
-
-                BT::NodeStatus tick() override;
-
-            private:
-                rclcpp::Node::SharedPtr nh_; // Per il logging
-            };
-
-            // ------------------------------------------------------------------------------------------------------------------
-            //                                       Utility Node - COMPUTE OBJECT CENTER XY
-            // ------------------------------------------------------------------------------------------------------------------
-            class ComputeObjectCenterXY : public BT::SyncActionNode
-            {
-            public:
-                ComputeObjectCenterXY(const std::string& name, const BT::NodeConfiguration& config);
-
-                static BT::PortsList providedPorts();
-
-                BT::NodeStatus tick() override;
-
-            private:
-                rclcpp::Node::SharedPtr nh_; // Per il logging
-            };
-
-            // ------------------------------------------------------------------------------------------------------------------
-            //                                       Utility Node - COMPUTE APPROACH Z
-            // ------------------------------------------------------------------------------------------------------------------
-            class ComputeApproachZ : public BT::SyncActionNode
-            {
-            public:
-                ComputeApproachZ(const std::string& name, const BT::NodeConfiguration& config);
-
-                static BT::PortsList providedPorts();
-
-                BT::NodeStatus tick() override;
-
-            private:
-                rclcpp::Node::SharedPtr nh_; // Per il logging
-            };
-
 	} // namespace bt_nodes
 } // namespace cr
 

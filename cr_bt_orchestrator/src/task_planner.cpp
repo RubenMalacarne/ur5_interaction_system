@@ -63,6 +63,8 @@ namespace cr
             attach_params.default_port_value = "/attach_object";
             factory_.registerNodeType<cr::bt::pick_place::SetObjectAttachedNode>("SetObjectAttached", attach_params);
 
+            factory_.registerNodeType<cr::bt_nodes::IsAreaSafe>("IsAreaSafe");
+            factory_.registerNodeType<cr::bt_nodes::EnsureAreaIsSafe>("EnsureAreaIsSafe");
             factory_.registerNodeType<cr::bt::pick_place::SetGripperNode>("SetGripper");
             factory_.registerNodeType<cr::bt::pick_place::ArmVerticalMoveNode>("ArmVerticalMove");
             factory_.registerNodeType<cr::bt::pick_place::ArmHorizontalMoveNode>("ArmHorizontalMove");
@@ -167,7 +169,7 @@ namespace cr
                     // La factory cercherà l'ID "PickAndPlace" tra quelli registrati
                     // e quando incontrerà <SubTree ID="Pick"/>, cercherà anche "Pick".
                     RCLCPP_INFO(get_logger(), "BT Thread: Creating tree with ID 'PickAndPlace'");
-                    local_tree = factory_ptr->createTree("PickAndPlace", thread_local_blackboard);
+                    local_tree = factory_ptr->createTree("GuardedPickAndPlace", thread_local_blackboard);
 
                 } catch (const BT::RuntimeError& e) {
                     RCLCPP_ERROR(get_logger(), "BT Thread: Error creating Behavior Tree: %s", e.what());

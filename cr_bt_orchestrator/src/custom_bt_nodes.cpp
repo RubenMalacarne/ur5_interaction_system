@@ -14,15 +14,13 @@ namespace cr
 
         BT::PortsList GetObjectInfo::providedPorts()
         {
-            return BT::RosServiceNode<cr_interfaces::srv::GetObjectInfo>::providedBasicPorts({
-                BT::InputPort<std::string>("object_id"),
-                BT::OutputPort<double>("object_center_x"),
-                BT::OutputPort<double>("object_center_y"),
-                BT::OutputPort<double>("object_center_z"),
-                BT::OutputPort<double>("object_size_x"),
-                BT::OutputPort<double>("object_size_y"),
-                BT::OutputPort<double>("object_size_z")
-            });
+            return BT::RosServiceNode<cr_interfaces::srv::GetObjectInfo>::providedBasicPorts({BT::InputPort<std::string>("object_id"),
+                                                                                              BT::OutputPort<double>("object_center_x"),
+                                                                                              BT::OutputPort<double>("object_center_y"),
+                                                                                              BT::OutputPort<double>("object_center_z"),
+                                                                                              BT::OutputPort<double>("object_size_x"),
+                                                                                              BT::OutputPort<double>("object_size_y"),
+                                                                                              BT::OutputPort<double>("object_size_z")});
         }
 
         bool GetObjectInfo::setRequest(typename cr_interfaces::srv::GetObjectInfo::Request::SharedPtr &request)
@@ -88,7 +86,7 @@ namespace cr
         FreezeScene::FreezeScene(const std::string &instance_name, const BT::NodeConfig &conf, const BT::RosNodeParams &params)
             : BT::RosServiceNode<cr_interfaces::srv::FreezeScene>(instance_name, conf, params) {}
 
-        bool FreezeScene::setRequest(typename Request::SharedPtr& request)
+        bool FreezeScene::setRequest(typename Request::SharedPtr &request)
         {
             request->freeze = true;
             return true;
@@ -108,188 +106,6 @@ namespace cr
             }
             RCLCPP_INFO(logger(), "The planning scene was successfully frozen.");
             return BT::NodeStatus::SUCCESS;
-        }
-
-        // ------------------------------------------------------------------------------------------------------------------
-        //                                       Action Wrapper - EXECUTE PICK
-        // ------------------------------------------------------------------------------------------------------------------
-        ExecutePick::ExecutePick(const std::string &instance_name, const BT::NodeConfig &conf, const BT::RosNodeParams &params)
-            : BT::RosActionNode<cr_interfaces::action::Pick>(instance_name, conf, params) {}
-
-        BT::PortsList ExecutePick::providedPorts()
-        {
-            return BT::RosActionNode<cr_interfaces::action::Pick>::providedBasicPorts({BT::InputPort<cr_interfaces::msg::ObjectInfo>("object_info")});
-        }
-
-        bool ExecutePick::setGoal(Goal &goal)
-        {
-            cr_interfaces::msg::ObjectInfo obj;
-            if (!getInput<cr_interfaces::msg::ObjectInfo>("object_info", obj))
-            {
-                BT_ACTION_LOG_ERROR("missing required input [object_info]");
-                return false;
-            }
-            goal.object_info = obj;
-            BT_ACTION_LOG_INFO("goal populated");
-            return true;
-        }
-
-        BT::NodeStatus ExecutePick::onFailure(BT::ActionNodeErrorCode error)
-        {
-            switch (error)
-            {
-            case BT::ActionNodeErrorCode::SERVER_UNREACHABLE:
-                BT_ACTION_LOG_ERROR("server unreachable");
-                break;
-            case BT::ActionNodeErrorCode::SEND_GOAL_TIMEOUT:
-                BT_ACTION_LOG_ERROR("send-goal timeout");
-                break;
-            case BT::ActionNodeErrorCode::GOAL_REJECTED_BY_SERVER:
-                BT_ACTION_LOG_ERROR("goal rejected by server");
-                break;
-            case BT::ActionNodeErrorCode::ACTION_ABORTED:
-                BT_ACTION_LOG_ERROR("action aborted by server");
-                break;
-            case BT::ActionNodeErrorCode::ACTION_CANCELLED:
-                BT_ACTION_LOG_WARN("action cancelled");
-                break;
-            case BT::ActionNodeErrorCode::INVALID_GOAL:
-                BT_ACTION_LOG_ERROR("invalid goal");
-                break;
-            default:
-                BT_ACTION_LOG_ERROR("unknown error code [%d]", static_cast<int>(error));
-                break;
-            }
-            return BT::NodeStatus::FAILURE;
-        }
-
-        BT::NodeStatus ExecutePick::onFeedback(const std::shared_ptr<const Feedback> fb)
-        {
-            float pct = fb->percentage;
-            BT_ACTION_LOG_INFO("progress %.1f%%", pct);
-            return BT::NodeStatus::RUNNING;
-        }
-
-        BT::NodeStatus ExecutePick::onResultReceived(const WrappedResult &result)
-        {
-            switch (result.code)
-            {
-            case rclcpp_action::ResultCode::SUCCEEDED:
-                if (result.result->success)
-                {
-                    BT_ACTION_LOG_INFO("succeeded");
-                    return BT::NodeStatus::SUCCESS;
-                }
-                BT_ACTION_LOG_WARN("completed with failure");
-                return BT::NodeStatus::FAILURE;
-
-            case rclcpp_action::ResultCode::ABORTED:
-                BT_ACTION_LOG_ERROR("aborted by server");
-                return BT::NodeStatus::FAILURE;
-
-            case rclcpp_action::ResultCode::CANCELED:
-                BT_ACTION_LOG_WARN("cancelled");
-                return BT::NodeStatus::FAILURE;
-
-            default:
-                BT_ACTION_LOG_ERROR("unknown result code");
-                return BT::NodeStatus::FAILURE;
-            }
-        }
-
-        // ------------------------------------------------------------------------------------------------------------------
-        //                                       Action Wrapper - EXECUTE PLACE
-        // ------------------------------------------------------------------------------------------------------------------
-        ExecutePlace::ExecutePlace(const std::string &instance_name, const BT::NodeConfig &conf, const BT::RosNodeParams &params)
-            : BT::RosActionNode<cr_interfaces::action::Place>(instance_name, conf, params) {}
-
-        BT::PortsList ExecutePlace::providedPorts()
-        {
-            return BT::RosActionNode<cr_interfaces::action::Place>::providedBasicPorts({BT::InputPort<cr_interfaces::msg::ObjectInfo>("object_info"),
-                                                                                        BT::InputPort<geometry_msgs::msg::Point>("target_position")});
-        }
-
-        bool ExecutePlace::setGoal(Goal &goal)
-        {
-            cr_interfaces::msg::ObjectInfo obj;
-            geometry_msgs::msg::Point pt;
-            if (!getInput<cr_interfaces::msg::ObjectInfo>("object_info", obj))
-            {
-                BT_ACTION_LOG_ERROR("missing required input [object_info]");
-                return false;
-            }
-            if (!getInput<geometry_msgs::msg::Point>("target_position", pt))
-            {
-                BT_ACTION_LOG_ERROR("missing required input [target_position]");
-                return false;
-            }
-            goal.object_info = obj;
-            goal.target_position = pt;
-            BT_ACTION_LOG_INFO("goal populated (target: %.2f, %.2f, %.2f)", pt.x, pt.y, pt.z);
-            return true;
-        }
-
-        BT::NodeStatus ExecutePlace::onFailure(BT::ActionNodeErrorCode error)
-        {
-            switch (error)
-            {
-            case BT::ActionNodeErrorCode::SERVER_UNREACHABLE:
-                BT_ACTION_LOG_ERROR("server unreachable");
-                break;
-            case BT::ActionNodeErrorCode::SEND_GOAL_TIMEOUT:
-                BT_ACTION_LOG_ERROR("send-goal timeout");
-                break;
-            case BT::ActionNodeErrorCode::GOAL_REJECTED_BY_SERVER:
-                BT_ACTION_LOG_ERROR("goal rejected by server");
-                break;
-            case BT::ActionNodeErrorCode::ACTION_ABORTED:
-                BT_ACTION_LOG_ERROR("action aborted by server");
-                break;
-            case BT::ActionNodeErrorCode::ACTION_CANCELLED:
-                BT_ACTION_LOG_WARN("action cancelled");
-                break;
-            case BT::ActionNodeErrorCode::INVALID_GOAL:
-                BT_ACTION_LOG_ERROR("invalid goal");
-                break;
-            default:
-                BT_ACTION_LOG_ERROR("unknown error code [%d]", static_cast<int>(error));
-                break;
-            }
-            return BT::NodeStatus::FAILURE;
-        }
-
-        BT::NodeStatus ExecutePlace::onFeedback(const std::shared_ptr<const Feedback> fb)
-        {
-            float pct = fb->percentage;
-            BT_ACTION_LOG_INFO("progress %.1f%%", pct);
-            return BT::NodeStatus::RUNNING;
-        }
-
-        BT::NodeStatus ExecutePlace::onResultReceived(const WrappedResult &result)
-        {
-            switch (result.code)
-            {
-            case rclcpp_action::ResultCode::SUCCEEDED:
-                if (result.result->success)
-                {
-                    BT_ACTION_LOG_INFO("succeeded: %s", result.result->result_msg.c_str());
-                    return BT::NodeStatus::SUCCESS;
-                }
-                BT_ACTION_LOG_WARN("completed with failure: %s", result.result->result_msg.c_str());
-                return BT::NodeStatus::FAILURE;
-
-            case rclcpp_action::ResultCode::ABORTED:
-                BT_ACTION_LOG_ERROR("aborted by server");
-                return BT::NodeStatus::FAILURE;
-
-            case rclcpp_action::ResultCode::CANCELED:
-                BT_ACTION_LOG_WARN("cancelled");
-                return BT::NodeStatus::FAILURE;
-
-            default:
-                BT_ACTION_LOG_ERROR("unknown result code");
-                return BT::NodeStatus::FAILURE;
-            }
         }
 
         // ------------------------------------------------------------------------------------------------------------------
@@ -314,6 +130,103 @@ namespace cr
             RCLCPP_INFO(rclcpp::get_logger("LogMessageNode"), "BT_LOG: %s",
                         msg.value().c_str());
             return BT::NodeStatus::SUCCESS;
+        }
+
+        // ------------------------------------------------------------------------------------------------------------------
+        //                                        Condition Node - IsAreaSafe
+        // ------------------------------------------------------------------------------------------------------------------
+        IsAreaSafe::IsAreaSafe(const std::string &name, const BT::NodeConfig &config)
+            : BT::ConditionNode(name, config)
+        {
+
+            // Recuperiamo il nodo ROS dalla blackboard
+            auto ros_node = config.blackboard->get<rclcpp::Node::SharedPtr>("ros_node");
+
+            // Sottoscrizione al topic di sicurezza
+            sub_ = ros_node->create_subscription<std_msgs::msg::Bool>(
+                "/cr/human_near", rclcpp::QoS(10),
+                [this](const std_msgs::msg::Bool::SharedPtr msg)
+                { human_near_.store(msg->data, std::memory_order_relaxed); });
+        }
+
+        BT::PortsList IsAreaSafe::providedPorts() { return {}; }
+
+        BT::NodeStatus IsAreaSafe::tick()
+        {
+            // Area sicura ↔ non c’è umano vicino
+            return human_near_.load(std::memory_order_relaxed)
+                       ? BT::NodeStatus::FAILURE
+                       : BT::NodeStatus::SUCCESS;
+        }
+
+        // ------------------------------------------------------------------------------------------------------------------
+        //                                       Attesa di Area Safe
+        // ------------------------------------------------------------------------------------------------------------------
+        EnsureAreaIsSafe::EnsureAreaIsSafe(const std::string &name, const BT::NodeConfig &config)
+            : BT::CoroActionNode(name, config)
+        {
+
+            node_ = config.blackboard->get<rclcpp::Node::SharedPtr>("ros_node"); // Assicurati che "ros_node" sia nella blackboard
+            if (!node_)
+            {
+                throw BT::RuntimeError("Missing 'ros_node' in blackboard for EnsureAreaIsSafe");
+            }
+
+            // Sottoscrivi al topic di sicurezza
+            // Assicurati che il topic e il QoS siano corretti
+            safety_subscription_ = node_->create_subscription<std_msgs::msg::Bool>(
+                "/cr/human_near", rclcpp::QoS(10),
+                std::bind(&EnsureAreaIsSafe::safetyCallback, this, std::placeholders::_1));
+
+            RCLCPP_INFO(node_->get_logger(), "[EnsureAreaIsSafe] Initialized.");
+            // Potresti voler leggere lo stato iniziale della sicurezza qui se disponibile,
+            // altrimenti si basa sul valore di default e sul primo callback.
+        }
+
+        BT::NodeStatus EnsureAreaIsSafe::tick()
+        {
+            if (area_is_currently_safe_.load(std::memory_order_relaxed))
+            {
+                if (first_tick_unsafe_logged_)
+                { // Se prima era insicuro e ora è sicuro
+                    RCLCPP_INFO(node_->get_logger(), "[EnsureAreaIsSafe] Area is NOW SAFE. Proceeding.");
+                    first_tick_unsafe_logged_ = false; // Resetta il flag
+                }
+                return BT::NodeStatus::SUCCESS;
+            }
+            else
+            {
+                // Area non è sicura
+                if (!first_tick_unsafe_logged_)
+                {
+                    RCLCPP_WARN(node_->get_logger(), "[EnsureAreaIsSafe] Area is UNSAFE. Pausing operation until area is safe...");
+                    first_tick_unsafe_logged_ = true;
+                }
+                // Logga meno frequentemente per non inondare i log
+                RCLCPP_INFO_THROTTLE(node_->get_logger(), *node_->get_clock(), 5000, "[EnsureAreaIsSafe] Still waiting for area to become safe...");
+                return BT::NodeStatus::RUNNING; // Mantiene l'albero in attesa
+            }
+        }
+
+        void EnsureAreaIsSafe::halt()
+        {
+            RCLCPP_INFO(node_->get_logger(), "[EnsureAreaIsSafe] Halted.");
+            first_tick_unsafe_logged_ = false; // Resetta in caso di halt
+            CoroActionNode::halt();            // Chiamata al metodo della classe base
+        }
+
+        void EnsureAreaIsSafe::safetyCallback(const std_msgs::msg::Bool::SharedPtr msg)
+        {
+            bool previously_safe = area_is_currently_safe_.exchange(!msg->data, std::memory_order_relaxed);
+            if (previously_safe && msg->data)
+            {
+                RCLCPP_WARN(node_->get_logger(), "[EnsureAreaIsSafe] Safety status changed: Area became UNSAFE.");
+            }
+            else if (!previously_safe && !msg->data)
+            {
+                RCLCPP_INFO(node_->get_logger(), "[EnsureAreaIsSafe] Safety status changed: Area became SAFE.");
+                // Non è necessario fare nulla qui, il prossimo tick() lo rileverà.
+            }
         }
 
     } // namespace bt_nodes
