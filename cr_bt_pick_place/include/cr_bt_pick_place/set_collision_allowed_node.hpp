@@ -1,12 +1,12 @@
-#ifndef CR_BT_PICK_PLACE__SET_COLLISION_ALLOWED_NODE_HPP_
-#define CR_BT_PICK_PLACE__SET_COLLISION_ALLOWED_NODE_HPP_
+#ifndef CR_BT_PICK_PLACE_NODES__SET_COLLISION_ALLOWED_NODE_HPP_
+#define CR_BT_PICK_PLACE_NODES__SET_COLLISION_ALLOWED_NODE_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 #include <cr_interfaces/srv/allow_collision.hpp>
 #include <behaviortree_cpp/behavior_tree.h>
 #include <behaviortree_ros2/bt_service_node.hpp>
 
-namespace cr::bt::pick_place
+namespace cr::bt::pick_place::nodes
 {
     // ------------------------------------------------------------------------------------------------------------------
     //                                       Service Wrapper - SET ALLOW COLLISION

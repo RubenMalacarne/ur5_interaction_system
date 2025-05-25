@@ -1,42 +1,42 @@
-<root BTCPP_format="4" main_tree_to_execute="Pick">
+<root BTCPP_format="4">
     <BehaviorTree ID="Pick">
         <SequenceWithMemory>
-
-            <!-- Step 1: compute how much to move upward (pre-approach Z) -->
+            <!-- Step 1: compute pre-approach position -->
             <Script code="pre_approach_z_coord := object_center_z + object_size_z / 2.0 + pre_approach_distance" />
-            <!-- Step 2: vertical movement upward -->
-            <ArmVerticalMove name="MoveToPreApproachZ"
-                             target_z="{pre_approach_z_coord}" />
+            
+            <!-- Step 2: move to pre-approach position -->
+            <Action ID="ArmVerticalMove" name="MoveToPreApproachZ"
+                    target_z="{pre_approach_z_coord}" />
 
-            <!-- Step 3: horizontal movement above the object -->
-            <ArmHorizontalMove name="AlignOverObject"
-                               target_x="{object_center_x}"
-                               target_y="{object_center_y}" />
+            <!-- Step 3: align horizontally over object -->
+            <Action ID="ArmHorizontalMove" name="AlignOverObject"
+                    target_x="{object_center_x}"
+                    target_y="{object_center_y}" />
 
-            <!-- Step 4: open the gripper -->
-            <SetGripper name="OpenGripper" target="{gripper_open}" />
+            <!-- Step 4: open gripper -->
+            <Action ID="SetGripper" name="OpenGripper" target="{gripper_open}" />
 
-            <!-- Step 5: compute how much to move downward for approaching the object -->
+            <!-- Step 5: compute approach position -->
             <Script code="approach_z_coord := object_center_z + object_size_z / 2.0 + approach_distance" />
-            <!-- Step 6: approach the object -->
-            <ArmVerticalMove name="MoveToApproachZ"
-                             target_z="{approach_z_coord}" />
+            
+            <!-- Step 6: approach object -->
+            <Action ID="ArmVerticalMove" name="MoveToApproachZ"
+                    target_z="{approach_z_coord}" />
 
-            <!-- Step 7: allow collisions between the gripper and the object -->
-            <SetCollisionAllowed name= "DisableCollisions"
-                                 object_id="{object_id}"
-                                 is_allowed="true" />
+            <!-- Step 7: allow collisions -->
+            <Action ID="SetCollisionAllowed" name="DisableCollisions"
+                    object_id="{object_id}"
+                    is_allowed="true" />
 
-            <!-- Step 8: close the gripper -->
-            <SetGripper name="CloseGripper" target="{gripper_close}" />
+            <!-- Step 8: close gripper -->
+            <Action ID="SetGripper" name="CloseGripper" target="{gripper_close}" />
 
-            <!-- Step 9: attach the object to the end-effector in the MoveIt scene -->
-            <SetObjectAttached name= "AttachObject"
-                                 object_id="{object_id}"
-                                 attach="true" />
+            <!-- Step 9: attach object -->
+            <Action ID="SetObjectAttached" name="AttachObject"
+                    object_id="{object_id}"
+                    attach="true" />
 
-           <LogMessage message="Pick sequence completed!"/>
-
+            <LogMessage message="Pick sequence completed!"/>
         </SequenceWithMemory>
     </BehaviorTree>
 </root>

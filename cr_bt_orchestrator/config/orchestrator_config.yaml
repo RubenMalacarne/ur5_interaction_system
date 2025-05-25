@@ -1,4 +1,9 @@
-cr_bt_orchestrator:
+orchestrator:
   ros__parameters:
-    gripper_open: 0.0
-    gripper_close: 0.8
+    pre_approach_distance: 0.15
+    approach_distance: 0.06
+    gripper_open_value: 0.0
+    gripper_close_value: 0.8
+    home_z_position: 1.25
+    place_offset_x: 0.1
+    place_offset_z: 0.1

@@ -3,7 +3,7 @@
 #include <rclcpp/rclcpp.hpp>                   // Necessario per RCLCPP_... logging
 #include <cr_motion_core/motion_commander.hpp> // Necessario per MotionCommander e MotionStatus
 
-using namespace cr::bt::pick_place;
+using namespace cr::bt::pick_place::nodes;
 using BT::NodeStatus;
 
 SetGripperNode::SetGripperNode(const std::string &name,

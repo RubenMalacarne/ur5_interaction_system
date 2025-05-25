@@ -1,4 +1,4 @@
-#ifndef CR_BT_PICK_PLACE__SET_GRIPPER_NODE_HPP_
+#ifndef CR_BT_PICK_PLACE_NODES__SET_GRIPPER_NODE_HPP_
 #define CR_BT_PICK_PLACE__SET_GRIPPER_NODE_HPP_
 
 #include <behaviortree_cpp/action_node.h>
@@ -8,7 +8,7 @@
 
 #include "cr_motion_core/motion_commander.hpp" // Necessario per MotionCommander e MotionStatus
 
-namespace cr::bt::pick_place
+namespace cr::bt::pick_place::nodes
 {
 
     class SetGripperNode : public BT::StatefulActionNode

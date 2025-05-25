@@ -1,9 +1,9 @@
-#include "cr_bt_pick_place/arm_horizontal_move_node.hpp" // Modifica qui
+#include "cr_bt_pick_place/arm_horizontal_move_node.hpp"
 #include <behaviortree_cpp/bt_factory.h>
 #include <rclcpp/rclcpp.hpp>
 #include <cr_motion_core/motion_commander.hpp>
 
-using namespace cr::bt::pick_place;
+using namespace cr::bt::pick_place::nodes;
 using BT::NodeStatus;
 
 ArmHorizontalMoveNode::ArmHorizontalMoveNode(const std::string &name,

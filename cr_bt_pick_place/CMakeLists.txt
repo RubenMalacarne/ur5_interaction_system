@@ -10,6 +10,7 @@ find_package(behaviortree_cpp REQUIRED)
 find_package(cr_motion_core REQUIRED)
 find_package(behaviortree_ros2 REQUIRED)
 find_package(cr_interfaces REQUIRED)
+find_package(cr_bt_common REQUIRED)
 
 # ------------------------------------------------------------
 # 1) Creazione libreria di plugin
@@ -18,6 +19,7 @@ add_library(cr_bt_pick_place_nodes SHARED
   src/arm_horizontal_move_node.cpp
   src/arm_vertical_move_node.cpp
   src/set_gripper_node.cpp
+  src/bt_nodes_factory.cpp
   src/set_collision_allowed_node.cpp
   src/set_object_attached_node.cpp
 )
@@ -27,6 +29,7 @@ ament_target_dependencies(cr_bt_pick_place_nodes
   cr_motion_core
   behaviortree_ros2
   cr_interfaces
+  cr_bt_common
 )
 
 # ------------------------------------------------------------
@@ -56,7 +59,7 @@ install(
 
 install(DIRECTORY bt_xml/
   DESTINATION share/${PROJECT_NAME}/bt_xml
-  FILES_MATCHING PATTERN "*.xml"      # ← correct pattern
+  FILES_MATCHING PATTERN "*.xml"
 )
 
 
@@ -65,6 +68,6 @@ install(DIRECTORY bt_xml/
 # ------------------------------------------------------------
 ament_export_include_directories(include)
 ament_export_libraries(cr_bt_pick_place_nodes)
-ament_export_dependencies(behaviortree_cpp cr_motion_core cr_interfaces behaviortree_ros2)
+ament_export_dependencies(behaviortree_cpp cr_motion_core cr_interfaces behaviortree_ros2 cr_bt_common)
 
 ament_package()

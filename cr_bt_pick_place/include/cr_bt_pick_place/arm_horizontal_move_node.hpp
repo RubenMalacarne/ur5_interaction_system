@@ -1,5 +1,5 @@
-#ifndef CR_BT_PICK_PLACE__ARM_HORIZONTAL_MOVE_NODE_HPP_
-#define CR_BT_PICK_PLACE__ARM_HORIZONTAL_MOVE_NODE_HPP_
+#ifndef CR_BT_PICK_PLACE_NODES__ARM_HORIZONTAL_MOVE_NODE_HPP_
+#define CR_BT_PICK_PLACE_NODES__ARM_HORIZONTAL_MOVE_NODE_HPP_
 
 #include <behaviortree_cpp/action_node.h>
 #include <memory>
@@ -8,7 +8,7 @@
 
 #include "cr_motion_core/motion_commander.hpp"
 
-namespace cr::bt::pick_place
+namespace cr::bt::pick_place::nodes
 {
 
     class ArmHorizontalMoveNode : public BT::StatefulActionNode

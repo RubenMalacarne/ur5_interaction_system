@@ -3,7 +3,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <cr_motion_core/motion_commander.hpp>
 
-using namespace cr::bt::pick_place;
+using namespace cr::bt::pick_place::nodes;
 using BT::NodeStatus;
 
 ArmVerticalMoveNode::ArmVerticalMoveNode(const std::string &name,

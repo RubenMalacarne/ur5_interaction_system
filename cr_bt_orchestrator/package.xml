@@ -16,6 +16,7 @@
   <depend>cr_interfaces</depend>
   <depend>cr_motion_core</depend>
   <depend>cr_bt_pick_place</depend>
+  <depend>cr_bt_common</depend>
   <depend>ament_index_cpp</depend>
 
   <test_depend>ament_lint_auto</test_depend>

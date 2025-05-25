@@ -18,8 +18,8 @@ def generate_launch_description():
     return LaunchDescription([
         Node(
             package='cr_bt_orchestrator',
-            executable='task_planner',
-            name='task_planner',
+            executable='orchestrator',
+            name='orchestrator',
             parameters=[
                 moveit_config.to_dict(),
                 {"use_sim_time": True}

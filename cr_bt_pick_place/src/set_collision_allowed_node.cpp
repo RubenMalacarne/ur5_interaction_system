@@ -1,6 +1,6 @@
 #include "cr_bt_pick_place/set_collision_allowed_node.hpp"
 
-using namespace cr::bt::pick_place;
+using namespace cr::bt::pick_place::nodes;
 using BT::NodeStatus;
 
 SetCollisionAllowedNode::SetCollisionAllowedNode(const std::string &instance_name, const BT::NodeConfig &conf, const BT::RosNodeParams &params)
