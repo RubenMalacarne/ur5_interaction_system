@@ -1,50 +1,72 @@
 <root BTCPP_format="4" main_tree_to_execute="PickAndPlaceWorkflow">
     <BehaviorTree ID="PickAndPlaceWorkflow">
-        <RetryUntilSuccessful num_attempts="100" name="RetryUntilComplete">
-            <Sequence name="MonitoredPickAndPlaceAttempt">
-                <Action ID="EnsureAreaIsSafe" />
-                <ReactiveSequence name="PickPlaceReactive">
-                    <IsAreaSafe />
-                    <SequenceWithMemory name="PickAndPlaceSequence">
-                        <!-- 1. Freeze scene -->
-                        <Action ID="FreezeScene" freeze="true" />
 
-                        <!-- 2. Get object information -->
-                        <Action ID="GetObjectInfo"
-                            object_id="{object_id}"
-                            object_center_x="{object_center_x}"
-                            object_center_y="{object_center_y}"
-                            object_center_z="{object_center_z}"
-                            object_size_x="{object_size_x}"
-                            object_size_y="{object_size_y}"
-                            object_size_z="{object_size_z}"
-                        />
+        <!-- Fallback principale - se un umano richiede lo stop dell'esecuzione, allora l'albero deve terminare -->
+        <Fallback> 
 
-                        <!-- 3. Pick object -->
-                        <SubTree ID="Pick" _autoremap="true"
-                            object_id="{object_id}"
-                            object_center_x="{object_center_x}"
-                            object_center_y="{object_center_y}"
-                            object_center_z="{object_center_z}"
-                            object_size_z="{object_size_z}"
-                        />
+            <ReactiveSequence name="ReactiveStopChecking">
 
-                        <!-- 4. Place object -->
-                        <SubTree ID="Place" _autoremap="true"
-                            object_id="{object_id}"
-                            object_center_x="{object_center_x}"
-                            object_center_y="{object_center_y}"
-                            object_center_z="{object_center_z}"
-                            object_size_z="{object_size_z}"
-                        />
+                <Inverter>
+                    <IsStopRequested/>
+                </Inverter>
+            
 
-                        <!-- 5. Unfreeze scene -->
-                        <Action ID="FreezeScene" freeze="false" />
+                <RetryUntilSuccessful num_attempts="100" name="RetryUntilComplete">
+                    <Sequence name="MonitoredPickAndPlaceAttempt">
+                        <Action ID="WaitForTheGoAhead" />
+                        <ReactiveSequence name="PickPlaceReactive">
+                            <IsAreaSafe />
+                            <Inverter>
+                                <IsPauseRequested />
+                            </Inverter>
+                            <SequenceWithMemory name="PickAndPlaceSequence">
+                                <!-- 1. Freeze scene -->
+                                <Action ID="FreezeScene" freeze="true" />
 
-                        <LogMessage message="Workflow successfully completed!" />
-                    </SequenceWithMemory>
-                </ReactiveSequence>
-            </Sequence>
-        </RetryUntilSuccessful>
+                                <!-- 2. Get object information -->
+                                <Action ID="GetObjectInfo"
+                                    object_id="{object_id}"
+                                    object_center_x="{object_center_x}"
+                                    object_center_y="{object_center_y}"
+                                    object_center_z="{object_center_z}"
+                                    object_size_x="{object_size_x}"
+                                    object_size_y="{object_size_y}"
+                                    object_size_z="{object_size_z}"
+                                />
+
+                                <!-- 3. Pick object -->
+                                <SubTree ID="Pick" _autoremap="true"
+                                    object_id="{object_id}"
+                                    object_center_x="{object_center_x}"
+                                    object_center_y="{object_center_y}"
+                                    object_center_z="{object_center_z}"
+                                    object_size_z="{object_size_z}"
+                                />
+
+                                <!-- 4. Place object -->
+                                <SubTree ID="Place" _autoremap="true"
+                                    object_id="{object_id}"
+                                    object_center_x="{object_center_x}"
+                                    object_center_y="{object_center_y}"
+                                    object_center_z="{object_center_z}"
+                                    object_size_z="{object_size_z}"
+                                />
+
+                                <!-- 5. Unfreeze scene -->
+                                <Action ID="FreezeScene" freeze="false" />
+
+                                <LogMessage message="Workflow successfully completed!" />
+                            </SequenceWithMemory>
+                        </ReactiveSequence>
+                    </Sequence>
+                </RetryUntilSuccessful>
+
+            </ReactiveSequence>
+
+            <!-- Se è stato richiesto uno stop durante l'esecuzione del workflow, l'albero deve terminare -->
+            <LogMessage message="Execution successfully blocked!" />
+
+        </Fallback>
+
     </BehaviorTree>
 </root>

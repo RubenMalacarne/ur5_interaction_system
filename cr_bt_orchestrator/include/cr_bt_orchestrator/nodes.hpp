@@ -79,12 +79,48 @@ namespace cr::bt::orchestrator::nodes
 	};
 
 	// ------------------------------------------------------------------------------------------------------------------
-	//                                       Action Node - EnsureAreaIsSafe
+	//                                       Condition Node - IsStopRequested
 	// ------------------------------------------------------------------------------------------------------------------
-	class EnsureAreaIsSafe : public BT::CoroActionNode
+	class IsStopRequested : public BT::ConditionNode
 	{
 	public:
-		EnsureAreaIsSafe(const std::string &name, const BT::NodeConfig &config);
+		IsStopRequested(const std::string &name, const BT::NodeConfig &config);
+
+		static BT::PortsList providedPorts();
+
+		BT::NodeStatus tick() override;
+		void updateStopRequestedStatus(bool is_safe);
+
+	private:
+		rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr stop_command_sub_;
+		std::atomic<bool> stop_requested_{false};
+	};
+
+	// ------------------------------------------------------------------------------------------------------------------
+	//                                       Condition Node - IsPauseRequested
+	// ------------------------------------------------------------------------------------------------------------------
+	class IsPauseRequested : public BT::ConditionNode
+	{
+	public:
+		IsPauseRequested(const std::string &name, const BT::NodeConfig &config);
+
+		static BT::PortsList providedPorts();
+
+		BT::NodeStatus tick() override;
+		void updatePauseRequestedStatus(bool is_safe);
+
+	private:
+		rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr pause_command_sub_;
+		std::atomic<bool> pause_requested_{false};
+	};
+
+	// ------------------------------------------------------------------------------------------------------------------
+	//                                       Action Node - WaitForTheGoAhead
+	// ------------------------------------------------------------------------------------------------------------------
+	class WaitForTheGoAhead : public BT::CoroActionNode
+	{
+	public:
+		WaitForTheGoAhead(const std::string &name, const BT::NodeConfig &config);
 
 		static BT::PortsList providedPorts() { return {}; }
 
@@ -93,11 +129,17 @@ namespace cr::bt::orchestrator::nodes
 
 	private:
 		void safetyCallback(const std_msgs::msg::Bool::SharedPtr msg);
+		void pauseCallback(const std_msgs::msg::Bool::SharedPtr msg);
 
 		rclcpp::Node::SharedPtr node_;
 		rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr safety_subscription_;
+		rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr pause_command_sub_;
+
+		std::atomic<bool> human_resume_requested_{true};
 		std::atomic<bool> area_is_currently_safe_{false};
+
 		bool first_tick_unsafe_logged_{false};
+		bool first_tick_pause_logged_{false};
 	};
 
 } // namespace cr::bt::orchestrator::nodes

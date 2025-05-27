@@ -182,73 +182,180 @@ namespace cr::bt::orchestrator::nodes
     }
 
     // ------------------------------------------------------------------------------------------------------------------
-    //                                       Action Node - EnsureAreaIsSafe
+    //                                       Condition Node - IsStopRequested
+    // ------------------------------------------------------------------------------------------------------------------
+    IsStopRequested::IsStopRequested(const std::string &name, const BT::NodeConfig &config)
+        : BT::ConditionNode(name, config)
+    {
+        auto ros_node = config.blackboard->get<rclcpp::Node::SharedPtr>("ros_node");
+        if (!ros_node)
+        {
+            throw BT::RuntimeError("Missing 'ros_node' in blackboard for IsStopRequested");
+        }
+
+        stop_command_sub_ = ros_node->create_subscription<std_msgs::msg::Bool>(
+            "/cr/stop_command",
+            rclcpp::QoS(10),
+            [this](const std_msgs::msg::Bool::SharedPtr msg)
+            {
+                stop_requested_.store(msg->data, std::memory_order_relaxed);
+            });
+    }
+
+    BT::PortsList IsStopRequested::providedPorts()
+    {
+        return {};
+    }
+
+    BT::NodeStatus IsStopRequested::tick()
+    {
+        return stop_requested_.load(std::memory_order_relaxed)
+                   ? BT::NodeStatus::SUCCESS
+                   : BT::NodeStatus::FAILURE;
+    }
+
+    void IsStopRequested::updateStopRequestedStatus(bool is_stop_requested)
+    {
+        stop_requested_.store(is_stop_requested, std::memory_order_relaxed);
+    }
+
+    // ------------------------------------------------------------------------------------------------------------------
+    //                                       Condition Node - IsPauseRequested
+    // ------------------------------------------------------------------------------------------------------------------
+    IsPauseRequested::IsPauseRequested(const std::string &name, const BT::NodeConfig &config)
+        : BT::ConditionNode(name, config)
+    {
+        auto ros_node = config.blackboard->get<rclcpp::Node::SharedPtr>("ros_node");
+        if (!ros_node)
+        {
+            throw BT::RuntimeError("Missing 'ros_node' in blackboard for IsStopRequested");
+        }
+
+        pause_command_sub_ = ros_node->create_subscription<std_msgs::msg::Bool>(
+            "/cr/pause_command",
+            rclcpp::QoS(10),
+            [this](const std_msgs::msg::Bool::SharedPtr msg)
+            {
+                pause_requested_.store(msg->data, std::memory_order_relaxed);
+            });
+    }
+
+    BT::PortsList IsPauseRequested::providedPorts()
+    {
+        return {};
+    }
+
+    BT::NodeStatus IsPauseRequested::tick()
+    {
+        return pause_requested_.load(std::memory_order_relaxed)
+                   ? BT::NodeStatus::SUCCESS
+                   : BT::NodeStatus::FAILURE;
+    }
+
+    void IsPauseRequested::updatePauseRequestedStatus(bool is_stop_requested)
+    {
+        pause_requested_.store(is_stop_requested, std::memory_order_relaxed);
+    }
+
+    // ------------------------------------------------------------------------------------------------------------------
+    //                                       Action Node - WaitForTheGoAhead
     // ------------------------------------------------------------------------------------------------------------------
 
-    EnsureAreaIsSafe::EnsureAreaIsSafe(const std::string &name, const BT::NodeConfig &config)
+    WaitForTheGoAhead::WaitForTheGoAhead(const std::string &name,
+                                         const BT::NodeConfig &config)
         : BT::CoroActionNode(name, config)
     {
         node_ = config.blackboard->get<rclcpp::Node::SharedPtr>("ros_node");
         if (!node_)
         {
-            throw BT::RuntimeError("Missing 'ros_node' in blackboard for EnsureAreaIsSafe");
+            throw BT::RuntimeError("Missing 'ros_node' in blackboard for WaitForTheGoAhead");
         }
 
         safety_subscription_ = node_->create_subscription<std_msgs::msg::Bool>(
             "/cr/human_near",
             rclcpp::QoS(10),
-            std::bind(&EnsureAreaIsSafe::safetyCallback, this, std::placeholders::_1));
+            std::bind(&WaitForTheGoAhead::safetyCallback, this, std::placeholders::_1));
 
-        RCLCPP_INFO(node_->get_logger(), "[EnsureAreaIsSafe] Initialized");
+        pause_command_sub_ = node_->create_subscription<std_msgs::msg::Bool>(
+            "/cr/pause_command",
+            rclcpp::QoS(10),
+            std::bind(&WaitForTheGoAhead::pauseCallback, this, std::placeholders::_1));
+
+        RCLCPP_INFO(node_->get_logger(), "[WaitForTheGoAhead] Initialized");
     }
 
-    BT::NodeStatus EnsureAreaIsSafe::tick()
+    BT::NodeStatus WaitForTheGoAhead::tick()
     {
-        if (area_is_currently_safe_.load(std::memory_order_relaxed))
+        // 1) Controllo sicurezza area
+        if (!area_is_currently_safe_.load(std::memory_order_relaxed))
         {
-            if (first_tick_unsafe_logged_)
+            if (!first_tick_unsafe_logged_)
             {
-                RCLCPP_INFO(node_->get_logger(), "[EnsureAreaIsSafe] Area is now safe, proceeding");
-                first_tick_unsafe_logged_ = false;
+                RCLCPP_WARN(node_->get_logger(),
+                            "[WaitForTheGoAhead] Area unsafe, pausing until safe");
+                first_tick_unsafe_logged_ = true;
             }
-            return BT::NodeStatus::SUCCESS;
+            RCLCPP_INFO_THROTTLE(
+                node_->get_logger(),
+                *node_->get_clock(),
+                5000,
+                "[WaitForTheGoAhead] Waiting for area to become safe");
+            return BT::NodeStatus::RUNNING;
         }
-
-        if (!first_tick_unsafe_logged_)
+        else if (first_tick_unsafe_logged_)
         {
-            RCLCPP_WARN(node_->get_logger(), "[EnsureAreaIsSafe] Area unsafe, pausing until safe");
-            first_tick_unsafe_logged_ = true;
+            RCLCPP_INFO(node_->get_logger(),
+                        "[WaitForTheGoAhead] Area is now safe");
+            first_tick_unsafe_logged_ = false;
         }
 
-        RCLCPP_INFO_THROTTLE(
-            node_->get_logger(),
-            *node_->get_clock(),
-            5000,
-            "[EnsureAreaIsSafe] Waiting for area to become safe");
+        // 2) Controllo richiesta resume
+        if (!human_resume_requested_.load(std::memory_order_relaxed))
+        {
+            if (!first_tick_pause_logged_)
+            {
+                RCLCPP_WARN(node_->get_logger(),
+                            "[WaitForTheGoAhead] Human requested pause, waiting for resume");
+                first_tick_pause_logged_ = true;
+            }
+            RCLCPP_INFO_THROTTLE(
+                node_->get_logger(),
+                *node_->get_clock(),
+                5000,
+                "[WaitForTheGoAhead] Waiting for human resume");
+            return BT::NodeStatus::RUNNING;
+        }
+        else if (first_tick_pause_logged_)
+        {
+            RCLCPP_INFO(node_->get_logger(),
+                        "[WaitForTheGoAhead] Human resumed, proceeding");
+            first_tick_pause_logged_ = false;
+        }
 
-        return BT::NodeStatus::RUNNING;
+        // 3) Tutto ok: SUCCESS
+        return BT::NodeStatus::SUCCESS;
     }
 
-    void EnsureAreaIsSafe::halt()
+    void WaitForTheGoAhead::halt()
     {
-        RCLCPP_INFO(node_->get_logger(), "[EnsureAreaIsSafe] Halted");
+        RCLCPP_INFO(node_->get_logger(), "[WaitForTheGoAhead] Halted");
         first_tick_unsafe_logged_ = false;
+        first_tick_pause_logged_ = false;
         CoroActionNode::halt();
     }
 
-    void EnsureAreaIsSafe::safetyCallback(const std_msgs::msg::Bool::SharedPtr msg)
+    void WaitForTheGoAhead::safetyCallback(const std_msgs::msg::Bool::SharedPtr msg)
     {
-        const bool new_safe_status = !msg->data;
-        const bool was_safe = area_is_currently_safe_.exchange(new_safe_status, std::memory_order_relaxed);
+        // msg->data == true  → umano vicino  → area non sicura
+        bool new_safe = !msg->data;
+        area_is_currently_safe_.store(new_safe, std::memory_order_relaxed);
+    }
 
-        if (was_safe && !new_safe_status)
-        {
-            RCLCPP_WARN(node_->get_logger(), "[EnsureAreaIsSafe] Area became unsafe");
-        }
-        else if (!was_safe && new_safe_status)
-        {
-            RCLCPP_INFO(node_->get_logger(), "[EnsureAreaIsSafe] Area became safe");
-        }
+    void WaitForTheGoAhead::pauseCallback(const std_msgs::msg::Bool::SharedPtr msg)
+    {
+        // msg->data == true  → umano chiede pausa  → resume_requested = false
+        bool new_resume = !msg->data;
+        human_resume_requested_.store(new_resume, std::memory_order_relaxed);
     }
 
 } // namespace cr::bt::orchestrator::nodes

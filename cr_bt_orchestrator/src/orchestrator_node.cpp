@@ -5,6 +5,9 @@
 #include <cr_bt_pick_place/bt_nodes_factory.hpp>
 #include <cr_motion_core/motion_commander.hpp>
 
+#include <behaviortree_cpp/xml_parsing.h>
+#include <fstream>
+
 #include <thread>
 
 using namespace std::chrono_literals;
@@ -66,8 +69,10 @@ namespace cr::bt::orchestrator
         get_object_info_params.default_port_value = "cr/get_object_info";
         factory_.registerNodeType<nodes::GetObjectInfo>("GetObjectInfo", get_object_info_params);
 
+        factory_.registerNodeType<nodes::IsStopRequested>("IsStopRequested");
+        factory_.registerNodeType<nodes::IsPauseRequested>("IsPauseRequested");
         factory_.registerNodeType<nodes::IsAreaSafe>("IsAreaSafe");
-        factory_.registerNodeType<nodes::EnsureAreaIsSafe>("EnsureAreaIsSafe");
+        factory_.registerNodeType<nodes::WaitForTheGoAhead>("WaitForTheGoAhead");
 
         factory_.registerNodeType<cr::bt::common::LogMessageNode>("LogMessage");
 
@@ -92,6 +97,10 @@ namespace cr::bt::orchestrator
         }
 
         bt_factory_initialized_ = true;
+        std::string xml_models = BT::writeTreeNodesModelXML(factory_);
+        std::ofstream out("tree_nodes_model.xml");
+        out << xml_models;
+
         if (setup_timer_)
         {
             setup_timer_->cancel();
