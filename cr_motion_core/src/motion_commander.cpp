@@ -119,6 +119,54 @@ namespace cr::motion_core
         return async_cartesian_move(target_pose);
     }
 
+    std::shared_future<MotionStatus> MotionCommander::async_go_home()
+    {
+        if (arm_task_future_.valid() &&
+            arm_task_future_.wait_for(0s) == std::future_status::timeout)
+        {
+            RCLCPP_WARN(node_->get_logger(),
+                        "Richiesta go_home ignorata: braccio occupato");
+            return std::shared_future<MotionStatus>();
+        }
+
+        if (!waitForRobotState(2.0))
+        {
+            std::promise<MotionStatus> p;
+            p.set_value(MotionStatus::FAILED);
+            return p.get_future().share();
+        }
+
+        arm_group_->setNamedTarget("home");
+
+        moveit::planning_interface::MoveGroupInterface::Plan plan;
+        auto plan_result = arm_group_->plan(plan);
+        if (plan_result != moveit::core::MoveItErrorCode::SUCCESS)
+        {
+            std::string err_str = moveit::core::error_code_to_string(plan_result);
+            RCLCPP_ERROR(node_->get_logger(),
+                         "[MotionCommander] pianificazione go_home fallita: %s",
+                         err_str.c_str());
+            std::promise<MotionStatus> p;
+            p.set_value(MotionStatus::FAILED);
+            arm_task_future_ = p.get_future().share();
+            return arm_task_future_;
+        }
+
+        std::promise<MotionStatus> task_promise;
+        arm_task_future_ = task_promise.get_future().share();
+
+        std::thread([this, plan = std::move(plan), p = std::move(task_promise)]() mutable
+                    {
+        auto ec = arm_group_->execute(plan);
+        if (ec == moveit::core::MoveItErrorCode::SUCCESS)
+            p.set_value(MotionStatus::SUCCEEDED);
+        else
+            p.set_value(MotionStatus::FAILED); })
+            .detach();
+
+        return arm_task_future_;
+    }
+
     void MotionCommander::cancel_arm_execution()
     {
         if (arm_task_future_.valid() &&
@@ -196,7 +244,7 @@ namespace cr::motion_core
     }
 
     //---------------------------------------------------------------------
-    //  METODI GRIPPER (invariati)
+    //  METODI GRIPPER
     //---------------------------------------------------------------------
 
     std::shared_future<MotionStatus> MotionCommander::async_set_gripper_joint(double target)
@@ -238,6 +286,10 @@ namespace cr::motion_core
             gripper_task_future_.wait_for(0s) == std::future_status::timeout)
         {
             gripper_group_->stop();
+
+            std::promise<MotionStatus> p;
+            p.set_value(MotionStatus::CANCELLED);
+            gripper_task_future_ = p.get_future().share();
         }
     }
 

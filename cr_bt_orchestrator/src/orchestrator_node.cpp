@@ -2,6 +2,7 @@
 #include "cr_bt_orchestrator/nodes.hpp"
 
 #include <cr_bt_common/log_message_node.hpp>
+#include <cr_bt_common/gui_log_node.hpp>
 #include <cr_bt_pick_place/bt_nodes_factory.hpp>
 #include <cr_motion_core/motion_commander.hpp>
 
@@ -37,12 +38,19 @@ namespace cr::bt::orchestrator
         RCLCPP_INFO(get_logger(), "  place_offset_x: %.3f", place_offset_x_);
         RCLCPP_INFO(get_logger(), "  place_offset_z: %.3f", place_offset_z_);
 
+        auto gui_qos = rclcpp::QoS(10).transient_local();
+        gui_log_pub_ = this->create_publisher<std_msgs::msg::String>("cr/gui_log", gui_qos);
+
         execute_workflow_server_ = rclcpp_action::create_server<ExecuteWorkflow>(
             this,
             "cr/execute_workflow",
             std::bind(&OrchestratorNode::handle_goal, this, std::placeholders::_1, std::placeholders::_2),
             std::bind(&OrchestratorNode::handle_cancel, this, std::placeholders::_1),
             std::bind(&OrchestratorNode::execute, this, std::placeholders::_1));
+
+        std_msgs::msg::String init_msg;
+        init_msg.data = "Ready to receive a flow execution request!";
+        gui_log_pub_->publish(init_msg);
 
         setup_timer_ = create_wall_timer(
             0ms,
@@ -74,6 +82,7 @@ namespace cr::bt::orchestrator
         factory_.registerNodeType<nodes::IsAreaSafe>("IsAreaSafe");
         factory_.registerNodeType<nodes::WaitForTheGoAhead>("WaitForTheGoAhead");
 
+        factory_.registerNodeType<cr::bt::common::GuiLog>("GuiLog");
         factory_.registerNodeType<cr::bt::common::LogMessageNode>("LogMessage");
 
         cr::bt::pick_place::registerNodes(factory_, shared_from_this());
@@ -153,6 +162,7 @@ namespace cr::bt::orchestrator
         );
         thread_local_blackboard->set("motion_commander", motion_commander);
         thread_local_blackboard->set<std::string>("object_id", std::to_string(goal_handle->get_goal()->object_id));
+        thread_local_blackboard->set("gui_log_pub", gui_log_pub_);
         
         loadConfigurationToBlackboard(thread_local_blackboard);
 

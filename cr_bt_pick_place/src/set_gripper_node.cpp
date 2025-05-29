@@ -1,7 +1,7 @@
 #include "cr_bt_pick_place/set_gripper_node.hpp"
 #include <behaviortree_cpp/bt_factory.h>
-#include <rclcpp/rclcpp.hpp>                   // Necessario per RCLCPP_... logging
-#include <cr_motion_core/motion_commander.hpp> // Necessario per MotionCommander e MotionStatus
+#include <rclcpp/rclcpp.hpp>
+#include <cr_motion_core/motion_commander.hpp>
 
 using namespace cr::bt::pick_place::nodes;
 using BT::NodeStatus;

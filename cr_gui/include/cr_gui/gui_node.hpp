@@ -4,7 +4,10 @@
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/image.hpp>
 #include <cv_bridge/cv_bridge.h>
+#include <std_msgs/msg/string.hpp>
 #include <QMainWindow>
+#include <QSplitter>
+#include <QPlainTextEdit>
 #include "image_widget.hpp"
 
 namespace cr::gui
@@ -17,9 +20,12 @@ namespace cr::gui
 
     private:
         void imageCb(const sensor_msgs::msg::Image::ConstSharedPtr msg);
+        void logCb(const std_msgs::msg::String::ConstSharedPtr msg);
 
         ImageWidget *image_widget_;
+        QPlainTextEdit *log_widget_;
         rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr image_sub_;
+        rclcpp::Subscription<std_msgs::msg::String>::SharedPtr log_sub_;
     };
 } // namespace cr::gui
 

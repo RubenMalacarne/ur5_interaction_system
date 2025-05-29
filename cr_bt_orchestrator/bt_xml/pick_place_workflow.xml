@@ -1,15 +1,16 @@
 <root BTCPP_format="4" main_tree_to_execute="PickAndPlaceWorkflow">
     <BehaviorTree ID="PickAndPlaceWorkflow">
 
-        <!-- Fallback principale - se un umano richiede lo stop dell'esecuzione, allora l'albero deve terminare -->
-        <Fallback> 
+        <!-- Fallback principale - se un umano richiede lo stop dell'esecuzione, allora l'albero
+        deve terminare -->
+        <Fallback>
 
             <ReactiveSequence name="ReactiveStopChecking">
 
                 <Inverter>
-                    <IsStopRequested/>
+                    <IsStopRequested />
                 </Inverter>
-            
+
 
                 <RetryUntilSuccessful num_attempts="100" name="RetryUntilComplete">
                     <Sequence name="MonitoredPickAndPlaceAttempt">
@@ -55,6 +56,9 @@
                                 <!-- 5. Unfreeze scene -->
                                 <Action ID="FreezeScene" freeze="false" />
 
+                                <!-- 6. Ritorno a casa -->
+                                <Action ID="GoHome" />
+
                                 <LogMessage message="Workflow successfully completed!" />
                             </SequenceWithMemory>
                         </ReactiveSequence>
@@ -63,8 +67,35 @@
 
             </ReactiveSequence>
 
-            <!-- Se è stato richiesto uno stop durante l'esecuzione del workflow, l'albero deve terminare -->
-            <LogMessage message="Execution successfully blocked!" />
+            <!-- Se è stato richiesto uno stop durante l'esecuzione del workflow, l'albero deve
+            terminare -->
+            <Sequence>
+                <!-- Cancellazione di ciò che era stato impostato per l'esecuzione corrente -->
+                <Action ID="SetGripper" target="{gripper_open}" />
+                <Action ID="SetObjectAttached" name="DetachObject"
+                    object_id="{object_id}"
+                    attach="false" />
+                <Action ID="SetCollisionAllowed" name="EnableCollisions"
+                    object_id="{object_id}"
+                    is_allowed="false" />
+                <Action ID="FreezeScene" freeze="false" />
+
+                <!-- Ritorno in home, sempre controllando che la zona sia Safe -->
+                <RetryUntilSuccessful num_attempts="100" name="RetryUntilComplete">
+                    <Sequence name="MonitoredPickAndPlaceAttempt">
+                        <!-- ora il parser vedrà subito il nodo registrato "WaitForTheGoAhead" -->
+                        <WaitForTheGoAhead />
+                        <ReactiveSequence name="GoHomeReactive">
+                            <IsAreaSafe />
+                            <Inverter>
+                                <IsPauseRequested />
+                            </Inverter>
+                            <GoHome />
+                        </ReactiveSequence>
+                    </Sequence>
+                </RetryUntilSuccessful>
+                <LogMessage message="Execution successfully blocked!" />
+            </Sequence>
 
         </Fallback>
 

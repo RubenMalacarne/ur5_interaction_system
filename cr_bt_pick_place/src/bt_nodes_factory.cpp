@@ -1,6 +1,7 @@
 #include "cr_bt_pick_place/bt_nodes_factory.hpp"
 #include "cr_bt_pick_place/arm_horizontal_move_node.hpp"
 #include "cr_bt_pick_place/arm_vertical_move_node.hpp"
+#include "cr_bt_pick_place/go_home_node.hpp"
 #include "cr_bt_pick_place/set_gripper_node.hpp"
 #include "cr_bt_pick_place/set_collision_allowed_node.hpp"
 #include "cr_bt_pick_place/set_object_attached_node.hpp"
@@ -19,6 +20,7 @@ namespace cr::bt::pick_place
         factory.registerNodeType<nodes::ArmHorizontalMoveNode>("ArmHorizontalMove");
         factory.registerNodeType<nodes::ArmVerticalMoveNode>("ArmVerticalMove");
         factory.registerNodeType<nodes::SetGripperNode>("SetGripper");
+        factory.registerNodeType<nodes::GoHomeNode>("GoHome");
         
         BT::RosNodeParams collision_params = default_ros_params;
         collision_params.default_port_value = "/allow_collision";

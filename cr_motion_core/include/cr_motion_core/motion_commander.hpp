@@ -36,6 +36,7 @@ namespace cr::motion_core
         // --- METODI PER IL BRACCIO ---
         std::shared_future<MotionStatus> async_vertical_move(double z);
         std::shared_future<MotionStatus> async_horizontal_move(double x, double y);
+        std::shared_future<MotionStatus> async_go_home();
         void cancel_arm_execution();
         MotionStatus get_arm_motion_status() const;
 

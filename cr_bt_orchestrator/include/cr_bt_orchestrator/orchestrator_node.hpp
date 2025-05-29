@@ -4,6 +4,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_action/rclcpp_action.hpp>
 #include <cr_interfaces/action/execute_workflow.hpp>
+#include <std_msgs/msg/string.hpp>
 #include <ament_index_cpp/get_package_share_directory.hpp>
 
 #include <behaviortree_cpp/bt_factory.h>
@@ -26,6 +27,7 @@ namespace cr::bt::orchestrator
         using GoalHandleExecuteWorkflow = rclcpp_action::ServerGoalHandle<ExecuteWorkflow>;
 
         rclcpp_action::Server<ExecuteWorkflow>::SharedPtr execute_workflow_server_;
+        rclcpp::Publisher<std_msgs::msg::String>::SharedPtr gui_log_pub_;
 
         rclcpp_action::GoalResponse handle_goal(
             const rclcpp_action::GoalUUID &uuid,
@@ -35,6 +37,7 @@ namespace cr::bt::orchestrator
             const std::shared_ptr<GoalHandleExecuteWorkflow> goal_handle);
 
         void execute(const std::shared_ptr<GoalHandleExecuteWorkflow> goal_handle);
+
 
         void loadConfigurationToBlackboard(BT::Blackboard::Ptr blackboard);
 

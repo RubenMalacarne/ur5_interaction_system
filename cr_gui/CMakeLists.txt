@@ -10,6 +10,7 @@ find_package(rclcpp REQUIRED)
 find_package(Qt5Widgets REQUIRED)
 find_package(cv_bridge REQUIRED)
 find_package(sensor_msgs REQUIRED)
+find_package(std_msgs REQUIRED)
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
@@ -25,7 +26,7 @@ add_executable(gui_viewer
 )
 
 ament_target_dependencies(gui_viewer
-  rclcpp sensor_msgs cv_bridge
+  rclcpp sensor_msgs cv_bridge std_msgs
 )
 
 target_include_directories(gui_viewer PUBLIC

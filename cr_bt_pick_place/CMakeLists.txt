@@ -20,6 +20,7 @@ add_library(cr_bt_pick_place_nodes SHARED
   src/arm_vertical_move_node.cpp
   src/set_gripper_node.cpp
   src/bt_nodes_factory.cpp
+  src/go_home_node.cpp
   src/set_collision_allowed_node.cpp
   src/set_object_attached_node.cpp
 )
