@@ -11,6 +11,7 @@ find_package(Qt5Widgets REQUIRED)
 find_package(cv_bridge REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(cr_interfaces REQUIRED)
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
@@ -26,7 +27,7 @@ add_executable(gui_viewer
 )
 
 ament_target_dependencies(gui_viewer
-  rclcpp sensor_msgs cv_bridge std_msgs
+  rclcpp sensor_msgs cv_bridge std_msgs cr_interfaces
 )
 
 target_include_directories(gui_viewer PUBLIC
@@ -45,6 +46,11 @@ install(
 
 install(TARGETS gui_viewer
   DESTINATION lib/${PROJECT_NAME}
+)
+
+install(DIRECTORY
+  launch/
+  DESTINATION share/${PROJECT_NAME}/launch
 )
 
 ament_package()

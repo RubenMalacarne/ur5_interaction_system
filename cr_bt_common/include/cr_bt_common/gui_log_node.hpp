@@ -4,6 +4,7 @@
 #include <behaviortree_cpp/bt_factory.h>
 #include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/string.hpp>
+#include <cr_interfaces/msg/log.hpp>
 
 namespace cr::bt::common
 {
@@ -17,7 +18,7 @@ namespace cr::bt::common
         BT::NodeStatus tick() override;
 
     private:
-        rclcpp::Publisher<std_msgs::msg::String>::SharedPtr pub_;
+        rclcpp::Publisher<cr_interfaces::msg::Log>::SharedPtr pub_;
     };
 }
 

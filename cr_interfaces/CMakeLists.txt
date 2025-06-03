@@ -19,6 +19,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/DetectedSurfaces.msg"
   "msg/DetectedObjects.msg"
   "msg/InferenceResult.msg"
+  "msg/Log.msg"
   "msg/Yolov8Inference.msg"
   "msg/PoseKeypoint.msg"
   "msg/PoseResult.msg"

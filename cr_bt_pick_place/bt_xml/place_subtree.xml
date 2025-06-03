@@ -2,7 +2,7 @@
     <BehaviorTree ID="Place">
         <SequenceWithMemory>
 
-            <GuiLog text="Moving to place position..." />
+            <GuiLog main_msg = "Executing workflow" log_msg="Moving to place position..." phase="Place Phase" percentage="60" target_id = "{object_id}" />
             <!-- Step 1: lift object -->
             <Script
                 code="approach_z_coord := object_center_z + object_size_z / 2.0 + approach_distance" />
@@ -16,12 +16,12 @@
                 target_x="{place_shift_x}"
                 target_y="{object_center_y}" />
 
-            <GuiLog text="Placing object on the table..." />
+            <GuiLog main_msg = "Executing workflow" log_msg="Placing object on the table..." phase="Place Phase" percentage="80" target_id = "{object_id}" />
             <!-- Step 3: lower to place -->
             <Action ID="ArmVerticalMove" name="LowerToPlace"
                 target_z="{approach_z_coord}" />
 
-            <GuiLog text="Leaving object..." />
+            <GuiLog main_msg = "Executing workflow" log_msg="Leaving object..." phase="Place Phase" percentage="90" target_id = "{object_id}" />
             <!-- Step 4: open gripper -->
             <Action ID="SetGripper" name="OpenGripper" target="{gripper_open}" />
 
@@ -35,7 +35,7 @@
                 object_id="{object_id}"
                 is_allowed="false" />
 
-            <GuiLog text="Going home..." />
+            <GuiLog main_msg = "Executing workflow" log_msg="Going home..."  phase="Place Phase" percentage="95" target_id = "{object_id}" />
             <!-- Step 7: return to home -->
             <Action ID="ArmVerticalMove" name="CompleteTask"
                 target_z="{home_z_position}" />

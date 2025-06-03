@@ -5,6 +5,10 @@
         deve terminare -->
         <Fallback>
 
+            <ForceFailure>
+                <GuiLog main_msg = "Executing workflow" log_msg="Workflow started" percentage="5" target_id = "{object_id}" />
+            </ForceFailure>
+            
             <ReactiveSequence name="ReactiveStopChecking">
 
                 <Inverter>
@@ -60,17 +64,19 @@
                                 <Action ID="GoHome" />
 
                                 <LogMessage message="Workflow successfully completed!" />
+                                <GuiLog main_msg = "Executing workflow" log_msg="Workflow successfully completed" target_id="-1" />
                             </SequenceWithMemory>
                         </ReactiveSequence>
                     </Sequence>
                 </RetryUntilSuccessful>
-
             </ReactiveSequence>
 
             <!-- Se è stato richiesto uno stop durante l'esecuzione del workflow, l'albero deve
             terminare -->
             <Sequence>
+                <GuiLog main_msg = "Execution cancellation..." log_msg="Execution cancellation..." target_id="-1" />
                 <!-- Cancellazione di ciò che era stato impostato per l'esecuzione corrente -->
+                <GuiLog main_msg = "Execution cancellation..." log_msg="Gripper opening..." target_id="-1" />
                 <Action ID="SetGripper" target="{gripper_open}" />
                 <Action ID="SetObjectAttached" name="DetachObject"
                     object_id="{object_id}"
@@ -80,6 +86,7 @@
                     is_allowed="false" />
                 <Action ID="FreezeScene" freeze="false" />
 
+                <GuiLog main_msg = "Execution cancellation..." log_msg="Going home..." target_id="-1" />
                 <!-- Ritorno in home, sempre controllando che la zona sia Safe -->
                 <RetryUntilSuccessful num_attempts="100" name="RetryUntilComplete">
                     <Sequence name="MonitoredPickAndPlaceAttempt">
@@ -94,6 +101,7 @@
                         </ReactiveSequence>
                     </Sequence>
                 </RetryUntilSuccessful>
+                <GuiLog main_msg = "Execution cancellation..." log_msg="Execution successfully cancelled" target_id="-1" />
                 <LogMessage message="Execution successfully blocked!" />
             </Sequence>
 

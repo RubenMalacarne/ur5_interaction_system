@@ -8,7 +8,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(behaviortree_cpp REQUIRED)
-find_package(std_msgs REQUIRED)
+find_package(cr_interfaces REQUIRED)
 
 add_library(cr_bt_common_nodes SHARED
   src/check_blackboard_key_node.cpp
@@ -26,7 +26,7 @@ target_include_directories(cr_bt_common_nodes
 ament_target_dependencies(cr_bt_common_nodes
   rclcpp
   behaviortree_cpp      # il nome del pacchetto BehaviorTree.CPP
-  std_msgs
+  cr_interfaces
 )
 
 install(

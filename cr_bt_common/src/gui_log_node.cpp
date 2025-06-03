@@ -11,22 +11,52 @@ namespace cr::bt::common
         auto node = blackboard->get<rclcpp::Node::SharedPtr>("ros_node");
 
         auto qos = rclcpp::QoS(10).transient_local();
-        static auto shared_pub = node->create_publisher<std_msgs::msg::String>("cr/gui_log", qos);
+        static auto shared_pub = node->create_publisher<cr_interfaces::msg::Log>("cr/gui_log", qos);
         pub_ = shared_pub;
     }
 
     BT::PortsList GuiLog::providedPorts()
     {
-        return {BT::InputPort<std::string>("text", "Messaggio da mandare alla GUI")};
+        return {
+            BT::InputPort<std::string>("main_msg", "Main message (required)"),
+            BT::InputPort<std::string>("log_msg", "Log message (required)"),
+            BT::InputPort<std::string>("phase", "Phase (optional)"),
+            BT::InputPort<uint8_t>("percentage", "Progress % (optional)"),
+            BT::InputPort<int8_t>("target_id", "Target ID (optional)")};
     }
 
     BT::NodeStatus GuiLog::tick()
     {
-        std::string txt;
-        getInput("text", txt);
+        cr_interfaces::msg::Log m;
+        m.target_id = -1; // default “none”
+        m.severity = 0;   // default INFO
 
-        std_msgs::msg::String m;
-        m.data = txt;
+        // richiesti
+        if (!getInput("main_msg", m.main_msg))
+            throw BT::RuntimeError("GuiLog: missing port [main_msg]");
+        if (!getInput("log_msg", m.log_msg))
+            throw BT::RuntimeError("GuiLog: missing port [log_msg]");
+
+        // phase + percentage insieme
+        {
+            std::string phase;
+            uint8_t pct = 0;
+            if (getInput("phase", phase) && getInput("percentage", pct))
+            {
+                m.phase = phase;
+                m.percentage = pct;
+            }
+        }
+
+        // target_id opzionale
+        {
+            int8_t tid = -1;
+            if (getInput("target_id", tid))
+            {
+                m.target_id = tid;
+            }
+        }
+
         pub_->publish(m);
         return BT::NodeStatus::SUCCESS;
     }

@@ -11,6 +11,7 @@
 #include <cr_interfaces/msg/object_info.hpp>
 #include <cr_interfaces/srv/get_object_info.hpp>
 #include <cr_interfaces/srv/freeze_scene.hpp>
+#include <cr_interfaces/msg/log.hpp>
 #include <std_msgs/msg/bool.hpp>
 
 namespace cr::bt::orchestrator::nodes
@@ -75,6 +76,7 @@ namespace cr::bt::orchestrator::nodes
 
 	private:
 		rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr safety_subscription_;
+		rclcpp::Publisher<cr_interfaces::msg::Log>::SharedPtr gui_log_pub_;
 		std::atomic<bool> human_near_{false};
 	};
 
@@ -93,6 +95,7 @@ namespace cr::bt::orchestrator::nodes
 
 	private:
 		rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr stop_command_sub_;
+		rclcpp::Publisher<cr_interfaces::msg::Log>::SharedPtr gui_log_pub_;
 		std::atomic<bool> stop_requested_{false};
 	};
 
@@ -111,6 +114,7 @@ namespace cr::bt::orchestrator::nodes
 
 	private:
 		rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr pause_command_sub_;
+		rclcpp::Publisher<cr_interfaces::msg::Log>::SharedPtr gui_log_pub_;
 		std::atomic<bool> pause_requested_{false};
 	};
 
@@ -134,6 +138,7 @@ namespace cr::bt::orchestrator::nodes
 		rclcpp::Node::SharedPtr node_;
 		rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr safety_subscription_;
 		rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr pause_command_sub_;
+		rclcpp::Publisher<cr_interfaces::msg::Log>::SharedPtr gui_log_pub_;
 
 		std::atomic<bool> human_resume_requested_{true};
 		std::atomic<bool> area_is_currently_safe_{false};

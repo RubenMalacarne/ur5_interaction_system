@@ -39,7 +39,7 @@ namespace cr::bt::orchestrator
         RCLCPP_INFO(get_logger(), "  place_offset_z: %.3f", place_offset_z_);
 
         auto gui_qos = rclcpp::QoS(10).transient_local();
-        gui_log_pub_ = this->create_publisher<std_msgs::msg::String>("cr/gui_log", gui_qos);
+        gui_log_pub_ = this->create_publisher<cr_interfaces::msg::Log>("cr/gui_log", gui_qos);
 
         execute_workflow_server_ = rclcpp_action::create_server<ExecuteWorkflow>(
             this,
@@ -47,10 +47,6 @@ namespace cr::bt::orchestrator
             std::bind(&OrchestratorNode::handle_goal, this, std::placeholders::_1, std::placeholders::_2),
             std::bind(&OrchestratorNode::handle_cancel, this, std::placeholders::_1),
             std::bind(&OrchestratorNode::execute, this, std::placeholders::_1));
-
-        std_msgs::msg::String init_msg;
-        init_msg.data = "Ready to receive a flow execution request!";
-        gui_log_pub_->publish(init_msg);
 
         setup_timer_ = create_wall_timer(
             0ms,
@@ -115,6 +111,11 @@ namespace cr::bt::orchestrator
             setup_timer_->cancel();
         }
         RCLCPP_INFO(get_logger(), "BehaviorTreeFactory setup complete");
+
+        cr_interfaces::msg::Log init_msg;
+        init_msg.main_msg = "Waiting for a request...";
+        init_msg.target_id = -1;
+        gui_log_pub_->publish(init_msg);
     }
 
     rclcpp_action::GoalResponse OrchestratorNode::handle_goal(
@@ -129,7 +130,17 @@ namespace cr::bt::orchestrator
             return rclcpp_action::GoalResponse::REJECT;
         }
 
+        if (bt_running_)
+        {
+            RCLCPP_WARN(get_logger(), "BT already running. Rejecting new goal.");
+            return rclcpp_action::GoalResponse::REJECT;
+        }
+        
         (void)uuid;
+        cr_interfaces::msg::Log msg;
+        msg.main_msg = "Request accepted!";
+        msg.target_id = goal->object_id;
+        gui_log_pub_->publish(msg);
         return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
     }
 
@@ -150,95 +161,99 @@ namespace cr::bt::orchestrator
             "Executing goal for object %d in new thread",
             goal_handle->get_goal()->object_id);
 
+        bt_running_ = true; // ✅ segna in esecuzione
+
         std::thread bt_executor_thread([this, goal_handle]()
                                        {
-        auto result = std::make_shared<ExecuteWorkflow::Result>();
+                                           auto result = std::make_shared<ExecuteWorkflow::Result>();
 
-        auto thread_local_blackboard = BT::Blackboard::create();
-        thread_local_blackboard->set<rclcpp::Node::SharedPtr>("ros_node", shared_from_this());
+                                           auto thread_local_blackboard = BT::Blackboard::create();
+                                           thread_local_blackboard->set<rclcpp::Node::SharedPtr>("ros_node", shared_from_this());
 
-        auto motion_commander = std::make_shared<cr::motion_core::MotionCommander>(
-            shared_from_this(), "arm_manipulator", "gripper"
-        );
-        thread_local_blackboard->set("motion_commander", motion_commander);
-        thread_local_blackboard->set<std::string>("object_id", std::to_string(goal_handle->get_goal()->object_id));
-        thread_local_blackboard->set("gui_log_pub", gui_log_pub_);
-        
-        loadConfigurationToBlackboard(thread_local_blackboard);
+                                           auto motion_commander = std::make_shared<cr::motion_core::MotionCommander>(
+                                               shared_from_this(), "arm_manipulator", "gripper");
+                                           thread_local_blackboard->set("motion_commander", motion_commander);
+                                           thread_local_blackboard->set<std::string>("object_id", std::to_string(goal_handle->get_goal()->object_id));
+                                           thread_local_blackboard->set("gui_log_pub", gui_log_pub_);
 
-        BT::Tree local_tree;
-        try {
-            RCLCPP_INFO(get_logger(), "BT Thread: Creating tree 'PickAndPlaceWorkflow'");
-            local_tree = factory_.createTree("PickAndPlaceWorkflow", thread_local_blackboard);
-        } catch (const BT::RuntimeError& e) {
-            RCLCPP_ERROR(get_logger(), "BT Thread: Error creating Behavior Tree: %s", e.what());
-            result->success = false;
-            goal_handle->abort(result);
-            return;
-        } catch (const std::exception& e) {
-            RCLCPP_ERROR(get_logger(), "BT Thread: Exception creating Behavior Tree: %s", e.what());
-            result->success = false;
-            goal_handle->abort(result);
-            return;
-        }
+                                           loadConfigurationToBlackboard(thread_local_blackboard);
 
-        RCLCPP_INFO(
-            get_logger(),
-            "BT Thread: Starting execution for object %d",
-            goal_handle->get_goal()->object_id
-        );
+                                           BT::Tree local_tree;
+                                           try
+                                           {
+                                               RCLCPP_INFO(get_logger(), "BT Thread: Creating tree 'PickAndPlaceWorkflow'");
+                                               local_tree = factory_.createTree("PickAndPlaceWorkflow", thread_local_blackboard);
+                                           }
+                                           catch (const BT::RuntimeError &e)
+                                           {
+                                               RCLCPP_ERROR(get_logger(), "BT Thread: Error creating Behavior Tree: %s", e.what());
+                                               result->success = false;
+                                               goal_handle->abort(result);
+                                               bt_running_ = false;
+                                               publishWaitingMessage(); // ✅
+                                               return;
+                                           }
+                                           catch (const std::exception &e)
+                                           {
+                                               RCLCPP_ERROR(get_logger(), "BT Thread: Exception creating Behavior Tree: %s", e.what());
+                                               result->success = false;
+                                               goal_handle->abort(result);
+                                               bt_running_ = false;
+                                               publishWaitingMessage(); // ✅
+                                               return;
+                                           }
 
-        BT::NodeStatus status = BT::NodeStatus::RUNNING;
-        rclcpp::Rate loop_rate(10);
+                                           RCLCPP_INFO(get_logger(), "BT Thread: Starting execution for object %d", goal_handle->get_goal()->object_id);
 
-        while (rclcpp::ok() && status == BT::NodeStatus::RUNNING) {
-            if (goal_handle->is_canceling()) {
-                RCLCPP_INFO(
-                    get_logger(),
-                    "BT Thread: Goal for object %d canceled, halting tree",
-                    goal_handle->get_goal()->object_id
-                );
-                local_tree.haltTree();
-                break;
-            }
+                                           BT::NodeStatus status = BT::NodeStatus::RUNNING;
+                                           rclcpp::Rate loop_rate(10);
 
-            try {
-                status = local_tree.tickOnce();
-            } catch (const std::exception& e) {
-                RCLCPP_ERROR(get_logger(), "BT Thread: Exception during tick: %s", e.what());
-                status = BT::NodeStatus::FAILURE;
-                break;
-            }
+                                           while (rclcpp::ok() && status == BT::NodeStatus::RUNNING)
+                                           {
+                                               if (goal_handle->is_canceling())
+                                               {
+                                                   RCLCPP_INFO(get_logger(), "BT Thread: Goal canceled, halting tree");
+                                                   local_tree.haltTree();
+                                                   break;
+                                               }
 
-            loop_rate.sleep();
-        }
+                                               try
+                                               {
+                                                   status = local_tree.tickOnce();
+                                               }
+                                               catch (const std::exception &e)
+                                               {
+                                                   RCLCPP_ERROR(get_logger(), "BT Thread: Exception during tick: %s", e.what());
+                                                   status = BT::NodeStatus::FAILURE;
+                                                   break;
+                                               }
 
-        if (goal_handle->is_canceling()) {
-            result->success = false;
-            goal_handle->canceled(result);
-            RCLCPP_INFO(
-                get_logger(),
-                "BT Thread: Workflow for object %d CANCELED",
-                goal_handle->get_goal()->object_id
-            );
-        } else if (status == BT::NodeStatus::SUCCESS) {
-            result->success = true;
-            goal_handle->succeed(result);
-            RCLCPP_INFO(
-                get_logger(),
-                "BT Thread: Workflow for object %d SUCCEEDED",
-                goal_handle->get_goal()->object_id
-            );
-        } else {
-            result->success = false;
-            goal_handle->abort(result);
-            RCLCPP_ERROR(
-                get_logger(),
-                "BT Thread: Workflow for object %d FAILED with status: %s",
-                goal_handle->get_goal()->object_id,
-                BT::toStr(status).c_str()
-            );
-        } });
+                                               loop_rate.sleep();
+                                           }
+
+                                           if (goal_handle->is_canceling())
+                                           {
+                                               result->success = false;
+                                               goal_handle->canceled(result);
+                                               RCLCPP_INFO(get_logger(), "BT Thread: Workflow canceled");
+                                           }
+                                           else if (status == BT::NodeStatus::SUCCESS)
+                                           {
+                                               result->success = true;
+                                               goal_handle->succeed(result);
+                                               RCLCPP_INFO(get_logger(), "BT Thread: Workflow succeeded");
+                                           }
+                                           else
+                                           {
+                                               result->success = false;
+                                               goal_handle->abort(result);
+                                               RCLCPP_ERROR(get_logger(), "BT Thread: Workflow failed");
+                                           }
+
+                                           // ✅ Fine esecuzione: sblocca accettazione goal e ristampa "waiting"
+                                           bt_running_ = false;
+                                           publishWaitingMessage(); // ✅
+                                       });
 
         bt_executor_thread.detach();
     }
@@ -254,6 +269,14 @@ namespace cr::bt::orchestrator
         blackboard->set("place_offset_z", place_offset_z_);
 
         RCLCPP_DEBUG(get_logger(), "Configuration loaded to blackboard");
+    }
+
+    void OrchestratorNode::publishWaitingMessage()
+    {
+        cr_interfaces::msg::Log msg;
+        msg.main_msg = "Waiting for a request...";
+        msg.target_id = -1;
+        gui_log_pub_->publish(msg);
     }
 
 } // namespace cr::bt::orchestrator

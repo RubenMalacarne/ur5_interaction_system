@@ -162,6 +162,12 @@ namespace cr::bt::orchestrator::nodes
             {
                 human_near_.store(msg->data, std::memory_order_relaxed);
             });
+
+        gui_log_pub_ = config.blackboard->get<rclcpp::Publisher<cr_interfaces::msg::Log>::SharedPtr>("gui_log_pub");
+        if (!gui_log_pub_)
+        {
+            throw BT::RuntimeError("Missing gui_log_pub in blackboard");
+        }
     }
 
     BT::PortsList IsAreaSafe::providedPorts()
@@ -171,9 +177,17 @@ namespace cr::bt::orchestrator::nodes
 
     BT::NodeStatus IsAreaSafe::tick()
     {
-        return human_near_.load(std::memory_order_relaxed)
-                   ? BT::NodeStatus::FAILURE
-                   : BT::NodeStatus::SUCCESS;
+        if(human_near_.load(std::memory_order_relaxed)){
+            cr_interfaces::msg::Log log_msg;
+            log_msg.main_msg = "Paused - Area Unsafe";
+            log_msg.log_msg = "Paused - Area Unsafe";
+            log_msg.target_id = -1;
+            log_msg.percentage = 0;
+            gui_log_pub_->publish(log_msg);
+            return BT::NodeStatus::FAILURE;
+        } else {
+            return BT::NodeStatus::SUCCESS;
+        }                  
     }
 
     void IsAreaSafe::updateSafetyStatus(bool is_safe)
@@ -200,6 +214,12 @@ namespace cr::bt::orchestrator::nodes
             {
                 stop_requested_.store(msg->data, std::memory_order_relaxed);
             });
+
+        gui_log_pub_ = config.blackboard->get<rclcpp::Publisher<cr_interfaces::msg::Log>::SharedPtr>("gui_log_pub");
+        if (!gui_log_pub_)
+        {
+            throw BT::RuntimeError("Missing gui_log_pub in blackboard");
+        }
     }
 
     BT::PortsList IsStopRequested::providedPorts()
@@ -209,9 +229,17 @@ namespace cr::bt::orchestrator::nodes
 
     BT::NodeStatus IsStopRequested::tick()
     {
-        return stop_requested_.load(std::memory_order_relaxed)
-                   ? BT::NodeStatus::SUCCESS
-                   : BT::NodeStatus::FAILURE;
+        if(stop_requested_.load(std::memory_order_relaxed)){
+            cr_interfaces::msg::Log log_msg;
+            log_msg.main_msg = "Execution cancellation...";
+            log_msg.log_msg = "Cancel request received";
+            log_msg.target_id = -1;
+            log_msg.percentage = 0;
+            gui_log_pub_->publish(log_msg);
+            return BT::NodeStatus::SUCCESS;
+        } else {
+            return BT::NodeStatus::FAILURE;
+        }
     }
 
     void IsStopRequested::updateStopRequestedStatus(bool is_stop_requested)
@@ -238,6 +266,12 @@ namespace cr::bt::orchestrator::nodes
             {
                 pause_requested_.store(msg->data, std::memory_order_relaxed);
             });
+
+        gui_log_pub_ = config.blackboard->get<rclcpp::Publisher<cr_interfaces::msg::Log>::SharedPtr>("gui_log_pub");
+        if (!gui_log_pub_)
+        {
+            throw BT::RuntimeError("Missing gui_log_pub in blackboard");
+        }
     }
 
     BT::PortsList IsPauseRequested::providedPorts()
@@ -247,9 +281,17 @@ namespace cr::bt::orchestrator::nodes
 
     BT::NodeStatus IsPauseRequested::tick()
     {
-        return pause_requested_.load(std::memory_order_relaxed)
-                   ? BT::NodeStatus::SUCCESS
-                   : BT::NodeStatus::FAILURE;
+        if(pause_requested_.load(std::memory_order_relaxed)){
+            cr_interfaces::msg::Log log_msg;
+            log_msg.main_msg = "Pause";
+            log_msg.log_msg = "Pause";
+            log_msg.target_id = -1;
+            log_msg.percentage = 0;
+            gui_log_pub_->publish(log_msg);
+            return BT::NodeStatus::SUCCESS;
+        } else {
+            return BT::NodeStatus::FAILURE;
+        }
     }
 
     void IsPauseRequested::updatePauseRequestedStatus(bool is_stop_requested)
@@ -281,6 +323,11 @@ namespace cr::bt::orchestrator::nodes
             rclcpp::QoS(10),
             std::bind(&WaitForTheGoAhead::pauseCallback, this, std::placeholders::_1));
 
+        gui_log_pub_ = config.blackboard->get<rclcpp::Publisher<cr_interfaces::msg::Log>::SharedPtr>("gui_log_pub");
+        if (!gui_log_pub_)
+        {
+            throw BT::RuntimeError("Missing gui_log_pub in blackboard");
+        }
         RCLCPP_INFO(node_->get_logger(), "[WaitForTheGoAhead] Initialized");
     }
 
@@ -304,6 +351,12 @@ namespace cr::bt::orchestrator::nodes
         }
         else if (first_tick_unsafe_logged_)
         {
+            cr_interfaces::msg::Log log_msg;
+            log_msg.main_msg = "Executing Workflow";
+            log_msg.log_msg = "Execution resumed";
+            log_msg.target_id = -1;
+            log_msg.percentage = 0;
+            gui_log_pub_->publish(log_msg);
             RCLCPP_INFO(node_->get_logger(),
                         "[WaitForTheGoAhead] Area is now safe");
             first_tick_unsafe_logged_ = false;
@@ -327,8 +380,15 @@ namespace cr::bt::orchestrator::nodes
         }
         else if (first_tick_pause_logged_)
         {
+            cr_interfaces::msg::Log log_msg;
+            log_msg.main_msg = "Executing Workflow";
+            log_msg.log_msg = "Execution resumed";
+            log_msg.target_id = -1;
+            log_msg.percentage = 0;
+            gui_log_pub_->publish(log_msg);
             RCLCPP_INFO(node_->get_logger(),
                         "[WaitForTheGoAhead] Human resumed, proceeding");
+            
             first_tick_pause_logged_ = false;
         }
 

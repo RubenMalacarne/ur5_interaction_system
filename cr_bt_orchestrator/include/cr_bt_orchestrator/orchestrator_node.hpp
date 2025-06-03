@@ -4,6 +4,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_action/rclcpp_action.hpp>
 #include <cr_interfaces/action/execute_workflow.hpp>
+#include <cr_interfaces/msg/log.hpp>
 #include <std_msgs/msg/string.hpp>
 #include <ament_index_cpp/get_package_share_directory.hpp>
 
@@ -27,7 +28,7 @@ namespace cr::bt::orchestrator
         using GoalHandleExecuteWorkflow = rclcpp_action::ServerGoalHandle<ExecuteWorkflow>;
 
         rclcpp_action::Server<ExecuteWorkflow>::SharedPtr execute_workflow_server_;
-        rclcpp::Publisher<std_msgs::msg::String>::SharedPtr gui_log_pub_;
+        rclcpp::Publisher<cr_interfaces::msg::Log>::SharedPtr gui_log_pub_; // Questo pub è condiviso tra tutti coloro che devono utilizzarlo
 
         rclcpp_action::GoalResponse handle_goal(
             const rclcpp_action::GoalUUID &uuid,
@@ -38,13 +39,15 @@ namespace cr::bt::orchestrator
 
         void execute(const std::shared_ptr<GoalHandleExecuteWorkflow> goal_handle);
 
-
         void loadConfigurationToBlackboard(BT::Blackboard::Ptr blackboard);
+
+        void publishWaitingMessage();
 
         BT::BehaviorTreeFactory factory_;
         void setupBTFactory();
         rclcpp::TimerBase::SharedPtr setup_timer_;
         bool bt_factory_initialized_{false};
+        std::atomic_bool bt_running_{false};
 
         double pre_approach_distance_;
         double approach_distance_;
@@ -56,4 +59,4 @@ namespace cr::bt::orchestrator
     };
 } // namespace cr
 
-#endif // CR_BT_ORCHESTRATOR_TASK_PLANNER_HPP_
+#endif // CR_BT_ORCHESTRATOR__ORCHESTRATOR_NODE_HPP_
