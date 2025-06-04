@@ -177,17 +177,20 @@ namespace cr::bt::orchestrator::nodes
 
     BT::NodeStatus IsAreaSafe::tick()
     {
-        if(human_near_.load(std::memory_order_relaxed)){
-            cr_interfaces::msg::Log log_msg;
-            log_msg.main_msg = "Paused - Area Unsafe";
-            log_msg.log_msg = "Paused - Area Unsafe";
-            log_msg.target_id = -1;
-            log_msg.percentage = 0;
-            gui_log_pub_->publish(log_msg);
+        if (human_near_.load(std::memory_order_relaxed))
+        {
+            // cr_interfaces::msg::Log log_msg;
+            // log_msg.main_msg = "Paused - Area Unsafe";
+            // log_msg.log_msg = "Paused - Area Unsafe";
+            // log_msg.target_id = -1;
+            // log_msg.percentage = 0;
+            // gui_log_pub_->publish(log_msg);
             return BT::NodeStatus::FAILURE;
-        } else {
+        }
+        else
+        {
             return BT::NodeStatus::SUCCESS;
-        }                  
+        }
     }
 
     void IsAreaSafe::updateSafetyStatus(bool is_safe)
@@ -229,7 +232,8 @@ namespace cr::bt::orchestrator::nodes
 
     BT::NodeStatus IsStopRequested::tick()
     {
-        if(stop_requested_.load(std::memory_order_relaxed)){
+        if (stop_requested_.load(std::memory_order_relaxed))
+        {
             cr_interfaces::msg::Log log_msg;
             log_msg.main_msg = "Execution cancellation...";
             log_msg.log_msg = "Cancel request received";
@@ -237,7 +241,9 @@ namespace cr::bt::orchestrator::nodes
             log_msg.percentage = 0;
             gui_log_pub_->publish(log_msg);
             return BT::NodeStatus::SUCCESS;
-        } else {
+        }
+        else
+        {
             return BT::NodeStatus::FAILURE;
         }
     }
@@ -281,15 +287,18 @@ namespace cr::bt::orchestrator::nodes
 
     BT::NodeStatus IsPauseRequested::tick()
     {
-        if(pause_requested_.load(std::memory_order_relaxed)){
-            cr_interfaces::msg::Log log_msg;
-            log_msg.main_msg = "Pause";
-            log_msg.log_msg = "Pause";
-            log_msg.target_id = -1;
-            log_msg.percentage = 0;
-            gui_log_pub_->publish(log_msg);
+        if (pause_requested_.load(std::memory_order_relaxed))
+        {
+            // cr_interfaces::msg::Log log_msg;
+            // log_msg.main_msg = "Pause";
+            // log_msg.log_msg = "Pause";
+            // log_msg.target_id = -1;
+            // log_msg.percentage = 0;
+            // gui_log_pub_->publish(log_msg);
             return BT::NodeStatus::SUCCESS;
-        } else {
+        }
+        else
+        {
             return BT::NodeStatus::FAILURE;
         }
     }
@@ -338,6 +347,12 @@ namespace cr::bt::orchestrator::nodes
         {
             if (!first_tick_unsafe_logged_)
             {
+                cr_interfaces::msg::Log log_msg;
+                log_msg.main_msg = "Paused - Area Unsafe";
+                log_msg.log_msg = "Paused - Area Unsafe";
+                log_msg.target_id = -1;
+                log_msg.percentage = 0;
+                gui_log_pub_->publish(log_msg);
                 RCLCPP_WARN(node_->get_logger(),
                             "[WaitForTheGoAhead] Area unsafe, pausing until safe");
                 first_tick_unsafe_logged_ = true;
@@ -352,8 +367,16 @@ namespace cr::bt::orchestrator::nodes
         else if (first_tick_unsafe_logged_)
         {
             cr_interfaces::msg::Log log_msg;
-            log_msg.main_msg = "Executing Workflow";
-            log_msg.log_msg = "Execution resumed";
+
+            if(first_tick_pause_logged_){
+                log_msg.main_msg = "Pause";
+                log_msg.log_msg = "Area is safe, but the execution is paused";
+            } else {
+                log_msg.main_msg = "Executing Workflow";
+                log_msg.log_msg = "Area is safe";
+            }
+
+
             log_msg.target_id = -1;
             log_msg.percentage = 0;
             gui_log_pub_->publish(log_msg);
@@ -367,6 +390,12 @@ namespace cr::bt::orchestrator::nodes
         {
             if (!first_tick_pause_logged_)
             {
+                cr_interfaces::msg::Log log_msg;
+                log_msg.main_msg = "Pause";
+                log_msg.log_msg = "Pause";
+                log_msg.target_id = -1;
+                log_msg.percentage = 0;
+                gui_log_pub_->publish(log_msg);
                 RCLCPP_WARN(node_->get_logger(),
                             "[WaitForTheGoAhead] Human requested pause, waiting for resume");
                 first_tick_pause_logged_ = true;
@@ -381,17 +410,28 @@ namespace cr::bt::orchestrator::nodes
         else if (first_tick_pause_logged_)
         {
             cr_interfaces::msg::Log log_msg;
-            log_msg.main_msg = "Executing Workflow";
-            log_msg.log_msg = "Execution resumed";
+            if(first_tick_unsafe_logged_){
+                log_msg.main_msg = "Pause - Area Unsafe";
+                log_msg.log_msg = "Request to resume received, but area is unsafe";
+            } else {
+                log_msg.main_msg = "Executing Workflow";
+                log_msg.log_msg = "Request to resume received";
+            }
             log_msg.target_id = -1;
             log_msg.percentage = 0;
             gui_log_pub_->publish(log_msg);
             RCLCPP_INFO(node_->get_logger(),
                         "[WaitForTheGoAhead] Human resumed, proceeding");
-            
+
             first_tick_pause_logged_ = false;
         }
 
+        cr_interfaces::msg::Log log_msg;
+        log_msg.main_msg = "Executing Workflow";
+        log_msg.log_msg = "Resume";
+        log_msg.target_id = -1;
+        log_msg.percentage = 0;
+        gui_log_pub_->publish(log_msg);
         // 3) Tutto ok: SUCCESS
         return BT::NodeStatus::SUCCESS;
     }
