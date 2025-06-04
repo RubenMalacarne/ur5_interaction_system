@@ -13,10 +13,15 @@ namespace vision {
     {
         RCLCPP_INFO(this->get_logger(), "Starting ObjectStateManager...");
 
-        // Service
+        // Services
         this->get_object_info_srv_ = this->create_service<cr_interfaces::srv::GetObjectInfo>(
             "cr/get_object_info",
             std::bind(&ObjectStateManager::give_object_info, this, std::placeholders::_1, std::placeholders::_2)
+        );
+
+        this->freeze_scene_srv_ = this->create_service<cr_interfaces::srv::FreezeScene>(
+            "cr/freeze_scene",
+            std::bind(&ObjectStateManager::handle_freeze_scene_request, this, std::placeholders::_1, std::placeholders::_2)
         );
 
         // Subscriptions
@@ -24,12 +29,6 @@ namespace vision {
             "cr_vision/object_selection_results",
             10,
             std::bind(&ObjectStateManager::update_scene_objects, this, std::placeholders::_1)
-        );
-
-        this->freeze_scene_sub_ = this->create_subscription<cr_interfaces::msg::FreezeScene>(
-            "cr/freeze_scene",
-            10,
-            std::bind(&ObjectStateManager::update_frozen_scene, this, std::placeholders::_1)
         );
 
         // Publisher
@@ -83,9 +82,21 @@ namespace vision {
         }
     }
 
-    void ObjectStateManager::update_frozen_scene(const cr_interfaces::msg::FreezeScene & frozen_msg)
+    void ObjectStateManager::handle_freeze_scene_request(const std::shared_ptr<cr_interfaces::srv::FreezeScene::Request> request,
+            std::shared_ptr<cr_interfaces::srv::FreezeScene::Response> response)
     {
-        this->is_scene_frozen_ = frozen_msg.freeze;
+        this->is_scene_frozen_ = request->freeze;
+
+        if (request->freeze)
+        {
+            RCLCPP_INFO(this->get_logger(), "Planning scene has been frozen.");
+        }
+        else
+        {
+            RCLCPP_INFO(this->get_logger(), "Planning scene has been unfrozen.");
+        }
+
+        response->success = true;
     }
 
 } // namespace vision

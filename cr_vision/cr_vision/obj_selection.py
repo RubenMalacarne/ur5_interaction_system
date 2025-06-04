@@ -17,7 +17,7 @@ class ObjSelectionNode(Node):
                 ('target_labels', ["green_cube", "red_cube"]),
                 ('target_size_x', 0.05),
                 ('target_size_y', 0.05),
-                ('target_size_z', 0.05)
+                ('target_size_z', 0.15)
             ]
         )
         

@@ -56,7 +56,7 @@ namespace scene_management {
             geometry_msgs::msg::Pose pose;
             pose.position.x = obj.center.x;
             pose.position.y = obj.center.y;
-            pose.position.z = obj.center.z;
+            pose.position.z = obj.center.z - obj.size.z/2;
 
             shape_msgs::msg::SolidPrimitive primitive;
             primitive.type = primitive.BOX;

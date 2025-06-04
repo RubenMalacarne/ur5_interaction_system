@@ -3,6 +3,9 @@
 /sim_ros2_interface/
 /robotiq_description/
 /cr_vision/data/
+/BehaviorTree.CPP/
+/BehaviorTree.ROS2/
+llama-2-7b-chat.Q4_K_M.gguf
 # File temporanei generici
 *.log
 *.pyc

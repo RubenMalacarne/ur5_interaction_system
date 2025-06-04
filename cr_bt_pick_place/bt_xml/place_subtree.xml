@@ -1,0 +1,46 @@
+<root BTCPP_format="4">
+    <BehaviorTree ID="Place">
+        <SequenceWithMemory>
+
+            <GuiLog main_msg = "Executing workflow" log_msg="Moving to place position..." phase="Place Phase" percentage="60" target_id = "{object_id}" />
+            <!-- Step 1: lift object -->
+            <Script
+                code="approach_z_coord := object_center_z + object_size_z / 2.0 + approach_distance" />
+            <Script code="place_lift_z := approach_z_coord + place_offset_z" />
+            <Action ID="ArmVerticalMove" name="LiftUpAfterPick"
+                target_z="{place_lift_z}" />
+
+            <!-- Step 2: move to place position -->
+            <Script code="place_shift_x := object_center_x - place_offset_x" />
+            <Action ID="ArmHorizontalMove" name="ShiftPlaceX"
+                target_x="{place_shift_x}"
+                target_y="{object_center_y}" />
+
+            <GuiLog main_msg = "Executing workflow" log_msg="Placing object on the table..." phase="Place Phase" percentage="80" target_id = "{object_id}" />
+            <!-- Step 3: lower to place -->
+            <Action ID="ArmVerticalMove" name="LowerToPlace"
+                target_z="{approach_z_coord}" />
+
+            <GuiLog main_msg = "Executing workflow" log_msg="Leaving object..." phase="Place Phase" percentage="90" target_id = "{object_id}" />
+            <!-- Step 4: open gripper -->
+            <Action ID="SetGripper" name="OpenGripper" target="{gripper_open}" />
+
+            <!-- Step 5: detach object -->
+            <Action ID="SetObjectAttached" name="DetachObject"
+                object_id="{object_id}"
+                attach="false" />
+
+            <!-- Step 6: restore collisions -->
+            <Action ID="SetCollisionAllowed" name="EnableCollisions"
+                object_id="{object_id}"
+                is_allowed="false" />
+
+            <GuiLog main_msg = "Executing workflow" log_msg="Going home..."  phase="Place Phase" percentage="95" target_id = "{object_id}" />
+            <!-- Step 7: return to home -->
+            <Action ID="ArmVerticalMove" name="CompleteTask"
+                target_z="{home_z_position}" />
+
+            <LogMessage message="Place sequence completed!" />
+        </SequenceWithMemory>
+    </BehaviorTree>
+</root>
