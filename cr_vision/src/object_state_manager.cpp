@@ -26,7 +26,7 @@ namespace vision {
 
         // Subscriptions
         this->object_info_array_sub_ = this->create_subscription<cr_interfaces::msg::ObjectInfoArray>(
-            "cr_vision/object_selection_results",
+            "cr_vision/object_detection_results",
             10,
             std::bind(&ObjectStateManager::update_scene_objects, this, std::placeholders::_1)
         );

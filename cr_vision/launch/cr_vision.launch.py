@@ -25,13 +25,13 @@ def generate_launch_description():
         output='screen',
         # parameters=[{'param_name': 'param_value'}]
     )
-    cr_obj_selection_node = launch_ros.actions.Node(
-        package='cr_vision',
-        executable='obj_selection.py',  
-        name='obj_selection_node',
-        output='screen',
-        parameters=[obj_selection_config]
-    )
+    # cr_obj_selection_node = launch_ros.actions.Node(
+    #     package='cr_vision',
+    #     executable='obj_selection.py',  
+    #     name='obj_selection_node',
+    #     output='screen',
+    #     parameters=[obj_selection_config]
+    # )
     cr_obj_state_manager_node = launch_ros.actions.Node(
         package='cr_vision',
         executable='object_state_manager',  
@@ -48,7 +48,6 @@ def generate_launch_description():
     nodes = [
         cr_mirror_node,
         cr_obj_detection_node,
-        cr_obj_selection_node,
         cr_obj_state_manager_node,
         cr_human_proximity_monitor_node
     ]
