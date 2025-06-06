@@ -18,13 +18,22 @@ def generate_launch_description():
         output='screen',
         # parameters=[{'param_name': 'param_value'}]
     )
+    # cr_obj_detection_node = launch_ros.actions.Node(
+    #     package='cr_vision',
+    #     executable='obj_detection.py',  
+    #     name='object_detection_node',
+    #     output='screen',
+    #     # parameters=[{'param_name': 'param_value'}]
+    # )
+
     cr_obj_detection_node = launch_ros.actions.Node(
         package='cr_vision',
-        executable='obj_detection.py',  
-        name='object_detection_node',
+        executable='obj_detector.py',  
+        name='object_detector_node',
         output='screen',
         # parameters=[{'param_name': 'param_value'}]
     )
+
     # cr_obj_selection_node = launch_ros.actions.Node(
     #     package='cr_vision',
     #     executable='obj_selection.py',  

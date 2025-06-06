@@ -63,6 +63,7 @@ install(
     cr_vision/obj_detection.py
     cr_vision/pose_estimation_person.py
     cr_vision/obj_selection.py
+    cr_vision/obj_detector.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
