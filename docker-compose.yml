@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: my_ros2_image
+    image: ros2_cr
     container_name: ros2_container
     volumes:
       - .:/ros2_ws/src_CR

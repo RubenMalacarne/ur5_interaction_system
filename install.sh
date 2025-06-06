@@ -71,6 +71,9 @@ git submodule update --init --recursive
 echo "Submodules cloned successfully."
 # ----------------------------------------------------------------------------------------
 
+git clone https://github.com/BehaviorTree/BehaviorTree.CPP.git
+git clone https://github.com/BehaviorTree/BehaviorTree.ROS2.git
+# -------------------------------------------------------------------------
 
 # Create data directory if it doesn't exist
 mkdir -p /cr_vision/data

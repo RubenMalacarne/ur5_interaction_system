@@ -39,7 +39,11 @@ RUN pip3 install pyzmq cbor2 \
     flask \
     flask-ask-sdk \
     ask-sdk \
+    ultralytics \
+    pyyaml \
+    numpy \ 
     xmlschema
+
 
 # ROS workspace
 WORKDIR /ros2_ws
