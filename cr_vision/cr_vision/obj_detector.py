@@ -29,12 +29,16 @@ class ObjectDetectorNode(Node):
         self.declare_parameters(
             namespace='',
             parameters=[
-                ('target_labels', ["green_cube", "red_cube"]),
+                ('target_labels', ['green_cube', 'red_cube']),
                 ('target_size_x', 0.05),
                 ('target_size_y', 0.05),
-                ('target_size_z', 0.15)
+                ('target_size_z', 0.15),
+                ('camera_width', 512),
+                ('camera_height', 512),
+                ('camera_fov_deg', 60)
             ]
         )
+
         self.target_labels = list(self.get_parameter('target_labels').value)
         self.target_size_x = self.get_parameter('target_size_x').value
         self.target_size_y = self.get_parameter('target_size_y').value
@@ -43,6 +47,11 @@ class ObjectDetectorNode(Node):
         # ROI per filtrare i risultati di YOLO (opzionale)
         self.roi_x_min = 200
         self.roi_y_min = 0
+        
+        self.camera_width = self.get_parameter('camera_width').value
+        self.camera_height = self.get_parameter('camera_height').value
+        self.camera_fov_deg = self.get_parameter('camera_fov_deg').value
+
         self.roi_x_max = 512
         self.roi_y_max = 400
 
@@ -102,6 +111,7 @@ class ObjectDetectorNode(Node):
         3) Trova la faccia top (Z_max) e ne calcola il baricentro world
         4) Calcola il “vero” baricentro in pixel (via TF world→camera + intrinseci)
         5) Plotta RGB, Z_world, top surface con croce rossa sul centro
+        6) Disegna overlay con bounding box e ID
         """
         self.get_logger().info("Ricevuta coppia RGB+Depth per la detection")
 
@@ -109,30 +119,37 @@ class ObjectDetectorNode(Node):
             self.get_logger().warn("Immagini mancanti, salto elaborazione")
             return
 
+        # A) Prepara overlay
+        cv_rgb = self.bridge.imgmsg_to_cv2(rgb_image, "bgr8")
+        overlay = cv_rgb.copy()
+
         # (1) YOLO per trovare bounding box valide
         boxes = self.get_detected_boxes(rgb_image)
         self.get_logger().info(f"YOLO ha trovato {len(boxes)} oggetti nella ROI")
         if not boxes:
+            # Pubblica overlay anche se vuoto
+            img_msg = self.bridge.cv2_to_imgmsg(overlay, "bgr8")
+            img_msg.header = rgb_image.header
+            self.objects_overlay_publisher.publish(img_msg)
             return
 
         detected_objs = []
 
-        for i,box in enumerate(boxes):
-            # (2a) estraggo la point cloud (N×8) con [u,v,X_cam,Y_cam,Z_cam,X_w,Y_w,Z_w]
+        for i, box in enumerate(boxes):
+            # Estrai la point cloud dal box
             points_map = self.compute_pointcloud_from_box(depth_image, box)
             if points_map is None or points_map.size == 0:
                 continue
 
-            # (2b) filtro i top_points e calcolo centroid_world e centroid_pixel (solo debug)
+            # Trova centroid world e top_points
             centroid_world, centroid_pixel, top_points = self.find_top_surface_center(points_map)
 
+            # Se ho un centro valido, registro e disegno
             if centroid_world is not None:
                 xw, yw, zw = centroid_world
-                self.get_logger().info(
-                    f"Centro top surface nel frame world: "
-                    f"x={xw:.3f}, y={yw:.3f}, z={zw:.3f}"
-                )
+                self.get_logger().info(f"Centro top surface world: x={xw:.3f}, y={yw:.3f}, z={zw:.3f}")
 
+                # prepara msg ObjectInfo
                 obj = ObjectInfo()
                 obj.id = i
                 obj.center.x = float(xw)
@@ -141,38 +158,67 @@ class ObjectDetectorNode(Node):
                 obj.size.x  = self.target_size_x
                 obj.size.y  = self.target_size_y
                 obj.size.z  = self.target_size_z
-
                 detected_objs.append(obj)
 
+                # pubblica tf
                 self.publish_tf(
-                    float(xw), 
-                    float(yw), 
-                    float(zw), 
-                    f"{i}_top_center"
+                        float(xw),
+                        float(yw),
+                        float(zw),
+                        f"{i}_top_center"
+                    )
+
+                # Estrai coordinate del box come interi
+                x_min_f, y_min_f, x_max_f, y_max_f = box.xyxy[0]
+                x_min, y_min, x_max, y_max = map(int, (x_min_f, y_min_f, x_max_f, y_max_f))
+
+                # B) Disegna bounding box
+                cv2.rectangle(
+                    overlay,
+                    (x_min, y_min),
+                    (x_max, y_max),
+                    (0, 255, 0),
+                    2
+                )
+                # C) Disegna ID sopra il box
+                cv2.putText(
+                    overlay,
+                    f"ID={i}",
+                    (x_min, y_min - 10),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.6,
+                    (0, 255, 0),
+                    2
                 )
 
-            # (3) trasformo centroid_world → camera e lo proietto
+            # Trasforma il centro world→camera e proietta per debug pixel
             true_cam, true_pix = self.compute_true_top_center(centroid_world)
             if true_cam and true_pix:
                 Xc, Yc, Zc = true_cam
                 u_c, v_c = true_pix
                 self.get_logger().info(
-                    f"True centro in camera: ({Xc:.3f}, {Yc:.3f}, {Zc:.3f}), pixel=({u_c},{v_c})"
+                    f"True centro camera: ({Xc:.3f}, {Yc:.3f}, {Zc:.3f}), pixel=({u_c},{v_c})"
                 )
             else:
                 self.get_logger().warn("Impossibile calcolare il vero centro top")
 
-            # (4) plot comparativo
-            #self.plot_comparison(rgb_image, points_map, top_points, true_pix)
+            # Plot comparativo (puoi anche spostarlo fuori dal loop)
+            # self.plot_comparison(rgb_image, points_map, top_points, true_pix)
 
+        # Pubblica ObjectInfoArray
         if detected_objs:
             msg = ObjectInfoArray()
             msg.header = Header()
             msg.header.stamp = self.get_clock().now().to_msg()
             msg.header.frame_id = "object_detection"
-            msg.objects = detected_objs 
-
+            msg.objects = detected_objs
             self.obj_selected_pub_.publish(msg)
+
+        # Pubblica overlay con bounding box e ID
+        img_msg = self.bridge.cv2_to_imgmsg(overlay, "bgr8")
+        img_msg.header.stamp = self.get_clock().now().to_msg()
+        img_msg.header.frame_id = rgb_image.header.frame_id
+        self.objects_overlay_publisher.publish(img_msg)
 
     def get_detected_boxes(self, rgb_image: Image):
         cv_image = self.bridge.imgmsg_to_cv2(rgb_image, "bgr8")
@@ -189,7 +235,9 @@ class ObjectDetectorNode(Node):
         return valid_boxes
 
     def compute_pointcloud_from_box(self, depth_msg: Image, box):
-        fx, fy, cx, cy = 525.0, 525.0, 256.0, 256.0
+
+        fx = fy = (self.camera_width/2) / np.tan(np.deg2rad(self.camera_fov_deg/2))
+        cx, cy = self.camera_width/2, self.camera_height/2  
 
         depth = self.bridge.imgmsg_to_cv2(depth_msg, desired_encoding="32FC1")
         h, w = depth.shape
@@ -243,6 +291,9 @@ class ObjectDetectorNode(Node):
         if top.size == 0:
             self.get_logger().warn("Nessun top_point")
             return None, None, None
+        
+        num_top = top.shape[0]
+        self.get_logger().info(f"[find_top_surface_center] Numero di top_points: {num_top}")
 
         # CENTRO CON MEDIAN invece della media (più robusto)
         X_w = np.median(top[:, 5])
@@ -287,8 +338,9 @@ class ObjectDetectorNode(Node):
         pt_cam = tf2_geometry_msgs.do_transform_point(pt_w, t)
         Xc, Yc, Zc = pt_cam.point.x, pt_cam.point.y, pt_cam.point.z
 
-        # 3) Proietto con intrinseci fissi (512x512)
-        fx, fy, cx, cy = 525.0, 525.0, 256.0, 256.0
+        fx = fy = (self.camera_width/2) / np.tan(np.deg2rad(self.camera_fov_deg/2))
+        cx, cy = self.camera_width/2, self.camera_height/2  
+
         if Zc <= 0.0:
             return (Xc, Yc, Zc), None
 
@@ -300,7 +352,6 @@ class ObjectDetectorNode(Node):
         v = max(0, min(511, v))
 
         return (Xc, Yc, Zc), (u, v)
-
 
     def plot_comparison(self, rgb_msg, points_map, top_points, true_pix):
         # converto RGB e preparo le mappe Z
