@@ -90,7 +90,7 @@ namespace cr::gui
 
         /* ---------- ROS subscriptions ------------------------------------- */
         image_sub_ = create_subscription<sensor_msgs::msg::Image>(
-            "cr_vision/yolov8_detection_image", 10,
+            "cr_vision/detected_objects_image", 10,
             std::bind(&GuiNode::imageCb, this, std::placeholders::_1));
 
         auto qos = rclcpp::QoS(10).transient_local();

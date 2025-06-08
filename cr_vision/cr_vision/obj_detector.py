@@ -124,7 +124,7 @@ class ObjectDetectorNode(Node):
         overlay = cv_rgb.copy()
 
         # (1) YOLO per trovare bounding box valide
-        boxes = self.get_detected_boxes(rgb_image)
+        boxes, names = self.get_detected_boxes(rgb_image)
         self.get_logger().info(f"YOLO ha trovato {len(boxes)} oggetti nella ROI")
         if not boxes:
             # Pubblica overlay anche se vuoto
@@ -151,7 +151,9 @@ class ObjectDetectorNode(Node):
 
                 # prepara msg ObjectInfo
                 obj = ObjectInfo()
-                obj.id = i
+                obj.id = i 
+                cls_id = int(box.cls[0])            
+                obj.label = f"{names[cls_id]}_{i}"
                 obj.center.x = float(xw)
                 obj.center.y = float(yw)
                 obj.center.z = float(zw)
@@ -177,18 +179,45 @@ class ObjectDetectorNode(Node):
                     overlay,
                     (x_min, y_min),
                     (x_max, y_max),
-                    (0, 255, 0),
+                    (32, 32, 32),
                     2
                 )
-                # C) Disegna ID sopra il box
+
+                # C) Disegna etichetta sul lato sinistro, centrata verticalmente
+                label = f"{obj.id}"
+
+                # Font piccolo e fine
+                font = cv2.FONT_HERSHEY_SIMPLEX
+                font_scale = 0.5
+                thickness = 2
+
+                # Calcola dimensioni del testo
+                (font_w, font_h), _ = cv2.getTextSize(label, font, font_scale, thickness)
+
+                # Posizione: lato sinistro, centrato verticalmente
+                padding = 4
+                text_x = x_min - font_w - padding
+                text_y = y_min + (y_max - y_min) // 2 + font_h // 2  # centro verticale del box
+
+                # Sfondo grigio scuro dietro il testo
+                cv2.rectangle(
+                    overlay,
+                    (text_x - 2, text_y - font_h - 2),
+                    (text_x + font_w + 2, text_y + 2),
+                    (32, 32, 32),  # grigio scuro
+                    -1
+                )
+
+                # Testo giallo sopra lo sfondo
                 cv2.putText(
                     overlay,
-                    f"ID={i}",
-                    (x_min, y_min - 10),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    0.6,
-                    (0, 255, 0),
-                    2
+                    label,
+                    (text_x, text_y),
+                    font,
+                    font_scale,
+                    (0, 255, 255),  # giallo
+                    thickness,
+                    cv2.LINE_AA
                 )
 
             # Trasforma il centro world→camera e proietta per debug pixel
@@ -232,7 +261,7 @@ class ObjectDetectorNode(Node):
                 cy = int((y_min + y_max) / 2.0)
                 if self.roi_x_min <= cx <= self.roi_x_max and self.roi_y_min <= cy <= self.roi_y_max:
                     valid_boxes.append(box)
-        return valid_boxes
+        return valid_boxes, results[0].names
 
     def compute_pointcloud_from_box(self, depth_msg: Image, box):
 
