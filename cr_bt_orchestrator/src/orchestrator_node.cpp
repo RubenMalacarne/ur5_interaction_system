@@ -24,7 +24,7 @@ namespace cr::bt::orchestrator
         pre_approach_distance_ = this->declare_parameter("pre_approach_distance", 0.15);
         approach_distance_ = this->declare_parameter("approach_distance", 0.06);
         gripper_open_value_ = this->declare_parameter("gripper_open_value", 0.0);
-        gripper_close_value_ = this->declare_parameter("gripper_close_value", 0.8);
+        gripper_close_value_ = this->declare_parameter("gripper_close_value", 0.31);
         home_z_position_ = this->declare_parameter("home_z_position", 1.25);
         place_offset_x_ = this->declare_parameter("place_offset_x", 0.1);
         place_offset_z_ = this->declare_parameter("place_offset_z", 0.1);
