@@ -17,7 +17,7 @@ namespace scene_management {
         rclcpp::QoS qos_profile(rclcpp::QoSInitialization::from_rmw(rmw_qos_profile_default));
         qos_profile.reliable();
         qos_profile.history(rclcpp::HistoryPolicy::KeepLast);
-        qos_profile.keep_last(10);
+        qos_profile.keep_last(1);
 
         // Subscriber su /object_info
         obj_detection_result_sub_ = this->create_subscription<cr_interfaces::msg::ObjectInfoArray>(
@@ -45,18 +45,24 @@ namespace scene_management {
 
         moveit_msgs::msg::PlanningScene planning_scene;
 
-        for (const auto& obj : detected_objects->objects) {
+        // Set di oggetti attualmente rilevati
+        std::set<std::string> current_object_ids;
 
-            RCLCPP_INFO(this->get_logger(), "Adding object %d to planning scene msg...", obj.id);
+        // Aggiunta oggetti rilevati
+        for (const auto& obj : detected_objects->objects) {
+            std::string object_id_str = std::to_string(obj.id);
+            current_object_ids.insert(object_id_str);
+
+            RCLCPP_INFO(this->get_logger(), "Adding object %s to planning scene msg...", object_id_str.c_str());
 
             moveit_msgs::msg::CollisionObject collision_object;
-            collision_object.id = std::to_string(obj.id);
+            collision_object.id = object_id_str;
             collision_object.header.frame_id = "world";
 
             geometry_msgs::msg::Pose pose;
             pose.position.x = obj.center.x;
             pose.position.y = obj.center.y;
-            pose.position.z = obj.center.z - obj.size.z/2;
+            pose.position.z = obj.center.z - obj.size.z / 2;
 
             shape_msgs::msg::SolidPrimitive primitive;
             primitive.type = primitive.BOX;
@@ -72,10 +78,35 @@ namespace scene_management {
             planning_scene.world.collision_objects.push_back(collision_object);
         }
 
+        // Ottenere scena attuale per confrontare gli oggetti esistenti
+        auto& manager = cr::scene_management::SceneManager::instance(shared_from_this());
+        auto psm = manager.getPlanningSceneMonitor();
+
+        if (psm && psm->getPlanningScene()) {
+            auto current_scene = psm->getPlanningScene();
+            const auto& existing_objects = current_scene->getWorld()->getObjectIds();
+
+            for (const auto& existing_id : existing_objects) {
+                // Se l'oggetto nella scena non è tra quelli rilevati, va rimosso
+                if (current_object_ids.find(existing_id) == current_object_ids.end()) {
+                    RCLCPP_INFO(this->get_logger(), "Removing object %s no longer detected.", existing_id.c_str());
+                    moveit_msgs::msg::CollisionObject remove_object;
+                    remove_object.id = existing_id;
+                    remove_object.header.frame_id = "world";
+                    remove_object.operation = remove_object.REMOVE;
+
+                    planning_scene.world.collision_objects.push_back(remove_object);
+                }
+            }
+        } else {
+            RCLCPP_WARN(this->get_logger(), "PlanningSceneMonitor not available. Skipping object removal.");
+        }
+
         planning_scene.is_diff = true;
         planning_scene_pub_->publish(planning_scene);
-        RCLCPP_INFO(this->get_logger(), "Objects spawned in the scene.");
+        RCLCPP_INFO(this->get_logger(), "Published updated planning scene with added and removed objects.");
     }
+
 
     void PlanningSceneModifier::allowCollision(
         const std::shared_ptr<cr_interfaces::srv::AllowCollision::Request> request,
