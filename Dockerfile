@@ -43,7 +43,8 @@ RUN pip3 install pyzmq cbor2 \
     ultralytics \ 
     pyyaml \
     xmlschema
-
+# Downgrade NumPy to fix compatibility issues with cv_bridge etc.
+RUN pip3 install "numpy<2"
 # ROS workspace
 WORKDIR /ros2_ws
 COPY . /ros2_ws/src_CR
