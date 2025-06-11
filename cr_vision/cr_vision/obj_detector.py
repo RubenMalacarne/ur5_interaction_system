@@ -153,7 +153,7 @@ class ObjectDetectorNode(Node):
                 obj = ObjectInfo()
                 obj.id = i 
                 cls_id = int(box.cls[0])            
-                obj.label = f"{names[cls_id]}_{i}"
+                obj.label = f"{names[cls_id]}"
                 obj.center.x = float(xw)
                 obj.center.y = float(yw)
                 obj.center.z = float(zw)
