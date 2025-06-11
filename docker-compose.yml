@@ -3,8 +3,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: my_ros2_image
-    container_name: ros2_container
+    image: cr_project
+    container_name: cr_project_container
     volumes:
       - .:/ros2_ws/src_CR
       - /tmp/.X11-unix:/tmp/.X11-unix

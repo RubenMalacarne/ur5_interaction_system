@@ -131,25 +131,25 @@ class PickRedIntentHandler(AbstractRequestHandler):
 
         return handler_input.response_builder.response
 
-class PickColorIntentHandler(AbstractRequestHandler):
+class PickBlueIntentHandler(AbstractRequestHandler):
     def can_handle(self, handler_input):
-        return is_intent_name("PrendiCuboColoratoIntent")(handler_input)
+        return is_intent_name("PrendiCuboBlueIntent")(handler_input)
 
     def handle(self, handler_input):
         # Rispondi subito ad Alexa
-        speech_text = "Ok, prendo il cubetto colorato..."
+        speech_text = "Ok, prendo il cubetto blu..."
 
         # Esegui il resto in background
         def ros_action():
             nonlocal speech_text
             rclpy.spin_once(alexa_node, timeout_sec=1.0)
-            object_id = get_lowest_id_by_label(alexa_node.latest_objects, "red_cube")
+            object_id = get_lowest_id_by_label(alexa_node.latest_objects, "blue_cube")
             if object_id is None:
-                speech_text = "Nessun cubetto colorato trovato."
-                alexa_node.get_logger().error("Nessun cubetto rosso trovato.")
+                speech_text = "Nessun cubetto blu trovato."
+                alexa_node.get_logger().error("Nessun cubetto blu trovato.")
                 return
 
-            speech_text = f"Il robot andrà a prendere il cubetto colorato con id {object_id}."
+            speech_text = f"Il robot andrà a prendere il cubetto blu con id {object_id}."
             alexa_node.get_logger().info(speech_text)
 
             goal = ExecuteWorkflow.Goal()
@@ -218,7 +218,7 @@ skill_builder = SkillBuilder()
 skill_builder.add_request_handler(LaunchRequestHandler())
 skill_builder.add_request_handler(PickGreenIntentHandler())
 skill_builder.add_request_handler(PickRedIntentHandler())
-skill_builder.add_request_handler(PickColorIntentHandler())
+skill_builder.add_request_handler(PickBlueIntentHandler())
 skill_builder.add_request_handler(StopIntentHandler())
 skill_builder.add_request_handler(ResumeIntentHandler())
 skill_builder.add_exception_handler(AllExceptionHandler())
