@@ -6,7 +6,7 @@
         <Fallback>
 
             <ForceFailure>
-                <GuiLog main_msg = "Executing workflow" log_msg="Workflow started" percentage="5" target_id = "{object_id}" />
+                <GuiLog main_msg = "Executing workflow" log_msg="Workflow started" percentage="5" target_id = "-1" />
             </ForceFailure>
             
             <ReactiveSequence name="ReactiveStopChecking">
@@ -37,7 +37,10 @@
                                     object_size_x="{object_size_x}"
                                     object_size_y="{object_size_y}"
                                     object_size_z="{object_size_z}"
+                                    object_label="{object_label}"
                                 />
+
+                                <GuiLog main_msg = "Executing workflow" log_msg="Workflow started" percentage="5" target_id = "{object_id}" target_label = "{object_label}" />
 
                                 <!-- 3. Pick object -->
                                 <SubTree ID="Pick" _autoremap="true"
@@ -46,6 +49,7 @@
                                     object_center_y="{object_center_y}"
                                     object_center_z="{object_center_z}"
                                     object_size_z="{object_size_z}"
+                                    object_label="{object_label}"
                                 />
 
                                 <!-- 4. Place object -->
@@ -55,6 +59,7 @@
                                     object_center_y="{object_center_y}"
                                     object_center_z="{object_center_z}"
                                     object_size_z="{object_size_z}"
+                                    object_label="{object_label}"
                                 />
 
                                 <!-- 5. Unfreeze scene -->

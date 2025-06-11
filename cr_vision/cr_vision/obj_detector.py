@@ -184,7 +184,7 @@ class ObjectDetectorNode(Node):
                 )
 
                 # C) Disegna etichetta sul lato sinistro, centrata verticalmente
-                label = f"{obj.id}"
+                label = f"{obj.label}"
 
                 # Font piccolo e fine
                 font = cv2.FONT_HERSHEY_SIMPLEX

@@ -29,7 +29,8 @@ namespace cr::bt::orchestrator::nodes
                                                                                           BT::OutputPort<double>("object_center_z"),
                                                                                           BT::OutputPort<double>("object_size_x"),
                                                                                           BT::OutputPort<double>("object_size_y"),
-                                                                                          BT::OutputPort<double>("object_size_z")});
+                                                                                          BT::OutputPort<double>("object_size_z"),
+                                                                                          BT::OutputPort<std::string>("object_label")});
     }
 
     bool GetObjectInfo::setRequest(typename Request::SharedPtr &request)
@@ -85,6 +86,7 @@ namespace cr::bt::orchestrator::nodes
         setOutput("object_size_x", response->object_info.size.x);
         setOutput("object_size_y", response->object_info.size.y);
         setOutput("object_size_z", response->object_info.size.z);
+        setOutput("object_label", response->object_info.label);
 
         BT_ACTION_LOG_INFO(
             "Received object info: center=[%.2f, %.2f, %.2f]",

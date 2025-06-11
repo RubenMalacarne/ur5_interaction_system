@@ -168,7 +168,7 @@ namespace cr::gui
         /* ---- update target id (optional) --------------------------------- */
         if (msg->target_id >= 0)
         {
-            QString t = QString("target cube: %1").arg(msg->target_id);
+            QString t = QString("target cube: %1").arg(QString::fromStdString(msg->target_label));
             QMetaObject::invokeMethod(
                 target_label_, "setText",
                 Qt::QueuedConnection,

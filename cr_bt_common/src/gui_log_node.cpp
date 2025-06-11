@@ -22,7 +22,8 @@ namespace cr::bt::common
             BT::InputPort<std::string>("log_msg", "Log message (required)"),
             BT::InputPort<std::string>("phase", "Phase (optional)"),
             BT::InputPort<uint8_t>("percentage", "Progress % (optional)"),
-            BT::InputPort<int8_t>("target_id", "Target ID (optional)")};
+            BT::InputPort<int8_t>("target_id", "Target ID (optional)"),
+            BT::InputPort<std::string>("target_label", "Target Label (optional)")};
     }
 
     BT::NodeStatus GuiLog::tick()
@@ -54,6 +55,14 @@ namespace cr::bt::common
             if (getInput("target_id", tid))
             {
                 m.target_id = tid;
+            }
+        }
+
+        {
+            std::string target_label;
+            if (getInput("target_label", target_label))
+            {
+                m.target_label = target_label;
             }
         }
 
