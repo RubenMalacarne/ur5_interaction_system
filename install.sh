@@ -76,7 +76,7 @@ git clone https://github.com/BehaviorTree/BehaviorTree.ROS2.git
 # -------------------------------------------------------------------------
 
 # Create data directory if it doesn't exist
-mkdir -p /cr_vision/data
+mkdir -p ./cr_vision/data
 
 # Download YOLO model if not exists
 check_download "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolo11n-pose.pt" "./cr_vision/data/yolo11n-pose.pt"

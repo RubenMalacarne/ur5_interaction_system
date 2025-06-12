@@ -29,7 +29,7 @@ class ObjectDetectorNode(Node):
         self.declare_parameters(
             namespace='',
             parameters=[
-                ('target_labels', ['green_cube', 'red_cube']),
+                ('target_labels', ['green_cube', 'red_cube', 'blue_cube']),
                 ('target_size_x', 0.05),
                 ('target_size_y', 0.05),
                 ('target_size_z', 0.15),
