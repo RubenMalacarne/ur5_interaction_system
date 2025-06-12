@@ -84,3 +84,4 @@ std_msgs/msg/MultiArrayDimension
 std_msgs/msg/Float64MultiArray
 std_msgs/msg/MultiArrayLayout
 tf2_msgs/msg/TFMessage
+geometry_msgs/msg/PoseArray
