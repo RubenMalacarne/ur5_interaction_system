@@ -122,7 +122,7 @@ namespace cr::bt::orchestrator
         const rclcpp_action::GoalUUID &uuid,
         std::shared_ptr<const ExecuteWorkflow::Goal> goal)
     {
-        RCLCPP_INFO(get_logger(), "Received goal request for object %d", goal->object_id);
+        RCLCPP_INFO(get_logger(), "Received goal request for object %s", (goal->object_label).c_str());
 
         if (!bt_factory_initialized_)
         {
@@ -139,7 +139,7 @@ namespace cr::bt::orchestrator
         (void)uuid;
         cr_interfaces::msg::Log msg;
         msg.main_msg = "Request accepted!";
-        msg.target_id = goal->object_id;
+        msg.target_label = goal->object_label;
         gui_log_pub_->publish(msg);
         return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
     }
@@ -158,8 +158,8 @@ namespace cr::bt::orchestrator
     {
         RCLCPP_INFO(
             get_logger(),
-            "Executing goal for object %d in new thread",
-            goal_handle->get_goal()->object_id);
+            "Executing goal for object %s in new thread",
+            (goal_handle->get_goal()->object_label).c_str());
 
         bt_running_ = true; // ✅ segna in esecuzione
 
@@ -173,7 +173,7 @@ namespace cr::bt::orchestrator
                                            auto motion_commander = std::make_shared<cr::motion_core::MotionCommander>(
                                                shared_from_this(), "arm_manipulator", "gripper");
                                            thread_local_blackboard->set("motion_commander", motion_commander);
-                                           thread_local_blackboard->set<std::string>("object_id", std::to_string(goal_handle->get_goal()->object_id));
+                                           thread_local_blackboard->set<std::string>("object_label", (goal_handle->get_goal()->object_label).c_str());
                                            thread_local_blackboard->set("gui_log_pub", gui_log_pub_);
 
                                            loadConfigurationToBlackboard(thread_local_blackboard);
@@ -203,7 +203,7 @@ namespace cr::bt::orchestrator
                                                return;
                                            }
 
-                                           RCLCPP_INFO(get_logger(), "BT Thread: Starting execution for object %d", goal_handle->get_goal()->object_id);
+                                           RCLCPP_INFO(get_logger(), "BT Thread: Starting execution for object %s", (goal_handle->get_goal()->object_label).c_str());
 
                                            BT::NodeStatus status = BT::NodeStatus::RUNNING;
                                            rclcpp::Rate loop_rate(10);

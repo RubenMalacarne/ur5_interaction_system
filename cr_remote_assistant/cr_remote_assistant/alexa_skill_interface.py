@@ -48,16 +48,13 @@ alexa_node = AlexaNode()
 action_client = ActionClient(alexa_node, ExecuteWorkflow, '/cr/execute_workflow')
 
 #function to take the lowest id of an object with a specific label
-def get_lowest_id_by_label(objects, target_label):
-    filtered = [obj for obj in objects if obj.label == target_label]
-    if not filtered:
-        return None
-    return min(filtered, key=lambda x: x.id).id
+def exists_label(objects, target_label):
+    return any(obj.label == target_label for obj in objects)
 
 # Funzione helper per gestire l'invio del goal e controllare se viene rifiutato
-def send_goal_and_check_reject(object_id, color_name):
+def send_goal_and_check_reject(object_label, color_name):
     goal = ExecuteWorkflow.Goal()
-    goal.object_id = object_id
+    goal.object_label = object_label
     
     # Invia il goal e aspetta la risposta
     future = action_client.send_goal_async(goal)
@@ -66,8 +63,8 @@ def send_goal_and_check_reject(object_id, color_name):
     if future.result() is not None:
         goal_handle = future.result()
         if goal_handle.accepted:
-            alexa_node.get_logger().info(f"Goal accettato per {color_name} con id {object_id}")
-            return True, f"Il robot andrà a prendere il cubetto {color_name} con id {object_id}."
+            alexa_node.get_logger().info(f"Goal accettato per {color_name}")
+            return True, f"Il robot andrà a prendere il cubetto {color_name}"
         else:
             alexa_node.get_logger().warn(f"Goal rifiutato per {color_name}")
             return False, "Non posso, sto già prendendo un altro cubo!"
@@ -98,14 +95,14 @@ class PickGreenIntentHandler(AbstractRequestHandler):
     def handle(self, handler_input):
         # Esegui tutto prima di rispondere ad Alexa
         rclpy.spin_once(alexa_node, timeout_sec=1.0)
-        object_id = get_lowest_id_by_label(alexa_node.latest_objects, "green_cube")
+        object_exists = exists_label(alexa_node.latest_objects, "green_cube")
         
-        if object_id is None:
+        if object_exists is False:
             speech_text = "Nessun cubetto verde trovato."
             alexa_node.get_logger().error("Nessun cubetto verde trovato.")
         else:
             # Usa la nuova funzione per controllare il reject
-            accepted, response_msg = send_goal_and_check_reject(object_id, "verde")
+            accepted, response_msg = send_goal_and_check_reject("green_cube", "verde")
             speech_text = response_msg
 
         handler_input.response_builder.speak(speech_text).set_card(
@@ -121,14 +118,14 @@ class PickRedIntentHandler(AbstractRequestHandler):
     def handle(self, handler_input):
         # Esegui tutto prima di rispondere ad Alexa
         rclpy.spin_once(alexa_node, timeout_sec=1.0)
-        object_id = get_lowest_id_by_label(alexa_node.latest_objects, "red_cube")
+        object_exists = exists_label(alexa_node.latest_objects, "red_cube")
         
-        if object_id is None:
+        if object_exists is False:
             speech_text = "Nessun cubetto rosso trovato."
             alexa_node.get_logger().error("Nessun cubetto rosso trovato.")
         else:
             # Usa la nuova funzione per controllare il reject
-            accepted, response_msg = send_goal_and_check_reject(object_id, "rosso")
+            accepted, response_msg = send_goal_and_check_reject("red_cube", "rosso")
             speech_text = response_msg
 
         handler_input.response_builder.speak(speech_text).set_card(
@@ -143,14 +140,14 @@ class PickBlueIntentHandler(AbstractRequestHandler):
     def handle(self, handler_input):
         # Esegui tutto prima di rispondere ad Alexa
         rclpy.spin_once(alexa_node, timeout_sec=1.0)
-        object_id = get_lowest_id_by_label(alexa_node.latest_objects, "blue_cube")
+        object_exists = exists_label(alexa_node.latest_objects, "blue_cube")
         
-        if object_id is None:
+        if object_exists is False:
             speech_text = "Nessun cubetto blu trovato."
             alexa_node.get_logger().error("Nessun cubetto blu trovato.")
         else:
             # Usa la nuova funzione per controllare il reject
-            accepted, response_msg = send_goal_and_check_reject(object_id, "blu")
+            accepted, response_msg = send_goal_and_check_reject("blue_cube", "blu")
             speech_text = response_msg
 
         handler_input.response_builder.speak(speech_text).set_card(

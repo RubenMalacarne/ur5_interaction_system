@@ -30,6 +30,7 @@
 
                                 <!-- 2. Get object information -->
                                 <Action ID="GetObjectInfo"
+                                    object_label="{object_label}"
                                     object_id="{object_id}"
                                     object_center_x="{object_center_x}"
                                     object_center_y="{object_center_y}"
@@ -37,7 +38,6 @@
                                     object_size_x="{object_size_x}"
                                     object_size_y="{object_size_y}"
                                     object_size_z="{object_size_z}"
-                                    object_label="{object_label}"
                                 />
 
                                 <GuiLog main_msg = "Executing workflow" log_msg="Workflow started" percentage="5" target_id = "{object_id}" target_label = "{object_label}" />
