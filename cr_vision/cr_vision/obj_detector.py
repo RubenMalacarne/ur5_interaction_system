@@ -63,7 +63,7 @@ class ObjectDetectorNode(Node):
 
         # Caricamento modello YOLO
         package_share_directory = get_package_share_directory('cr_vision')
-        model_path = os.path.join(package_share_directory, 'data', 'yolo_cubi.pt')
+        model_path = os.path.join(package_share_directory, 'data', 'color_cube.pt')
         self.model = YOLO(model_path)
 
         # Subscriber sincronizzati per RGB e Depth
