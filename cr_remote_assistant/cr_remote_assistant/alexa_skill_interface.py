@@ -133,9 +133,9 @@ class PickRedIntentHandler(AbstractRequestHandler):
 
         return handler_input.response_builder.response
 
-class PickBlueIntentHandler(AbstractRequestHandler):
+class PickBluIntentHandler(AbstractRequestHandler):
     def can_handle(self, handler_input):
-        return is_intent_name("PrendiCuboBlueIntetnt")(handler_input)
+        return is_intent_name("PrendiCuboBluIntent")(handler_input)
 
     def handle(self, handler_input):
         # Esegui tutto prima di rispondere ad Alexa
@@ -230,7 +230,7 @@ skill_builder = SkillBuilder()
 skill_builder.add_request_handler(LaunchRequestHandler())
 skill_builder.add_request_handler(PickGreenIntentHandler())
 skill_builder.add_request_handler(PickRedIntentHandler())
-skill_builder.add_request_handler(PickBlueIntentHandler())
+skill_builder.add_request_handler(PickBluIntentHandler())
 skill_builder.add_request_handler(StopIntentHandler())
 skill_builder.add_request_handler(ResumeIntentHandler())
 skill_builder.add_request_handler(PauseIntentHandler())
