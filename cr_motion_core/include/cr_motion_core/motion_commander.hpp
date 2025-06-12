@@ -40,6 +40,8 @@ namespace cr::motion_core
         void cancel_arm_execution();
         MotionStatus get_arm_motion_status() const;
 
+        moveit::planning_interface::MoveGroupInterface::Plan cartesian_movement();
+
         // --- METODI PER IL GRIPPER ---
 
         /**
