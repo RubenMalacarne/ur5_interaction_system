@@ -127,6 +127,12 @@ class ObjectDetectorNode(Node):
         boxes, names = self.get_detected_boxes(rgb_image)
         self.get_logger().info(f"YOLO ha trovato {len(boxes)} oggetti nella ROI")
         if not boxes:
+            msg = ObjectInfoArray()
+            msg.header = Header()
+            msg.header.stamp = self.get_clock().now().to_msg()
+            msg.header.frame_id = "object_detection"
+            msg.objects = []
+            self.obj_selected_pub_.publish(msg)
             # Pubblica overlay anche se vuoto
             img_msg = self.bridge.cv2_to_imgmsg(overlay, "bgr8")
             img_msg.header = rgb_image.header
