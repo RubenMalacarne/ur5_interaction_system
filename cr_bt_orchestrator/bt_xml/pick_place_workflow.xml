@@ -6,7 +6,7 @@
         <Fallback>
 
             <ForceFailure>
-                <GuiLog main_msg = "Executing workflow" log_msg="Workflow started" percentage="5" target_id = "{object_id}" />
+                <GuiLog main_msg = "Executing workflow" log_msg="Workflow started" percentage="5" target_id = "-1" />
             </ForceFailure>
             
             <ReactiveSequence name="ReactiveStopChecking">
@@ -30,6 +30,7 @@
 
                                 <!-- 2. Get object information -->
                                 <Action ID="GetObjectInfo"
+                                    object_label="{object_label}"
                                     object_id="{object_id}"
                                     object_center_x="{object_center_x}"
                                     object_center_y="{object_center_y}"
@@ -39,6 +40,8 @@
                                     object_size_z="{object_size_z}"
                                 />
 
+                                <GuiLog main_msg = "Executing workflow" log_msg="Workflow started" percentage="5" target_id = "{object_id}" target_label = "{object_label}" />
+
                                 <!-- 3. Pick object -->
                                 <SubTree ID="Pick" _autoremap="true"
                                     object_id="{object_id}"
@@ -46,6 +49,7 @@
                                     object_center_y="{object_center_y}"
                                     object_center_z="{object_center_z}"
                                     object_size_z="{object_size_z}"
+                                    object_label="{object_label}"
                                 />
 
                                 <!-- 4. Place object -->
@@ -55,13 +59,14 @@
                                     object_center_y="{object_center_y}"
                                     object_center_z="{object_center_z}"
                                     object_size_z="{object_size_z}"
+                                    object_label="{object_label}"
                                 />
-
-                                <!-- 5. Unfreeze scene -->
-                                <Action ID="FreezeScene" freeze="false" />
 
                                 <!-- 6. Ritorno a casa -->
                                 <Action ID="GoHome" />
+
+                                <!-- 5. Unfreeze scene -->
+                                <Action ID="FreezeScene" freeze="false" />
 
                                 <LogMessage message="Workflow successfully completed!" />
                                 <GuiLog main_msg = "Executing workflow" log_msg="Workflow successfully completed" target_id="-1" />
@@ -84,7 +89,6 @@
                 <Action ID="SetCollisionAllowed" name="EnableCollisions"
                     object_id="{object_id}"
                     is_allowed="false" />
-                <Action ID="FreezeScene" freeze="false" />
 
                 <GuiLog main_msg = "Execution cancellation..." log_msg="Going home..." target_id="-1" />
                 <!-- Ritorno in home, sempre controllando che la zona sia Safe -->
@@ -103,6 +107,8 @@
                 </RetryUntilSuccessful>
                 <GuiLog main_msg = "Execution cancellation..." log_msg="Execution successfully cancelled" target_id="-1" />
                 <LogMessage message="Execution successfully blocked!" />
+
+                <Action ID="FreezeScene" freeze="false" />
             </Sequence>
 
         </Fallback>

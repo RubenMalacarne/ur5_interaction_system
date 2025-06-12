@@ -12,4 +12,11 @@ install(DIRECTORY launch
   DESTINATION share/${PROJECT_NAME}
 )
 
+install(
+  PROGRAMS
+    cr_bringup/emergency_stop_node.py
+    cr_bringup/socket_listener.py 
+  DESTINATION lib/${PROJECT_NAME}
+)
+
 ament_package()

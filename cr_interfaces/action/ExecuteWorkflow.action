@@ -1,4 +1,4 @@
-uint8 object_id
+string object_label
 ---
 bool success
 string msg

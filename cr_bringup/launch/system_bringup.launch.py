@@ -28,6 +28,13 @@ def generate_launch_description():
         include('cr_vision', 'cr_vision.launch.py', delay=4.0),
 
         # 4) Gui
-        include('cr_gui', 'gui.launch.py', delay=4.0)
+        include('cr_gui', 'gui.launch.py', delay=6.0),
+        
+        # # 5) Alexa
+        include('cr_remote_assistant', 'alexa.launch.py', delay=8.0),
+        
+        # # 6) BT
+        include('cr_bt_orchestrator', 'orchestrator.launch.py', delay=10.0),
+        
 
     ])

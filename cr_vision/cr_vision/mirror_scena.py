@@ -1,195 +1,89 @@
 #!/usr/bin/env python3
-
-import rclpy
+import rclpy, copy, numpy as np, cv2
 from rclpy.node import Node
-
-import copy
-import numpy as np
-import cv2
-
-from cv_bridge import CvBridge
 from sensor_msgs.msg import Image, PointCloud2
-from geometry_msgs.msg import TransformStamped
 from tf2_msgs.msg import TFMessage
-
-
-'''
-this code:
-
-
-'''
+from cv_bridge import CvBridge
+from message_filters import Subscriber, TimeSynchronizer, ApproximateTimeSynchronizer
 
 class MirrorCameraNode(Node):
     def __init__(self):
-        super().__init__('mirror_camera_node')
-        
+        super().__init__("mirror_camera_node")
+
         self.bridge = CvBridge()
-
-        #parameter camera:
         self.fx = 525.0
-        self.desired_encoding_rgb = "rgb8"
-        self.desired_encoding_depth = "32FC1"
         
-        # Subscriber
-        self.rgb_sub = self.create_subscription(
-            Image, '/coppelia_camera/rgb', self.rgb_callback, 10)
-        self.depth_sub = self.create_subscription(
-            Image, '/coppelia_camera/depth', self.depth_callback, 10)
-        self.pc_sub = self.create_subscription(
-            PointCloud2, '/coppelia_camera/pointcloud', self.pointcloud_callback, 10)
-        self.tf_sub = self.create_subscription(
-            TFMessage, '/tf', self.tf_callback, 10)
+        # Contatori per debug
+        self.rgb_count = 0
+        self.depth_count = 0
+        self.sync_count = 0
+
+        # --------- subscriber singoli per debug ----------
+        #self.rgb_debug_sub = self.create_subscription(Image, "/coppelia_camera/rgb", self.rgb_debug_cb, 10)
+        #self.depth_debug_sub = self.create_subscription(Image, "/coppelia_camera/depth", self.depth_debug_cb, 10)
+
+        # --------- subscriber con message_filters ----------
+        qos = rclpy.qos.QoSProfile(depth=10)
+        self.rgb_sub = Subscriber(self, Image, "/coppelia_camera/rgb", qos_profile=qos)
+        self.depth_sub = Subscriber(self, Image, "/coppelia_camera/depth", qos_profile=qos)
+
+        # Prova prima con ApproximateTimeSynchronizer (più permissivo)
+        self.sync = ApproximateTimeSynchronizer([self.rgb_sub, self.depth_sub], 
+                                              queue_size=10, slop=0.1)
+        self.sync.registerCallback(self.rgb_depth_cb)
+
+        # --------- publisher ----------
+        self.rgb_pub = self.create_publisher(Image, "cr_vision/mirrored_camera/rgb", 10)
+        self.depth_pub = self.create_publisher(Image, "cr_vision/mirrored_camera/depth", 10)
+
+        # Timer per log periodico
+        #self.debug_timer = self.create_timer(2.0, self.debug_status)
+
+        #self.get_logger().info("MirrorCameraNode with RGB-Depth sync ready.")
+
+    # def rgb_debug_cb(self, msg):
+    #     self.rgb_count += 1
+    #     if self.rgb_count % 10 == 1:  # Log ogni 10 messaggi
+    #         self.get_logger().info(f"RGB #{self.rgb_count}: stamp={msg.header.stamp.sec}.{msg.header.stamp.nanosec:09d}, frame_id='{msg.header.frame_id}', size={msg.width}x{msg.height}")
+
+    # def depth_debug_cb(self, msg):
+    #     self.depth_count += 1
+    #     if self.depth_count % 10 == 1:  # Log ogni 10 messaggi
+    #         self.get_logger().info(f"Depth #{self.depth_count}: stamp={msg.header.stamp.sec}.{msg.header.stamp.nanosec:09d}, frame_id='{msg.header.frame_id}', size={msg.width}x{msg.height}")
+
+    # def debug_status(self):
+    #     self.get_logger().info(f"Status: RGB={self.rgb_count}, Depth={self.depth_count}, Sync={self.sync_count}")
+
+    def rgb_depth_cb(self, rgb_msg: Image, depth_msg: Image):
+        self.sync_count += 1
         
-        # Publisher
-        self.rgb_pub = self.create_publisher(Image, 'cr_vision/mirrored_camera/rgb', 10)
-        self.depth_pub = self.create_publisher(Image, 'cr_vision/mirrored_camera/depth', 10)
-        self.pc_pub = self.create_publisher(PointCloud2, 'cr_vision/mirrored_camera/pointcloud', 10)
-        self.tf_pub = self.create_publisher(TFMessage, 'cr_vision/mirrored/tf', 10)
-
+        # Log della sincronizzazione
+        rgb_stamp = rgb_msg.header.stamp.sec + rgb_msg.header.stamp.nanosec * 1e-9
+        depth_stamp = depth_msg.header.stamp.sec + depth_msg.header.stamp.nanosec * 1e-9
+        time_diff = abs(rgb_stamp - depth_stamp)
         
-        self.get_logger().info("mirror camera node activated.")
+        #self.get_logger().info(f"SYNC #{self.sync_count}: time_diff={time_diff*1000:.2f}ms, RGB_frame='{rgb_msg.header.frame_id}', Depth_frame='{depth_msg.header.frame_id}'")
 
-
-    def rgb_callback(self, msg):
         try:
-            cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding=self.desired_encoding_rgb)
-        except Exception as e:
-            self.get_logger().error(f"Errore conversione RGB: {e}")
-            return
-        # use file about opencv to mirror the image
-        mirrored = cv2.flip(cv_image, 1)
-        mirrored_msg = self.bridge.cv2_to_imgmsg(mirrored, encoding =self.desired_encoding_rgb)
-        mirrored_msg.header = msg.header
-        # (Se vuoi cambiare timestamp: mirrored_msg.header.stamp = self.get_clock().now().to_msg())
-        self.rgb_pub.publish(mirrored_msg)
+            # ---- mirror RGB ----
+            rgb = self.bridge.imgmsg_to_cv2(rgb_msg, desired_encoding="rgb8")
+            rgb_flipped = cv2.flip(rgb, 1)
+            rgb_out = self.bridge.cv2_to_imgmsg(rgb_flipped, encoding="rgb8")
+            rgb_out.header = rgb_msg.header
+            self.rgb_pub.publish(rgb_out)
 
-
-    def depth_callback(self, msg):
-        try:
-            cv_depth = self.bridge.imgmsg_to_cv2(msg, desired_encoding=self.desired_encoding_depth)
-        except Exception as e:
-            self.get_logger().error(f"Errore conversione Depth: {e}")
-            return
-        mirrored_depth = cv2.flip(cv_depth, 1)
-        mirrored_msg = self.bridge.cv2_to_imgmsg(mirrored_depth, encoding =self.desired_encoding_depth)
-        mirrored_msg.header = msg.header
-        self.depth_pub.publish(mirrored_msg)
-
-    def pointcloud_callback (self,msg):
-        try:
-            # nota: l'immagine usata è 2d quindi la depth si rifa su di essa 
-            height = msg.height
-            width = msg.width
-            num_points = height * width
-            points = np.frombuffer(msg.data, dtype=np.float32).reshape((num_points, 3))
+            # ---- mirror Depth ----
+            depth = self.bridge.imgmsg_to_cv2(depth_msg, desired_encoding="32FC1")
+            depth_flipped = cv2.flip(depth, 1)
+            depth_out = self.bridge.cv2_to_imgmsg(depth_flipped, encoding="32FC1")
+            depth_out.header = depth_msg.header
+            self.depth_pub.publish(depth_out)
+            
+            #self.get_logger().info(f"Successfully published mirrored images #{self.sync_count}")
             
         except Exception as e:
-            self.get_logger().error(f"Errore conversione PointCloud2: {e}")
-            return
-        
-        points_organized = points.reshape((height, width, 3))
-        points_flipped = np.flip(points_organized, axis=1)
+            self.get_logger().error(f"Error in mirroring: {e}")
 
-        # mirrorino e traslazione lungo z termine --> z/fx
-        points_flipped[:, :, 0] = -points_flipped[:, :, 0] - (points_flipped[:, :, 2] / self.fx)
-
-        mirrored_points = points_flipped.reshape((num_points, 3))
-        mirrored_data = mirrored_points.astype(np.float32).tobytes()
-
-        new_msg = PointCloud2()
-        new_msg.header = msg.header
-        # Se non hai un TF per "mirrored_..." commenta la riga sotto per evitare frame inesistente:
-        # new_msg.header.frame_id = "mirrored_" + (msg.header.frame_id or "camera")
-        new_msg.height = height
-        new_msg.width = width
-        new_msg.fields = msg.fields
-        new_msg.is_bigendian = msg.is_bigendian
-        new_msg.point_step = msg.point_step
-        new_msg.row_step = msg.row_step
-        new_msg.data = mirrored_data
-        new_msg.is_dense = msg.is_dense
-
-        self.pc_pub.publish(new_msg)
-        
-    def tf_callback(self, msg):
-        tf_new = TFMessage()
-        try:
-            tf_msg = copy.deepcopy(msg)
-            for transform in tf_msg.transforms:
-                new_transform = copy.deepcopy(transform)
-                # mirror translation and rotation
-                new_transform.transform.translation.x = -transform.transform.translation.x
-                new_transform.transform.rotation.y = -transform.transform.rotation.y
-                new_transform.transform.rotation.z = -transform.transform.rotation.z
-                # Mirroring rotazione: R_new = M * R * M con M = diag([-1,1,1])
-                q = [
-                    transform.transform.rotation.x,
-                    transform.transform.rotation.y,
-                    transform.transform.rotation.z,
-                    transform.transform.rotation.w
-                ]
-                R = self.quaternion_to_matrix(q)
-                M = np.diag([-1, 1, 1])
-                R_new = M @ R @ M
-                q_new = self.matrix_to_quaternion(R_new)
-                new_transform.transform.rotation.x = q_new[0]
-                new_transform.transform.rotation.y = q_new[1]
-                new_transform.transform.rotation.z = q_new[2]
-                new_transform.transform.rotation.w = q_new[3]
-
-                tf_new.transforms.append(new_transform)
-        except Exception as e:
-            self.get_logger().error(f"Errore conversione TF: {e}")
-            return
-
-        self.tf_pub.publish(tf_msg)
-
-
-    def quaternion_to_matrix(self, q):
-        """Converte un quaternion [x, y, z, w] in una matrice di rotazione 3x3."""
-        x, y, z, w = q
-        R = np.array([
-            [1 - 2*y*y - 2*z*z,   2*x*y - 2*z*w,     2*x*z + 2*y*w],
-            [2*x*y + 2*z*w,       1 - 2*x*x - 2*z*z, 2*y*z - 2*x*w],
-            [2*x*z - 2*y*w,       2*y*z + 2*x*w,     1 - 2*x*x - 2*y*y]
-        ])
-        return R
-
-    def matrix_to_quaternion(self, R):
-        """Converte una matrice di rotazione 3x3 in un quaternion [x, y, z, w]."""
-        m00, m01, m02 = R[0, 0], R[0, 1], R[0, 2]
-        m10, m11, m12 = R[1, 0], R[1, 1], R[1, 2]
-        m20, m21, m22 = R[2, 0], R[2, 1], R[2, 2]
-
-        trace = m00 + m11 + m22
-        if trace > 0:
-            s = 0.5 / np.sqrt(trace + 1.0)
-            w = 0.25 / s
-            x = (m21 - m12) * s
-            y = (m02 - m20) * s
-            z = (m10 - m01) * s
-        else:
-            if (m00 > m11) and (m00 > m22):
-                s = 2.0 * np.sqrt(1.0 + m00 - m11 - m22)
-                w = (m21 - m12) / s
-                x = 0.25 * s
-                y = (m01 + m10) / s
-                z = (m02 + m20) / s
-            elif m11 > m22:
-                s = 2.0 * np.sqrt(1.0 + m11 - m00 - m22)
-                w = (m02 - m20) / s
-                x = (m01 + m10) / s
-                y = 0.25 * s
-                z = (m12 + m21) / s
-            else:
-                s = 2.0 * np.sqrt(1.0 + m22 - m00 - m11)
-                w = (m10 - m01) / s
-                x = (m02 + m20) / s
-                y = (m12 + m21) / s
-                z = 0.25 * s
-        return [x, y, z, w]
-    
-    
 def main(args=None):
     rclpy.init(args=args)
     node = MirrorCameraNode()
@@ -200,5 +94,5 @@ def main(args=None):
     node.destroy_node()
     rclpy.shutdown()
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

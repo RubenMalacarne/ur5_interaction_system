@@ -12,13 +12,12 @@ from rclpy.node import Node
 from rclpy.action import ActionClient
 from std_msgs.msg import String
 import threading
-
+from std_msgs.msg import Bool
 from cr_interfaces.msg import ObjectInfoArray
 from cr_interfaces.action import ExecuteWorkflow
+from rclpy.action.client import GoalStatus
 
 threading.Thread(target=lambda: rclpy.init()).start()
-
-
 
 class AlexaNode(Node):
     def __init__(self):
@@ -32,8 +31,13 @@ class AlexaNode(Node):
             10
         )
         self.publishers_cr_command = self.create_publisher(
-            String,
+            Bool,
             '/cr/pause_command',
+            10
+        )
+        self.publishers_cr_stop_command = self.create_publisher(
+            Bool,
+            '/cr/stop_command',
             10
         )
 
@@ -44,11 +48,29 @@ alexa_node = AlexaNode()
 action_client = ActionClient(alexa_node, ExecuteWorkflow, '/cr/execute_workflow')
 
 #function to take the lowest id of an object with a specific label
-def get_lowest_id_by_label(objects, target_label):
-    filtered = [obj for obj in objects if obj.label == target_label]
-    if not filtered:
-        return None
-    return min(filtered, key=lambda x: x.id).id
+def exists_label(objects, target_label):
+    return any(obj.label == target_label for obj in objects)
+
+# Funzione helper per gestire l'invio del goal e controllare se viene rifiutato
+def send_goal_and_check_reject(object_label, color_name):
+    goal = ExecuteWorkflow.Goal()
+    goal.object_label = object_label
+    
+    # Invia il goal e aspetta la risposta
+    future = action_client.send_goal_async(goal)
+    rclpy.spin_until_future_complete(alexa_node, future, timeout_sec=2.0)
+    
+    if future.result() is not None:
+        goal_handle = future.result()
+        if goal_handle.accepted:
+            alexa_node.get_logger().info(f"Goal accettato per {color_name}")
+            return True, f"Il robot andrà a prendere il cubetto {color_name}"
+        else:
+            alexa_node.get_logger().warn(f"Goal rifiutato per {color_name}")
+            return False, "Non posso, sto già prendendo un altro cubo!"
+    else:
+        alexa_node.get_logger().error("Timeout nell'invio del goal")
+        return False, "Errore di comunicazione con il robot."
 
 app = Flask(__name__)
 
@@ -71,27 +93,17 @@ class PickGreenIntentHandler(AbstractRequestHandler):
         return is_intent_name("PrendiCuboVerdeIntent")(handler_input)
 
     def handle(self, handler_input):
-        # Rispondi subito ad Alexa
-        speech_text = "Ok, prendo il cubetto verde..."
-
-        # Esegui il resto in background
-        def ros_action():
-            nonlocal speech_text #usato per aggiornare quello che deve dire alexa
-            rclpy.spin_once(alexa_node, timeout_sec=1.0)
-            object_id = get_lowest_id_by_label(alexa_node.latest_objects, "green_cube")
-            if object_id is None:
-                speech_text = "Nessun cubetto verde trovato."
-                alexa_node.get_logger().error("Nessun cubetto verde trovato.")
-                return
-
-            speech_text = f"Il robot andrà a prendere il cubetto verde con id {object_id}."
-            alexa_node.get_logger().info(speech_text)
-
-            goal = ExecuteWorkflow.Goal()
-            goal.object_id = object_id
-            action_client.send_goal_async(goal)
-
-        threading.Thread(target=ros_action).start()
+        # Esegui tutto prima di rispondere ad Alexa
+        rclpy.spin_once(alexa_node, timeout_sec=1.0)
+        object_exists = exists_label(alexa_node.latest_objects, "green_cube")
+        
+        if object_exists is False:
+            speech_text = "Nessun cubetto verde trovato."
+            alexa_node.get_logger().error("Nessun cubetto verde trovato.")
+        else:
+            # Usa la nuova funzione per controllare il reject
+            accepted, response_msg = send_goal_and_check_reject("green_cube", "verde")
+            speech_text = response_msg
 
         handler_input.response_builder.speak(speech_text).set_card(
             SimpleCard("Pick", speech_text)).set_should_end_session(True)
@@ -104,59 +116,39 @@ class PickRedIntentHandler(AbstractRequestHandler):
         return is_intent_name("PrendiCuboRossoIntent")(handler_input)
 
     def handle(self, handler_input):
-        # Rispondi subito ad Alexa
-        speech_text = "Ok, ora cerco il cubetto rosso..."
-
-        # Esegui il resto in background
-        def ros_action():
-            nonlocal speech_text #usato per aggiornare quello che deve dire alexa
-            rclpy.spin_once(alexa_node, timeout_sec=1.0)
-            object_id = get_lowest_id_by_label(alexa_node.latest_objects, "red_cube")
-            if object_id is None:
-                speech_text = "Nessun cubetto rosso trovato."
-                alexa_node.get_logger().error("Nessun cubetto rosso trovato.")
-                return
-
-            speech_text = f"Il robot andrà a prendere il cubetto rosso con id {object_id}."
-            alexa_node.get_logger().info(speech_text)
-
-            goal = ExecuteWorkflow.Goal()
-            goal.object_id = object_id
-            action_client.send_goal_async(goal)
-
-        threading.Thread(target=ros_action).start()
+        # Esegui tutto prima di rispondere ad Alexa
+        rclpy.spin_once(alexa_node, timeout_sec=1.0)
+        object_exists = exists_label(alexa_node.latest_objects, "red_cube")
+        
+        if object_exists is False:
+            speech_text = "Nessun cubetto rosso trovato."
+            alexa_node.get_logger().error("Nessun cubetto rosso trovato.")
+        else:
+            # Usa la nuova funzione per controllare il reject
+            accepted, response_msg = send_goal_and_check_reject("red_cube", "rosso")
+            speech_text = response_msg
 
         handler_input.response_builder.speak(speech_text).set_card(
             SimpleCard("Pick", speech_text)).set_should_end_session(True)
 
         return handler_input.response_builder.response
 
-class PickColorIntentHandler(AbstractRequestHandler):
+class PickBluIntentHandler(AbstractRequestHandler):
     def can_handle(self, handler_input):
-        return is_intent_name("PrendiCuboColoratoIntent")(handler_input)
+        return is_intent_name("PrendiCuboBluIntent")(handler_input)
 
     def handle(self, handler_input):
-        # Rispondi subito ad Alexa
-        speech_text = "Ok, prendo il cubetto colorato..."
-
-        # Esegui il resto in background
-        def ros_action():
-            nonlocal speech_text
-            rclpy.spin_once(alexa_node, timeout_sec=1.0)
-            object_id = get_lowest_id_by_label(alexa_node.latest_objects, "red_cube")
-            if object_id is None:
-                speech_text = "Nessun cubetto colorato trovato."
-                alexa_node.get_logger().error("Nessun cubetto rosso trovato.")
-                return
-
-            speech_text = f"Il robot andrà a prendere il cubetto colorato con id {object_id}."
-            alexa_node.get_logger().info(speech_text)
-
-            goal = ExecuteWorkflow.Goal()
-            goal.object_id = object_id
-            action_client.send_goal_async(goal)
-
-        threading.Thread(target=ros_action).start()
+        # Esegui tutto prima di rispondere ad Alexa
+        rclpy.spin_once(alexa_node, timeout_sec=1.0)
+        object_exists = exists_label(alexa_node.latest_objects, "blue_cube")
+        
+        if object_exists is False:
+            speech_text = "Nessun cubetto blu trovato."
+            alexa_node.get_logger().error("Nessun cubetto blu trovato.")
+        else:
+            # Usa la nuova funzione per controllare il reject
+            accepted, response_msg = send_goal_and_check_reject("blue_cube", "blu")
+            speech_text = response_msg
 
         handler_input.response_builder.speak(speech_text).set_card(
             SimpleCard("Pick", speech_text)).set_should_end_session(True)
@@ -168,18 +160,37 @@ class StopIntentHandler(AbstractRequestHandler):
         return is_intent_name("StopIntent")(handler_input)
 
     def handle(self, handler_input):
-        speech_text = "il robot si sta per fermare"
+        speech_text = "ok, annullamento esecuzione"
         
         def ros_action():
-        
-            msg = String()
-            msg.data = 'pause'
-            alexa_node.publishers_cr_command.publish(msg)
+            #ritorna un bool
+            msg= Bool()
+            msg.data = True
+            alexa_node.publishers_cr_stop_command.publish(msg)
             alexa_node.get_logger().info('Publishing: "%s"' % msg.data)
-
+            
         threading.Thread(target=ros_action).start()
         handler_input.response_builder.speak(speech_text).set_card(
             SimpleCard("Stop", speech_text)).set_should_end_session(True)
+        return handler_input.response_builder.response
+
+class PauseIntentHandler(AbstractRequestHandler):
+    def can_handle(self, handler_input):
+        return is_intent_name("PauseIntent")(handler_input)
+
+    def handle(self, handler_input):
+        speech_text = "ok, pausa dell'esecuzione in corso"
+        
+        def ros_action():
+            #ritorna un bool
+            msg= Bool()
+            msg.data = True
+            alexa_node.publishers_cr_command.publish(msg)
+            alexa_node.get_logger().info('Publishing: "%s"' % msg.data)
+            
+        threading.Thread(target=ros_action).start()
+        handler_input.response_builder.speak(speech_text).set_card(
+            SimpleCard("Pause", speech_text)).set_should_end_session(True)
         return handler_input.response_builder.response
 
 class ResumeIntentHandler(AbstractRequestHandler):
@@ -192,8 +203,9 @@ class ResumeIntentHandler(AbstractRequestHandler):
         
         def ros_action():
             
-            msg = String()
-            msg.data = 'resume'
+            #ritorna un bool
+            msg= Bool()
+            msg.data = False
             alexa_node.publishers_cr_command.publish(msg)
             alexa_node.get_logger().info('Publishing: "%s"' % msg.data)
 
@@ -218,12 +230,13 @@ skill_builder = SkillBuilder()
 skill_builder.add_request_handler(LaunchRequestHandler())
 skill_builder.add_request_handler(PickGreenIntentHandler())
 skill_builder.add_request_handler(PickRedIntentHandler())
-skill_builder.add_request_handler(PickColorIntentHandler())
+skill_builder.add_request_handler(PickBluIntentHandler())
 skill_builder.add_request_handler(StopIntentHandler())
 skill_builder.add_request_handler(ResumeIntentHandler())
+skill_builder.add_request_handler(PauseIntentHandler())
 skill_builder.add_exception_handler(AllExceptionHandler())
-# Register your intent handlers to the skill_builder object
 
+# Register your intent handlers to the skill_builder object
 
 SKILL_ID = "amzn1.ask.skill.3ad3dd7c-03cb-4a11-94af-0ac3b027efe2"
 
@@ -236,7 +249,6 @@ skill_adapter = SkillAdapter(
 @app.route("/")
 def invoke_skill():
     return skill_adapter.dispatch_request()
-
 
 skill_adapter.register(app=app, route="/")
 

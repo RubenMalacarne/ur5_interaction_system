@@ -118,7 +118,42 @@ namespace cr::motion_core
 
         return async_cartesian_move(target_pose);
     }
+    moveit::planning_interface::MoveGroupInterface::Plan MotionCommander::cartesian_movement()
+    {
+        moveit::planning_interface::MoveGroupInterface::Plan cart_plan;
 
+        geometry_msgs::msg::Pose start_pose = arm_group_->getCurrentPose().pose;
+        std::vector<geometry_msgs::msg::Pose> waypoints;
+
+        geometry_msgs::msg::Pose target_pose = start_pose;
+        target_pose.position.z += 0.03;
+        waypoints.push_back(target_pose);
+
+        target_pose.position.z += 0.03;
+        waypoints.push_back(target_pose);
+
+        moveit_msgs::msg::RobotTrajectory trajectory;
+        double jump_threshold = 0.0;
+        double eef_step = 0.01;
+
+        double fraction = arm_group_->computeCartesianPath(
+            waypoints, eef_step, jump_threshold, trajectory);
+
+        if (fraction > 0.0)
+        {
+            RCLCPP_INFO(node_->get_logger(),
+                        "✅ Cartesian path planned successfully (fraction: %f)", fraction);
+            cart_plan.trajectory_ = trajectory;
+        }
+        else
+        {
+            RCLCPP_WARN(node_->get_logger(),
+                        "⚠️ Failed to compute Cartesian path.");
+            cart_plan.trajectory_ = moveit_msgs::msg::RobotTrajectory();
+        }
+
+        return cart_plan;
+    }
     std::shared_future<MotionStatus> MotionCommander::async_go_home()
     {
         if (arm_task_future_.valid() &&
@@ -134,6 +169,21 @@ namespace cr::motion_core
             std::promise<MotionStatus> p;
             p.set_value(MotionStatus::FAILED);
             return p.get_future().share();
+        }
+
+
+        // 👉 PRIMA fase: movimento cartesiano verso il basso
+        auto cartesian_plan = cartesian_movement();
+        if (!cartesian_plan.trajectory_.joint_trajectory.points.empty())
+        {
+            auto ec = arm_group_->execute(cartesian_plan);
+            if (ec != moveit::core::MoveItErrorCode::SUCCESS)
+            {
+                std::promise<MotionStatus> p;
+                p.set_value(MotionStatus::FAILED);
+                arm_task_future_ = p.get_future().share();
+                return arm_task_future_;
+            }
         }
 
         arm_group_->setNamedTarget("home");

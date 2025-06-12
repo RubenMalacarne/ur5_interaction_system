@@ -39,12 +39,12 @@ RUN pip3 install pyzmq cbor2 \
     flask \
     flask-ask-sdk \
     ask-sdk \
-    ultralytics \
+    notebook \ 
+    ultralytics \ 
     pyyaml \
-    numpy \ 
     xmlschema
-
-
+# Downgrade NumPy to fix compatibility issues with cv_bridge etc.
+RUN pip3 install "numpy<2"
 # ROS workspace
 WORKDIR /ros2_ws
 COPY . /ros2_ws/src_CR
@@ -64,7 +64,7 @@ RUN rm -rf /ros2_ws/src_CR/download
 
 ENV COPPELIASIM_ROOT_DIR=/opt/CoppeliaSim_Edu_V4_10_0_rev0_Ubuntu22_04
 ENV PATH=$COPPELIASIM_ROOT_DIR:$PATH
-ENV LD_LIBRARY_PATH=$COPPELIASIM_ROOT_DIR:$LD_LIBRARY_PATH
+ENV LD_LIBRARY_PATH=$COPPELIASIM_ROOT_DIR
 ENV QT_QPA_PLATFORM_PLUGIN_PATH=/usr/lib/x86_64-linux-gnu/qt5/plugins/platforms
 ENV QT_QPA_PLATFORM=xcb
 

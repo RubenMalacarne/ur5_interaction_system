@@ -1,6 +1,11 @@
-obj_selection_node:
+obj_detector_node:
   ros__parameters:
-    target_label: green_cube
+    target_labels: 
+      - green_cube
+      - red_cube
     target_size_x: 0.05 # [m]
     target_size_y: 0.05 # [m]
     target_size_z: 0.15 # [m]
+    camera_width: 512
+    camera_height: 512
+    camera_fov_deg: 60

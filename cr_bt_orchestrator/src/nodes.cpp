@@ -23,7 +23,8 @@ namespace cr::bt::orchestrator::nodes
 
     BT::PortsList GetObjectInfo::providedPorts()
     {
-        return BT::RosServiceNode<cr_interfaces::srv::GetObjectInfo>::providedBasicPorts({BT::InputPort<std::string>("object_id"),
+        return BT::RosServiceNode<cr_interfaces::srv::GetObjectInfo>::providedBasicPorts({BT::InputPort<std::string>("object_label"),
+                                                                                          BT::OutputPort<std::string>("object_id"),
                                                                                           BT::OutputPort<double>("object_center_x"),
                                                                                           BT::OutputPort<double>("object_center_y"),
                                                                                           BT::OutputPort<double>("object_center_z"),
@@ -34,34 +35,14 @@ namespace cr::bt::orchestrator::nodes
 
     bool GetObjectInfo::setRequest(typename Request::SharedPtr &request)
     {
-        std::string object_id_str;
-        if (!getInput("object_id", object_id_str))
+        std::string object_label;
+        if (!getInput("object_label", object_label))
         {
-            BT_ACTION_LOG_ERROR("Missing input [object_id]");
+            BT_ACTION_LOG_ERROR("Missing input [object_label]");
             return false;
         }
 
-        try
-        {
-            const int tmp = std::stoi(object_id_str);
-            if (tmp < 0 || tmp > std::numeric_limits<uint8_t>::max())
-            {
-                BT_ACTION_LOG_ERROR(
-                    "object_id out of range [0..%u]",
-                    static_cast<unsigned>(std::numeric_limits<uint8_t>::max()));
-                return false;
-            }
-            request->id = static_cast<uint8_t>(tmp);
-        }
-        catch (const std::exception &e)
-        {
-            BT_ACTION_LOG_ERROR(
-                "Invalid object_id '%s': %s",
-                object_id_str.c_str(),
-                e.what());
-            return false;
-        }
-
+        request->label = object_label;
         return true;
     }
 
@@ -79,6 +60,7 @@ namespace cr::bt::orchestrator::nodes
             return BT::NodeStatus::FAILURE;
         }
 
+        setOutput("object_id", std::to_string(response->object_info.id));
         setOutput("object_center_x", response->object_info.center.x);
         setOutput("object_center_y", response->object_info.center.y);
         setOutput("object_center_z", response->object_info.center.z);
