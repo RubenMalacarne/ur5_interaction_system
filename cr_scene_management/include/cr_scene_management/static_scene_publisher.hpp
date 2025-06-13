@@ -1,3 +1,10 @@
+/**
+ * @file static_scene_publisher.hpp
+ * @brief Defines a node for publishing static objects to the MoveIt planning scene.
+ *
+ * @ingroup cr_scene_management_nodes
+ */
+
 #ifndef CR_SCENE_MANAGEMENT_STATIC_SCENE_PUBLISHER_HPP_
 #define CR_SCENE_MANAGEMENT_STATIC_SCENE_PUBLISHER_HPP_
 
@@ -8,13 +15,6 @@
 
 namespace cr::scene_management
 {
-
-    /**
-     * @file static_scene_publisher.hpp
-     * @brief Defines a node for publishing static objects to the MoveIt planning scene.
-     *
-     * @ingroup cr_scene_management_nodes
-     */
 
     /**
      * @class StaticScenePublisher

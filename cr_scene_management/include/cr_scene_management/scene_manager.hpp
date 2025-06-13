@@ -1,3 +1,13 @@
+/**
+ * @file scene_manager.hpp
+ * @brief Singleton wrapper for initializing and accessing the MoveIt PlanningSceneMonitor.
+ *
+ * This utility ensures a single instance of the PlanningSceneMonitor is shared
+ * across nodes.
+ *
+ * @ingroup cr_scene_management_utils
+ */
+
 #ifndef CR_SCENE_MANAGEMENT_SCENE_MANAGER_HPP_
 #define CR_SCENE_MANAGEMENT_SCENE_MANAGER_HPP_
 
@@ -6,16 +16,6 @@
 
 namespace cr::scene_management
 {
-
-    /**
-     * @file scene_manager.hpp
-     * @brief Singleton wrapper for initializing and accessing the MoveIt PlanningSceneMonitor.
-     *
-     * This utility ensures a single instance of the PlanningSceneMonitor is shared
-     * across nodes.
-     *
-     * @ingroup cr_scene_management_utils
-     */
 
     /**
      * @class SceneManager

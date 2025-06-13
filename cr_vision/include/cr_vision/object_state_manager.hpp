@@ -1,3 +1,25 @@
+/**
+ * @file object_state_manager.hpp
+ * @brief Declares ObjectStateManager node for managing object state in the scene.
+ *
+ * This node keeps track of known objects in the scene.
+ * It listens to updated object lists, stores their state,
+ * and can provide info about specific objects.
+ * It also supports freezing the scene (ignoring new updates).
+ *
+ * Services:
+ *  - /cr/get_object_info: returns info about a specific object
+ *  - /cr/freeze_scene: freezes/unfreezes scene updates
+ *
+ * Publisher:
+ *  - /cr/scene_objects: current internal state of all tracked objects
+ *
+ * Subscriber:
+ *  - /cr/object_info_array: incoming updates
+ *
+ * @ingroup cr_vision_nodes
+ */
+
 #ifndef CR_VISION_OBJECT_STATE_MANAGER_HPP_
 #define CR_VISION_OBJECT_STATE_MANAGER_HPP_
 
@@ -9,28 +31,6 @@
 
 namespace cr::vision
 {
-    /**
-     * @file object_state_manager.hpp
-     * @brief Declares ObjectStateManager node for managing object state in the scene.
-     *
-     * This node keeps track of known objects in the scene.
-     * It listens to updated object lists, stores their state,
-     * and can provide info about specific objects.
-     * It also supports freezing the scene (ignoring new updates).
-     *
-     * Services:
-     *  - /cr/get_object_info: returns info about a specific object
-     *  - /cr/freeze_scene: freezes/unfreezes scene updates
-     *
-     * Publisher:
-     *  - /cr/scene_objects: current internal state of all tracked objects
-     *
-     * Subscriber:
-     *  - /cr/object_info_array: incoming updates
-     *
-     * @ingroup cr_vision_nodes
-     */
-
     /**
      * @brief Manages the internal state of detected objects.
      *

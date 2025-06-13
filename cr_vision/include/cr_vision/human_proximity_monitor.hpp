@@ -1,3 +1,14 @@
+/**
+ * @file human_proximity_monitor.hpp
+ * @brief Declares HumanProximityMonitor node for ROS2.
+ *
+ * This node listens to human poses from the simulation in CoppeliaSim,
+ * transforms them into the robot's end-effector frame, and checks if any
+ * human is closer than a safe distance. It publishes a Bool message
+ * on "/cr/human_near" indicating true if a human is too close.
+ *
+ */
+
 #ifndef CR_VISION_HUMAN_PROXIMITY_MONITOR_HPP_
 #define CR_VISION_HUMAN_PROXIMITY_MONITOR_HPP_
 
@@ -10,18 +21,6 @@
 
 namespace cr::vision
 {
-
-    /**
-     * @file human_proximity_monitor.hpp
-     * @brief Declares HumanProximityMonitor node for ROS2.
-     *
-     * This node listens to human poses from the simulation in CoppeliaSim,
-     * transforms them into the robot's end-effector frame, and checks if any
-     * human is closer than a safe distance. It publishes a Bool message
-     * on "/cr/human_near" indicating true if a human is too close.
-     *
-     */
-
     /**
      * @class HumanProximityMonitor
      * @brief Monitors how close humans are to the robot.

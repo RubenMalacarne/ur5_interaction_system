@@ -1,3 +1,13 @@
+/**
+ * @file planning_scene_modifier.hpp
+ * @brief Declares the PlanningSceneModifier node for managing dynamic updates to the MoveIt planning scene.
+ *
+ * This node handles runtime modifications to the scene such as adding or removing objects,
+ * updating collision permissions, and attaching/detaching objects to the robot.
+ *
+ * @ingroup cr_scene_management_nodes
+ */
+
 #ifndef CR_SCENE_MANAGEMENT_PLANNING_SCENE_MODIFIER_HPP_
 #define CR_SCENE_MANAGEMENT_PLANNING_SCENE_MODIFIER_HPP_
 
@@ -12,16 +22,6 @@
 
 namespace cr::scene_management
 {
-
-    /**
-     * @file planning_scene_modifier.hpp
-     * @brief Declares the PlanningSceneModifier node for managing dynamic updates to the MoveIt planning scene.
-     *
-     * This node handles runtime modifications to the scene such as adding or removing objects,
-     * updating collision permissions, and attaching/detaching objects to the robot.
-     *
-     * @ingroup cr_scene_management_nodes
-     */
 
     /**
      * @class PlanningSceneModifier
@@ -83,13 +83,13 @@ namespace cr::scene_management
 
         /// Publisher for planning scene diffs
         rclcpp::Publisher<moveit_msgs::msg::PlanningScene>::SharedPtr planning_scene_pub_;
-       
+
         /// Subscriber to object detection results
         rclcpp::Subscription<cr_interfaces::msg::ObjectInfoArray>::SharedPtr obj_detection_result_sub_;
-        
+
         /// Service to allow or deny collisions with an object
         rclcpp::Service<cr_interfaces::srv::AllowCollision>::SharedPtr allow_collision_srv_;
-        
+
         /// Service to attach or detach an object to/from the robot
         rclcpp::Service<cr_interfaces::srv::AttachObject>::SharedPtr attach_object_srv_;
     };

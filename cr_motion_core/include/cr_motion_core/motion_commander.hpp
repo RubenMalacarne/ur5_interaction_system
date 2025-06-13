@@ -1,3 +1,13 @@
+/**
+ * @file motion_commander.hpp
+ * @brief Abstraction layer over MoveIt MoveGroupInterface for arm and gripper.
+ *
+ * This module wraps MoveGroupInterface behind a simple, asynchronous API
+ * that returns std::shared_future objects. It is designed to fit neatly into
+ * reactive frameworks (such as behaviour trees), where motions must be launched,
+ * monitored, and possibly cancelled without blocking the main control flow.
+ */
+
 #ifndef CR_MOTION_CORE__MOTION_COMMANDER_HPP_
 #define CR_MOTION_CORE__MOTION_COMMANDER_HPP_
 
@@ -8,16 +18,6 @@
 
 namespace cr::motion_core
 {
-
-    /**
-     * @file motion_commander.hpp
-     * @brief Abstraction layer over MoveIt MoveGroupInterface for arm and gripper.
-     *
-     * This module wraps MoveGroupInterface behind a simple, asynchronous API
-     * that returns std::shared_future objects. It is designed to fit neatly into
-     * reactive frameworks (such as behaviour trees), where motions must be launched,
-     * monitored, and possibly cancelled without blocking the main control flow.
-     */
 
     /**
      * @brief Enum representing the status of an asynchronous motion command.
