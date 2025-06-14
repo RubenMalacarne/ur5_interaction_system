@@ -1,3 +1,13 @@
+/**
+ * @file nodes.hpp
+ * @brief Behavior Tree nodes designed to support and coordinate the execution flow defined within the system.
+ *
+ * This header defines all Behavior Tree nodes used in the orchestrator workflow. These nodes
+ * are responsible for managing scene-level operations, safety conditions, user interactions,
+ * and global control flow. They interface with services, topics, and blackboard elements to
+ * coordinate the execution of pick-and-place tasks in a safe and modular manner.
+ */
+
 #ifndef CR_BT_ORCHESTRATOR__NODES_HPP_
 #define CR_BT_ORCHESTRATOR__NODES_HPP_
 
@@ -21,16 +31,20 @@ namespace cr::bt::orchestrator::nodes
 #define BT_ACTION_LOG_WARN(fmt, ...) RCLCPP_WARN(logger(), "[%s] " fmt, this->name().c_str(), ##__VA_ARGS__)
 #define BT_ACTION_LOG_ERROR(fmt, ...) RCLCPP_ERROR(logger(), "[%s] " fmt, this->name().c_str(), ##__VA_ARGS__)
 
-	// ------------------------------------------------------------------------------------------------------------------
-	//                                       Service Wrapper - GET OBJECT INFO
-	// ------------------------------------------------------------------------------------------------------------------
+	/**
+	 * @class GetObjectInfo
+	 * @brief Service node that retrieves full information about a scene object given its label.
+	 *
+	 * Uses the `cr_interfaces::srv::GetObjectInfo` service to query spatial and identification
+	 * information about objects to be manipulated. Outputs include ID, center coordinates,
+	 * and dimensions.
+	 */
 	class GetObjectInfo : public BT::RosServiceNode<cr_interfaces::srv::GetObjectInfo>
 	{
 	public:
-		GetObjectInfo(
-			const std::string &instance_name,
-			const BT::NodeConfig &conf,
-			const BT::RosNodeParams &params);
+		GetObjectInfo(const std::string &instance_name,
+					  const BT::NodeConfig &conf,
+					  const BT::RosNodeParams &params);
 
 		static BT::PortsList providedPorts();
 
@@ -41,16 +55,19 @@ namespace cr::bt::orchestrator::nodes
 		rclcpp::Logger logger() const { return rclcpp::get_logger(this->name()); }
 	};
 
-	// ------------------------------------------------------------------------------------------------------------------
-	//                                       Service Wrapper - FREEZE SCENE
-	// ------------------------------------------------------------------------------------------------------------------
+	/**
+	 * @class FreezeScene
+	 * @brief Service node to freeze or unfreeze the planning scene.
+	 *
+	 * Calls the `cr_interfaces::srv::FreezeScene` service to lock or unlock
+	 * the state of the environment. Used to stabilize planning operations.
+	 */
 	class FreezeScene : public BT::RosServiceNode<cr_interfaces::srv::FreezeScene>
 	{
 	public:
-		FreezeScene(
-			const std::string &instance_name,
-			const BT::NodeConfig &conf,
-			const BT::RosNodeParams &params);
+		FreezeScene(const std::string &instance_name,
+					const BT::NodeConfig &conf,
+					const BT::RosNodeParams &params);
 
 		static BT::PortsList providedPorts();
 
@@ -61,9 +78,13 @@ namespace cr::bt::orchestrator::nodes
 		rclcpp::Logger logger() const { return rclcpp::get_logger(this->name()); }
 	};
 
-	// ------------------------------------------------------------------------------------------------------------------
-	//                                       Condition Node - IsAreaSafe
-	// ------------------------------------------------------------------------------------------------------------------
+	/**
+	 * @class IsAreaSafe
+	 * @brief Condition node that checks if the workspace area is free of humans.
+	 *
+	 * Subscribes to a boolean topic indicating the presence of a human in the area.
+	 * Returns SUCCESS if the area is safe, FAILURE otherwise.
+	 */
 	class IsAreaSafe : public BT::ConditionNode
 	{
 	public:
@@ -80,9 +101,13 @@ namespace cr::bt::orchestrator::nodes
 		std::atomic<bool> human_near_{false};
 	};
 
-	// ------------------------------------------------------------------------------------------------------------------
-	//                                       Condition Node - IsStopRequested
-	// ------------------------------------------------------------------------------------------------------------------
+	/**
+	 * @class IsStopRequested
+	 * @brief Condition node that listens for external stop commands.
+	 *
+	 * Subscribes to a boolean stop topic and returns SUCCESS when a stop is requested,
+	 * otherwise FAILURE. Allows interruption of the workflow.
+	 */
 	class IsStopRequested : public BT::ConditionNode
 	{
 	public:
@@ -99,9 +124,13 @@ namespace cr::bt::orchestrator::nodes
 		std::atomic<bool> stop_requested_{false};
 	};
 
-	// ------------------------------------------------------------------------------------------------------------------
-	//                                       Condition Node - IsPauseRequested
-	// ------------------------------------------------------------------------------------------------------------------
+	/**
+	 * @class IsPauseRequested
+	 * @brief Condition node that detects if the user has requested a pause.
+	 *
+	 * Subscribes to a pause topic. Returns SUCCESS when a pause is active, FAILURE otherwise.
+	 * Helps coordinate safe pausing and resuming of operations.
+	 */
 	class IsPauseRequested : public BT::ConditionNode
 	{
 	public:
@@ -118,9 +147,13 @@ namespace cr::bt::orchestrator::nodes
 		std::atomic<bool> pause_requested_{false};
 	};
 
-	// ------------------------------------------------------------------------------------------------------------------
-	//                                       Action Node - WaitForTheGoAhead
-	// ------------------------------------------------------------------------------------------------------------------
+	/**
+	 * @class WaitForTheGoAhead
+	 * @brief CoroActionNode that blocks execution until safety and resume conditions are met.
+	 *
+	 * Combines area safety and resume request logic. Only returns SUCCESS when the area is safe
+	 * and the user has explicitly requested to resume operations. Continuously publishes log updates.
+	 */
 	class WaitForTheGoAhead : public BT::CoroActionNode
 	{
 	public:
