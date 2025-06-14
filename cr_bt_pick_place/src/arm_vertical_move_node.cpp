@@ -10,6 +10,7 @@ ArmVerticalMoveNode::ArmVerticalMoveNode(const std::string &name,
                                          const BT::NodeConfiguration &config)
     : BT::StatefulActionNode(name, config)
 {
+    // Retrieve required blackboard entries
     if (!config.blackboard->get("ros_node", nh_))
     {
         throw BT::RuntimeError(name + ": missing 'ros_node' on blackboard.");
@@ -18,6 +19,7 @@ ArmVerticalMoveNode::ArmVerticalMoveNode(const std::string &name,
     {
         throw BT::RuntimeError(name + ": missing 'motion_commander' on blackboard.");
     }
+
     RCLCPP_INFO(nh_->get_logger(), "%s initialized.", name.c_str());
 }
 
@@ -53,6 +55,7 @@ NodeStatus ArmVerticalMoveNode::onStart()
         RCLCPP_ERROR(nh_->get_logger(), "%s: Failed to start async_vertical_move task.", name().c_str());
         return NodeStatus::FAILURE;
     }
+
     return NodeStatus::RUNNING;
 }
 
@@ -64,7 +67,7 @@ NodeStatus ArmVerticalMoveNode::onRunning()
         return NodeStatus::FAILURE;
     }
 
-    // Usa get_arm_motion_status() perché questo nodo controlla il braccio
+    // Monitor motion status
     cr::motion_core::MotionStatus motion_status = commander_->get_arm_motion_status();
 
     switch (motion_status)
@@ -76,9 +79,9 @@ NodeStatus ArmVerticalMoveNode::onRunning()
         return NodeStatus::SUCCESS;
     case cr::motion_core::MotionStatus::CANCELLED:
         RCLCPP_WARN(nh_->get_logger(), "%s: Vertical move task CANCELLED.", name().c_str());
-        return NodeStatus::FAILURE; // O SUCCESS se la cancellazione è un esito accettabile in certi casi
+        return NodeStatus::FAILURE;
     case cr::motion_core::MotionStatus::FAILED:
-    case cr::motion_core::MotionStatus::PENDING: // PENDING non dovrebbe accadere qui se onStart ha avuto successo
+    case cr::motion_core::MotionStatus::PENDING:
     default:
         RCLCPP_ERROR(nh_->get_logger(), "%s: Vertical move task FAILED or unexpected status (%d).",
                      name().c_str(), static_cast<int>(motion_status));
@@ -89,9 +92,9 @@ NodeStatus ArmVerticalMoveNode::onRunning()
 void ArmVerticalMoveNode::onHalted()
 {
     RCLCPP_WARN(nh_->get_logger(), "%s: Halted. Requesting arm motion cancellation.", name().c_str());
+
     if (commander_)
     {
-        // Usa cancel_arm_execution()
         commander_->cancel_arm_execution();
     }
 }
