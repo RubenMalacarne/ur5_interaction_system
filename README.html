@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Readme</title>
+    
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji"; line-height: 1.6; margin: 0; padding: 0; background-color: #fff; }
+        .markdown-body { max-width: 800px; margin: 20px auto; padding: 20px; background-color: #fff; }
+        h1, h2, h3, h4, h5, h6 { margin-top: 24px; margin-bottom: 16px; font-weight: 600; line-height: 1.25; }
+        h1 { font-size: 2em; padding-bottom: 0.3em; border-bottom: 1px solid #eaecef; }
+        h2 { font-size: 1.5em; padding-bottom: 0.3em; border-bottom: 1px solid #eaecef; }
+        p { margin-top: 0; margin-bottom: 16px; }
+        ul, ol { margin-top: 0; margin-bottom: 16px; padding-left: 2em; }
+        li { margin-bottom: 0.25em; }
+        a { color: #0366d6; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        strong { font-weight: 600; }
+        hr { height: 0.25em; padding: 0; margin: 24px 0; background-color: #e1e4e8; border: 0; }
+        pre { padding: 16px; overflow: auto; font-size: 85%; line-height: 1.45; background-color: #f6f8fa; border-radius: 6px; margin-bottom: 16px; }
+        code { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace; font-size: inherit; }
+        table { border-collapse: collapse; margin-bottom: 16px; display: block; width: max-content; max-width: 100%; overflow: auto; }
+        th, td { border: 1px solid #dfe2e5; padding: 6px 13px; }
+        th { font-weight: 600; }
+        img { max-width: 100%; height: auto; display: block; margin-left: auto; margin-right: auto; }
+        .image-grid-table { width: 100%; margin: 25px auto; border-collapse: collapse; border-spacing: 0; border: none; }
+        .image-grid-table td { width: 25%; text-align: center; vertical-align: middle; padding: 5px; border: none; }
+        .image-grid-table img { max-width: 100%; max-height: 50px; height: auto; display: inline-block; }
+        /* ... (resto degli stili codehilite, omessi per brevità ma inclusi nel codice originale) ... */
+        .codehilite pre { margin: 0; } .codehilite .hll { background-color: #ffffcc }
+        .codehilite  { background: #f8f8f8; } .codehilite .c { color: #408080; font-style: italic }
+        .codehilite .err { border: 1px solid #FF0000 } .codehilite .k { color: #008000; font-weight: bold }
+        .codehilite .o { color: #666666 } .codehilite .ch { color: #408080; font-style: italic }
+        .codehilite .cm { color: #408080; font-style: italic } .codehilite .cp { color: #BC7A00 }
+        .codehilite .cpf { color: #408080; font-style: italic } .codehilite .c1 { color: #408080; font-style: italic }
+        .codehilite .cs { color: #408080; font-style: italic } .codehilite .gd { color: #A00000 }
+        .codehilite .ge { font-style: italic } .codehilite .gr { color: #FF0000 }
+        .codehilite .gh { color: #000080; font-weight: bold } .codehilite .gi { color: #00A000 }
+        .codehilite .go { color: #888888 } .codehilite .gp { color: #000080; font-weight: bold }
+        .codehilite .gs { font-weight: bold } .codehilite .gu { color: #800080; font-weight: bold }
+        .codehilite .gt { color: #0044DD } .codehilite .kc { color: #008000; font-weight: bold }
+        .codehilite .kd { color: #008000; font-weight: bold } .codehilite .kn { color: #008000; font-weight: bold }
+        .codehilite .kp { color: #008000 } .codehilite .kr { color: #008000; font-weight: bold }
+        .codehilite .kt { color: #B00040 } .codehilite .m { color: #666666 }
+        .codehilite .s { color: #BA2121 } .codehilite .na { color: #7D9029 }
+        .codehilite .nb { color: #008000 } .codehilite .nc { color: #0000FF; font-weight: bold }
+        .codehilite .no { color: #880000 } .codehilite .nd { color: #AA22FF }
+        .codehilite .ni { color: #999999; font-weight: bold } .codehilite .ne { color: #D2413A; font-weight: bold }
+        .codehilite .nf { color: #0000FF } .codehilite .nl { color: #A0A000 }
+        .codehilite .nn { color: #0000FF; font-weight: bold } .codehilite .nt { color: #008000; font-weight: bold }
+        .codehilite .nv { color: #19177C } .codehilite .ow { color: #AA22FF; font-weight: bold }
+        .codehilite .w { color: #bbbbbb } .codehilite .mb { color: #666666 }
+        .codehilite .mf { color: #666666 } .codehilite .mh { color: #666666 }
+        .codehilite .mi { color: #666666 } .codehilite .mo { color: #666666 }
+        .codehilite .sa { color: #BA2121 } .codehilite .sb { color: #BA2121 }
+        .codehilite .sc { color: #BA2121 } .codehilite .dl { color: #BA2121 }
+        .codehilite .sd { color: #BA2121; font-style: italic } .codehilite .s2 { color: #BA2121 }
+        .codehilite .se { color: #BB6622; font-weight: bold } .codehilite .sh { color: #BA2121 }
+        .codehilite .si { color: #BB6688; font-weight: bold } .codehilite .sx { color: #008000 }
+        .codehilite .sr { color: #BB6688 } .codehilite .s1 { color: #BA2121 }
+        .codehilite .ss { color: #19177C } .codehilite .bp { color: #008000 }
+        .codehilite .fm { color: #0000FF } .codehilite .vc { color: #19177C }
+        .codehilite .vg { color: #19177C } .codehilite .vi { color: #19177C }
+        .codehilite .vm { color: #19177C } .codehilite .il { color: #666666 }
+    </style>
+    
+</head>
+<body>
+    <div class="markdown-body">
+<h1 id="course-project-software-development-for-collaborative-robotics-ay-20242025">Course Project: Software Development for Collaborative Robotics - AY 2024/2025</h1>
+<h2 id="project-overview">Project Overview</h2>
+<p>Con l'obiettivo di sviluppare un'applicazione per la collaborazione human-robot in un contesto altamente dinamico, il nostro progetto consiste nella realizzazione di un flusso di lavoro in cui vengono integrati diversi componenti.<br />
+L'idea di base è quella di mettere a disposizione dell'utente una serie di cubetti di colori differenti e permettere di scegliere tramite Alexa di quale colore svolgere un semplice workflow di pick and place, in cui il cubetto desiderato verrà leggermente spostato orizzontalmente.</p>
+<h2 id="how-to-install">How to install</h2>
+<h2 id="how-to-start">How to start</h2>
+<h3 id="local-machine">Local Machine</h3>
+<h3 id="docker">Docker</h3>
+<h2 id="how-to-use">How to use</h2>
+<h3 id="interaction-with-alexa">Interaction with Alexa</h3>
+<h3 id="gui">GUI</h3>
+<h2 id="project-structure">Project Structure</h2>
+<ul>
+<li><strong>Robot:</strong> UR5 manipulator</li>
+<li><strong>Gripper:</strong> Robotiq 2F-85</li>
+<li><strong>Perception:</strong> RGB-D Camera</li>
+<li><strong>Object Detection:</strong> YOLO </li>
+<li><strong>Pose estimation:</strong> YOLO</li>
+<li><strong>Objective:</strong> Detect objects in the environment, classify them, and pick up only the desired ones.</li>
+</ul>
+<p>Using an RGB-D camera, the system identifies objects in 3D space. The YOLO algorithm is used to recognize and classify objects, helping the robot decide which objects to pick and which ones to ignore.</p>
+<hr />
+<h2 id="ros-2-package-graph">🗺️ ROS 2 Package Graph</h2>
+<p>You can view the full ROS 2 package architecture by clicking the link below:<br />
+🔗 <a href="https://app.diagrams.net/#G1d35rVPIo2uMd6x9BIGAX8NVfY-hrPb3q#%7B%22pageId%22%3A%22MBEQydd_YOxhgCBZd9wA%22%7D">View ROS 2 System Map</a></p>
+<h2 id="-">---</h2>
+<h2 id="step-to-prepare-ngrok">🔗 Step to prepare NGROK</h2>
+<p>Ngrok is used to expose a local server to the internet. This is particularly useful for enabling Alexa or other external services to communicate with your local application.</p>
+<p>setp sono : </p>
+<ul>
+<li><a href="https://dashboard.ngrok.com/get-started/setup/linux">download Ngrok</a></li>
+<li>copy your toke inside your pc: token about Ngrok is <a href="https://dashboard.ngrok.com/get-started/your-authtoken">here</a></li>
+<li>put your token in the following command: </li>
+</ul>
+<div class="codehilite"><pre><span></span><code>ngrok<span class="w"> </span>config<span class="w"> </span>add-authtoken<span class="w"> </span>&lt;il_tuo_token&gt;
+</code></pre></div>
+
+<ul>
+<li>in the end run the followint code: </li>
+</ul>
+<div class="codehilite"><pre><span></span><code>ngrok<span class="w"> </span>http<span class="w"> </span><span class="m">6000</span>
+</code></pre></div>
+
+<hr />
+<h2 id="technologies-used">🚀 Technologies Used</h2>
+<ul>
+<li>ROS 2 (Robot Operating System 2)</li>
+<li>MoveIt 2</li>
+<li>YOLOv8 for Object Detection</li>
+<li>Gazebo / Ignition for Simulation</li>
+<li>C++ and Python</li>
+</ul>
+<p align="center">
+  <img src="./images_logo/coppeliasim.png" alt="CoppeliaSim" height="100"/>  
+  <img src="./images_logo/gazebo.png" alt="Gazebo" height="100"/>  
+  <img src="./images_logo/moveit2.png" alt="Moveit2" height="70"/>  
+  <img src="./images_logo/ros2.png" alt="Ros2" height="70"/>  
+  <img src="./images_logo/ultralytics.png" alt="Ultralytics" height="70"/>  
+</p>
+<hr />
+<h2 id="project-structure_1">📂 Project Structure</h2>
+<p>```bash<br />
+WS_CR/<br />
+├── cr_bringup/<br />
+├── cr_vision/<br />
+├── cr_hw_controller/<br />
+├── cr_interfaces/<br />
+├── cr_moveit/<br />
+├── ...<br />
+└── cr_task_orchestration/</p>
+<p>## mettere questo: </p>
+<p>sensor_msgs/msg/JointState<br />
+rosgraph_msgs/msg/Clock<br />
+std_msgs/msg/MultiArrayDimension<br />
+std_msgs/msg/Float64MultiArray<br />
+std_msgs/msg/MultiArrayLayout<br />
+tf2_msgs/msg/TFMessage</p>
+    </div>
+</body>
+</html>
