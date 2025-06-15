@@ -5,10 +5,11 @@
 DIRECTORY_PKG=(
     "cr_bringup"
     "cr_bt_common"
-    "cr_bt_pick_plave"
+    "cr_bt_orchestrator"
+    "cr_bt_pick_place"
     "cr_controller"
     "cr_gui"
-    "cr_hw_interface"
+    "cr_hw_configuration"
     "cr_interfaces"
     "cr_motion_core"
     "cr_remote_assistant"

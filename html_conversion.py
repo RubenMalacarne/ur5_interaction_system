@@ -131,7 +131,7 @@ def start_server():
 
     # Server URL will be http://localhost:8000/
     # If index_documentation.html is present in the directory, it will be served automatically.
-    server_url_base = f"http://{HOST}:{PORT}"
+    server_url_base =  f"http://{HOST}:{PORT}/index_documentation.html"
     # No need to specify index_documentation.html in the URL; the server will handle that
     target_url = server_url_base
 
