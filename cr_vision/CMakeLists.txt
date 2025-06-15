@@ -60,8 +60,6 @@ ament_target_dependencies(human_proximity_monitor
 install(
   PROGRAMS
     cr_vision/mirror_scena.py 
-    cr_vision/obj_detection.py
-    cr_vision/obj_selection.py
     cr_vision/obj_detector.py
   DESTINATION lib/${PROJECT_NAME}
 )

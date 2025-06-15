@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+"""
+@file object_detector_node.py
+@brief A ROS 2 node for object detection using YOLO and synchronized RGB/Depth images.
+@details This node detects labeled objects from RGB images, computes their 3D world coordinates using depth data and TF transforms,
+         and publishes the detection results and visual overlays. It also broadcasts the top-center frame of each detected object.
+"""
 import os
 from ament_index_python.packages import get_package_share_directory
 import rclpy
@@ -19,13 +25,18 @@ from std_msgs.msg import Header
 
 
 class ObjectDetectorNode(Node):
+    
+    ## @class ObjectDetectorNode
+    #  @brief Node for detecting and localizing objects in 3D using YOLO and RGB-D images.
+    #  @details This class handles YOLO inference, depth back-projection, 3D centroid calculation, TF broadcasting, and ROS 2 pub/sub mechanisms.
 
     def __init__(self) -> None:
         super().__init__('object_detector_node')
-
-        # ------------------------------------------------------------
-        # 1) Gestione parametri e inizializzazioni di ROS 2 / YOLO / TF
-        # ------------------------------------------------------------
+        """
+        ## @brief Constructor that initializes the object detector node.
+        # @details load YOLO model, sets parameters, initilizes subscribers for RGB and depth images,
+        # sets up publishers for detected objects and overlays, and prepares TF broadcasting.
+        """
         self.declare_parameters(
             namespace='',
             parameters=[
@@ -44,7 +55,7 @@ class ObjectDetectorNode(Node):
         self.target_size_y = self.get_parameter('target_size_y').value
         self.target_size_z = self.get_parameter('target_size_z').value
 
-        # ROI per filtrare i risultati di YOLO (opzionale)
+        # ROI to limit detection area
         self.roi_x_min = 200
         self.roi_y_min = 0
         
@@ -61,12 +72,12 @@ class ObjectDetectorNode(Node):
             depth=20
         )
 
-        # Caricamento modello YOLO
+        # Load YOLO model  
         package_share_directory = get_package_share_directory('cr_vision')
         model_path = os.path.join(package_share_directory, 'data', 'color_cube.pt')
         self.model = YOLO(model_path)
 
-        # Subscriber sincronizzati per RGB e Depth
+        # Subscriber for RGB e Depth e synchronization
         self.rgb_sub = Subscriber(self, Image, "/cr_vision/mirrored_camera/rgb", qos_profile=qos_profile)
         self.depth_sub = Subscriber(self, Image, "/cr_vision/mirrored_camera/depth", qos_profile=qos_profile)
         self.sync = ApproximateTimeSynchronizer(
@@ -80,7 +91,7 @@ class ObjectDetectorNode(Node):
         self.objects_overlay_publisher = self.create_publisher(Image, 'cr_vision/detected_objects_image', 1)
         self.obj_selected_pub_ = self.create_publisher(ObjectInfoArray, 'cr_vision/detected_objects', 10)
 
-        # TF2 per trasformazioni camera→world
+        # TF2 to transform points between frames camera-world
         self.tf_broadcaster = tf2_ros.TransformBroadcaster(self)
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
@@ -88,7 +99,7 @@ class ObjectDetectorNode(Node):
         # cv_bridge
         self.bridge = CvBridge()
 
-        # Lista degli ID di classe (YOLO) da considerare
+        # list of allowed class IDs based on target labels
         self.allowed_class_ids = [
             cid for cid, name in self.model.names.items()
             if name in self.target_labels
@@ -98,7 +109,7 @@ class ObjectDetectorNode(Node):
                 f"Nessuna label fra {self.target_labels} è presente nel modello!"
             )
 
-        # Salvo dimensioni correnti (h, w) della depth map
+        # save camera parameters
         self.img_h = None
         self.img_w = None
 
@@ -106,12 +117,16 @@ class ObjectDetectorNode(Node):
 
     def detect_objects(self, rgb_image: Image, depth_image: Image):
         """
-        1) Fa YOLO per bounding box
-        2) Genera la point cloud 3D (camera→world)
-        3) Trova la faccia top (Z_max) e ne calcola il baricentro world
-        4) Calcola il “vero” baricentro in pixel (via TF world→camera + intrinseci)
-        5) Plotta RGB, Z_world, top surface con croce rossa sul centro
-        6) Disegna overlay con bounding box e ID
+        @brief Callback function for synchronized RGB and depth images.
+            @param rgb_image The RGB image from the camera.
+            @param depth_image The corresponding depth image.
+            @details is the following:
+                1) using YOLO to compute the bounding box and find the objects
+                2) Generate the point cloud form depth signal (camera→world)
+                3) find top surfeca using a Z_max parameter and calculate the center
+                4) Compute the right center in pixel (from TF world→camera + intrinsic parameters)
+                5) Plot RGB, Z_world, top surface
+                6) Draw overlay with bounding box and ID
         """
         self.get_logger().info("Ricevuta coppia RGB+Depth per la detection")
 
@@ -119,11 +134,11 @@ class ObjectDetectorNode(Node):
             self.get_logger().warn("Immagini mancanti, salto elaborazione")
             return
 
-        # A) Prepara overlay
+        # A) prepare overlay
         cv_rgb = self.bridge.imgmsg_to_cv2(rgb_image, "bgr8")
         overlay = cv_rgb.copy()
 
-        # (1) YOLO per trovare bounding box valide
+        # (1) YOLO to do bounding box validation
         boxes, names = self.get_detected_boxes(rgb_image)
         self.get_logger().info(f"YOLO ha trovato {len(boxes)} oggetti nella ROI")
         if not boxes:
@@ -133,7 +148,7 @@ class ObjectDetectorNode(Node):
             msg.header.frame_id = "object_detection"
             msg.objects = []
             self.obj_selected_pub_.publish(msg)
-            # Pubblica overlay anche se vuoto
+
             img_msg = self.bridge.cv2_to_imgmsg(overlay, "bgr8")
             img_msg.header = rgb_image.header
             self.objects_overlay_publisher.publish(img_msg)
@@ -142,20 +157,20 @@ class ObjectDetectorNode(Node):
         detected_objs = []
 
         for i, box in enumerate(boxes):
-            # Estrai la point cloud dal box
+            # estract point cloud of the object
             points_map = self.compute_pointcloud_from_box(depth_image, box)
             if points_map is None or points_map.size == 0:
                 continue
 
-            # Trova centroid world e top_points
+            # find centroid world e top_points
             centroid_world, centroid_pixel, top_points = self.find_top_surface_center(points_map)
 
-            # Se ho un centro valido, registro e disegno
+            # if valid center (not None)
             if centroid_world is not None:
                 xw, yw, zw = centroid_world
                 self.get_logger().info(f"Centro top surface world: x={xw:.3f}, y={yw:.3f}, z={zw:.3f}")
 
-                # prepara msg ObjectInfo
+                # take and prepare object info
                 obj = ObjectInfo()
                 obj.id = i 
                 cls_id = int(box.cls[0])            
@@ -168,7 +183,7 @@ class ObjectDetectorNode(Node):
                 obj.size.z  = self.target_size_z
                 detected_objs.append(obj)
 
-                # pubblica tf
+                # publish tf
                 self.publish_tf(
                         float(xw),
                         float(yw),
@@ -176,11 +191,11 @@ class ObjectDetectorNode(Node):
                         f"{i}_top_center"
                     )
 
-                # Estrai coordinate del box come interi
+                # Extract coordinate of the internal box
                 x_min_f, y_min_f, x_max_f, y_max_f = box.xyxy[0]
                 x_min, y_min, x_max, y_max = map(int, (x_min_f, y_min_f, x_max_f, y_max_f))
 
-                # B) Disegna bounding box
+                # Draw bounding box
                 cv2.rectangle(
                     overlay,
                     (x_min, y_min),
@@ -189,23 +204,16 @@ class ObjectDetectorNode(Node):
                     2
                 )
 
-                # C) Disegna etichetta sul lato sinistro, centrata verticalmente
+                # Draw label near of the box and setting the text
                 label = f"{obj.label}"
 
-                # Font piccolo e fine
                 font = cv2.FONT_HERSHEY_SIMPLEX
                 font_scale = 0.5
                 thickness = 2
-
-                # Calcola dimensioni del testo
                 (font_w, font_h), _ = cv2.getTextSize(label, font, font_scale, thickness)
-
-                # Posizione: lato sinistro, centrato verticalmente
                 padding = 4
                 text_x = x_min - font_w - padding
                 text_y = y_min + (y_max - y_min) // 2 + font_h // 2  # centro verticale del box
-
-                # Sfondo grigio scuro dietro il testo
                 cv2.rectangle(
                     overlay,
                     (text_x - 2, text_y - font_h - 2),
@@ -213,8 +221,6 @@ class ObjectDetectorNode(Node):
                     (32, 32, 32),  # grigio scuro
                     -1
                 )
-
-                # Testo giallo sopra lo sfondo
                 cv2.putText(
                     overlay,
                     label,
@@ -226,7 +232,7 @@ class ObjectDetectorNode(Node):
                     cv2.LINE_AA
                 )
 
-            # Trasforma il centro world→camera e proietta per debug pixel
+            # Transform the center world->camera and compute pixel coordinates
             true_cam, true_pix = self.compute_true_top_center(centroid_world)
             if true_cam and true_pix:
                 Xc, Yc, Zc = true_cam
@@ -240,7 +246,7 @@ class ObjectDetectorNode(Node):
             # Plot comparativo (puoi anche spostarlo fuori dal loop)
             # self.plot_comparison(rgb_image, points_map, top_points, true_pix)
 
-        # Pubblica ObjectInfoArray
+        # publish ObjectInfoArray
         if detected_objs:
             msg = ObjectInfoArray()
             msg.header = Header()
@@ -249,13 +255,18 @@ class ObjectDetectorNode(Node):
             msg.objects = detected_objs
             self.obj_selected_pub_.publish(msg)
 
-        # Pubblica overlay con bounding box e ID
+        # publish overlay con bounding box e ID
         img_msg = self.bridge.cv2_to_imgmsg(overlay, "bgr8")
         img_msg.header.stamp = self.get_clock().now().to_msg()
         img_msg.header.frame_id = rgb_image.header.frame_id
         self.objects_overlay_publisher.publish(img_msg)
 
     def get_detected_boxes(self, rgb_image: Image):
+        """
+        @brief Runs YOLO inference on an image and returns valid bounding boxes in the ROI.
+            @param rgb_image The input RGB image.
+            @return A tuple containing the list of valid bounding boxes and a dict of class names.
+        """
         cv_image = self.bridge.imgmsg_to_cv2(rgb_image, "bgr8")
         results = self.model.predict(cv_image, classes=self.allowed_class_ids, verbose=False)
 
@@ -270,6 +281,12 @@ class ObjectDetectorNode(Node):
         return valid_boxes, results[0].names
 
     def compute_pointcloud_from_box(self, depth_msg: Image, box):
+        """
+        @brief Computes a point cloud from a YOLO bounding box and depth image.
+            @param depth_msg The input depth image.
+            @param box The YOLO bounding box object.
+            @return A numpy array representing 2D pixel and 3D camera/world coordinates for each point.
+        """
 
         fx = fy = (self.camera_width/2) / np.tan(np.deg2rad(self.camera_fov_deg/2))
         cx, cy = self.camera_width/2, self.camera_height/2  
@@ -294,7 +311,7 @@ class ObjectDetectorNode(Node):
         X_cam = (u_ok - cx) * Z_ok / fx
         Y_cam = (v_ok - cy) * Z_ok / fy
 
-        # trasformo in world
+        # transform in world
         now = rclpy.time.Time()
         try:
             tf = self.tf_buffer.lookup_transform('world', 'camera_rgbd', now)
@@ -317,7 +334,13 @@ class ObjectDetectorNode(Node):
         return np.array(rows, dtype=np.float32)  # shape (N,8)
 
     def find_top_surface_center(self, points_map):
-        # prendo Z_w che è colonna 7
+        """
+        @brief Finds the centroid of the object's top surface using Z_max filtering.
+            @param points_map Numpy array of point cloud data with world coordinates.
+            @return Tuple of (centroid in world coordinates, centroid in pixel coordinates, top surface points).
+    
+        """
+        # Z_w che è in colonna 7 !!!
         z_w = points_map[:, 7]
         z_max = np.max(z_w)
         tol = 1e-3
@@ -330,36 +353,37 @@ class ObjectDetectorNode(Node):
         num_top = top.shape[0]
         self.get_logger().info(f"[find_top_surface_center] Numero di top_points: {num_top}")
 
-        # CENTRO CON MEDIAN invece della media (più robusto)
+        # CENTRO CON MEDIAN (simile alla media ma meglio)
         X_w = np.median(top[:, 5])
         Y_w = np.median(top[:, 6])
         Z_w = np.median(top[:, 7])
 
-        u_mean, v_mean = np.mean(top[:, 0:2], axis=0)  # opzionale: potresti farli anche median
+        u_mean, v_mean = np.mean(top[:, 0:2], axis=0) 
         return (X_w, Y_w, Z_w), (int(u_mean), int(v_mean)), top
 
     def compute_true_top_center(self, centroid_world):
         """
-        centroid_world = (X_w, Y_w, Z_w) in frame 'world'
-        → trasformo in camera_rgbd e poi proietto in pixel.
+        @brief Transforms a world coordinate to the camera frame and projects it to image pixels.
+            @param centroid_world The (X, Y, Z) point in the 'world' frame.
+            @return A tuple: camera frame coordinates and corresponding 2D pixel coordinates.
+        in other words:
+        centroid_world = (X_w, Y_w, Z_w) in frame 'world' -> transform in camera_rgbd and convert in pixel 
         """
         if centroid_world is None:
             return None, None
 
         from geometry_msgs.msg import PointStamped
 
-        # 1) Punto in world
         pt_w = PointStamped()
         pt_w.header.frame_id = 'world'
         pt_w.header.stamp = rclpy.time.Time().to_msg()
 
-        # estraggo e casto a Python float
         Xw, Yw, Zw = centroid_world
         pt_w.point.x = float(Xw)
         pt_w.point.y = float(Yw)
         pt_w.point.z = float(Zw)
 
-        # 2) Trasformo da world -> camera_rgbd
+        # Trasform world -> camera_rgbd
         try:
             t = self.tf_buffer.lookup_transform(
                 'camera_rgbd',  # target_frame
@@ -382,14 +406,19 @@ class ObjectDetectorNode(Node):
         u = int(round((Xc * fx) / Zc + cx))
         v = int(round((Yc * fy) / Zc + cy))
 
-        # 4) Clamp su [0,511]
         u = max(0, min(511, u))
         v = max(0, min(511, v))
 
         return (Xc, Yc, Zc), (u, v)
 
     def plot_comparison(self, rgb_msg, points_map, top_points, true_pix):
-        # converto RGB e preparo le mappe Z
+        """
+        @brief Plots a side-by-side comparison of RGB image, Z_world map, and top surface map.
+            @param rgb_msg The original RGB image message.
+            @param points_map The full 3D point cloud data.
+            @param top_points Points identified on the top surface.
+            @param true_pix The projected centroid in pixel coordinates (for drawing a red cross).
+        """
         cv_rgb = self.bridge.imgmsg_to_cv2(rgb_msg, "bgr8")
         rgb = cv2.cvtColor(cv_rgb, cv2.COLOR_BGR2RGB)
 
@@ -411,7 +440,6 @@ class ObjectDetectorNode(Node):
         im2 = axes[2].imshow(z_top, cmap='viridis', origin='upper', vmin=1e-6)
         axes[2].set_title("Top surface"); plt.colorbar(im2, ax=axes[2])
 
-        # croce rossa in tutti e tre
         if true_pix is not None:
             u_c, v_c = true_pix
             for ax in axes:
@@ -421,6 +449,13 @@ class ObjectDetectorNode(Node):
         plt.show()
 
     def publish_tf(self, x_world: float, y_world: float, z_world: float, object_name: str) -> None:
+        """
+        @brief Publishes a static TF transform for the object's top-center point.
+            @param x_world X-coordinate in world frame.
+            @param y_world Y-coordinate in world frame.
+            @param z_world Z-coordinate in world frame.
+            @param object_name Base name of the object for the child TF frame.
+        """
         t = geometry_msgs.msg.TransformStamped()
         t.header.stamp = self.get_clock().now().to_msg()
         t.header.frame_id = "world"  # frame padre
@@ -430,7 +465,6 @@ class ObjectDetectorNode(Node):
         t.transform.translation.y = y_world
         t.transform.translation.z = z_world
 
-        # Orientamento identity
         t.transform.rotation.x = 0.0
         t.transform.rotation.y = 0.0
         t.transform.rotation.z = 0.0

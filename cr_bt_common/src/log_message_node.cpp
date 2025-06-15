@@ -19,8 +19,10 @@ namespace cr::bt::common
             RCLCPP_ERROR(rclcpp::get_logger("LogMessageNode"), "Missing port [message]");
             return BT::NodeStatus::FAILURE;
         }
+
         RCLCPP_INFO(rclcpp::get_logger("LogMessageNode"), "BT_LOG: %s",
                     msg.value().c_str());
+
         return BT::NodeStatus::SUCCESS;
     }
 

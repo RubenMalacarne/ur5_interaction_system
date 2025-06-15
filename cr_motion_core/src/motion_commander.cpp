@@ -9,24 +9,12 @@ using namespace std::chrono_literals;
 namespace cr::motion_core
 {
 
-    //---------------------------------------------------------------------
-    //  HELPER (private)
-    //---------------------------------------------------------------------
-
-    /**
-     * @brief  Attende che il CurrentStateMonitor di MoveIt abbia ricevuto
-     *         almeno un JointState "recente".
-     *
-     * @param  timeout_sec  secondi di timeout (default = 1.0)
-     * @return true se lo stato è disponibile, false in caso di timeout.
-     */
+    // Waits for joint states to be received before planning
     bool MotionCommander::waitForRobotState(double timeout_sec)
     {
-        // assicuriamoci che il monitor sia attivo
         arm_group_->startStateMonitor();
         gripper_group_->startStateMonitor();
 
-        // MoveIt2 (Humble/IRON) → getCurrentState(timeout) restituisce nullptr se scade
         moveit::core::RobotStatePtr state_arm = arm_group_->getCurrentState(timeout_sec);
         moveit::core::RobotStatePtr state_group = gripper_group_->getCurrentState(timeout_sec);
 
@@ -40,9 +28,6 @@ namespace cr::motion_core
         return true;
     }
 
-    //---------------------------------------------------------------------
-    //  COSTRUTTORE / DISTRUTTORE
-    //---------------------------------------------------------------------
 
     MotionCommander::MotionCommander(const rclcpp::Node::SharedPtr &node,
                                      const std::string &arm_group_name,
@@ -54,7 +39,7 @@ namespace cr::motion_core
         gripper_group_ = std::make_shared<moveit::planning_interface::MoveGroupInterface>(
             node, gripper_group_name);
 
-        // Avvia il monitor e aspetta che arrivi lo stato, al massimo 2 secondi
+        // Ensure the robot state is available before proceeding
         waitForRobotState(5.0);
 
         RCLCPP_INFO(node_->get_logger(),
@@ -69,12 +54,11 @@ namespace cr::motion_core
     }
 
     //---------------------------------------------------------------------
-    //  METODI BRACCIO
+    //  ARM METHODS
     //---------------------------------------------------------------------
 
     std::shared_future<MotionStatus> MotionCommander::async_vertical_move(double z)
     {
-        // Assicuriamoci di avere una posa corrente valida
         if (!waitForRobotState(2.0))
         {
             std::promise<MotionStatus> p;
@@ -118,49 +102,15 @@ namespace cr::motion_core
 
         return async_cartesian_move(target_pose);
     }
-    moveit::planning_interface::MoveGroupInterface::Plan MotionCommander::cartesian_movement()
-    {
-        moveit::planning_interface::MoveGroupInterface::Plan cart_plan;
 
-        geometry_msgs::msg::Pose start_pose = arm_group_->getCurrentPose().pose;
-        std::vector<geometry_msgs::msg::Pose> waypoints;
-
-        geometry_msgs::msg::Pose target_pose = start_pose;
-        target_pose.position.z += 0.03;
-        waypoints.push_back(target_pose);
-
-        target_pose.position.z += 0.03;
-        waypoints.push_back(target_pose);
-
-        moveit_msgs::msg::RobotTrajectory trajectory;
-        double jump_threshold = 0.0;
-        double eef_step = 0.01;
-
-        double fraction = arm_group_->computeCartesianPath(
-            waypoints, eef_step, jump_threshold, trajectory);
-
-        if (fraction > 0.0)
-        {
-            RCLCPP_INFO(node_->get_logger(),
-                        "✅ Cartesian path planned successfully (fraction: %f)", fraction);
-            cart_plan.trajectory_ = trajectory;
-        }
-        else
-        {
-            RCLCPP_WARN(node_->get_logger(),
-                        "⚠️ Failed to compute Cartesian path.");
-            cart_plan.trajectory_ = moveit_msgs::msg::RobotTrajectory();
-        }
-
-        return cart_plan;
-    }
     std::shared_future<MotionStatus> MotionCommander::async_go_home()
     {
+        // Reject if another motion is in progress
         if (arm_task_future_.valid() &&
             arm_task_future_.wait_for(0s) == std::future_status::timeout)
         {
             RCLCPP_WARN(node_->get_logger(),
-                        "Richiesta go_home ignorata: braccio occupato");
+                        "go_home request ignored: arm is busy");
             return std::shared_future<MotionStatus>();
         }
 
@@ -171,31 +121,42 @@ namespace cr::motion_core
             return p.get_future().share();
         }
 
+        // Step 1: Lift up to avoid collision
+        geometry_msgs::msg::Pose target = arm_group_->getCurrentPose().pose;
+        target.position.z += 0.06;
 
-        // 👉 PRIMA fase: movimento cartesiano verso il basso
-        auto cartesian_plan = cartesian_movement();
-        if (!cartesian_plan.trajectory_.joint_trajectory.points.empty())
+        moveit_msgs::msg::RobotTrajectory traj;
+        if (plan_cartesian_path(target, traj))
         {
-            auto ec = arm_group_->execute(cartesian_plan);
+            auto ec = arm_group_->execute(traj);
             if (ec != moveit::core::MoveItErrorCode::SUCCESS)
             {
+                RCLCPP_ERROR(node_->get_logger(), "[go_home] vertical raise failed");
                 std::promise<MotionStatus> p;
                 p.set_value(MotionStatus::FAILED);
                 arm_task_future_ = p.get_future().share();
                 return arm_task_future_;
             }
         }
+        else
+        {
+            RCLCPP_ERROR(node_->get_logger(), "[go_home] cartesian path failed");
+            std::promise<MotionStatus> p;
+            p.set_value(MotionStatus::FAILED);
+            arm_task_future_ = p.get_future().share();
+            return arm_task_future_;
+        }
 
+        // Step 2: Move to named "home" pose
         arm_group_->setNamedTarget("home");
 
         moveit::planning_interface::MoveGroupInterface::Plan plan;
         auto plan_result = arm_group_->plan(plan);
         if (plan_result != moveit::core::MoveItErrorCode::SUCCESS)
         {
-            std::string err_str = moveit::core::error_code_to_string(plan_result);
             RCLCPP_ERROR(node_->get_logger(),
-                         "[MotionCommander] pianificazione go_home fallita: %s",
-                         err_str.c_str());
+                         "[MotionCommander] go_home planning failed: %s",
+                         moveit::core::error_code_to_string(plan_result).c_str());
             std::promise<MotionStatus> p;
             p.set_value(MotionStatus::FAILED);
             arm_task_future_ = p.get_future().share();
@@ -205,13 +166,13 @@ namespace cr::motion_core
         std::promise<MotionStatus> task_promise;
         arm_task_future_ = task_promise.get_future().share();
 
+        // Run in detached thread
         std::thread([this, plan = std::move(plan), p = std::move(task_promise)]() mutable
                     {
         auto ec = arm_group_->execute(plan);
-        if (ec == moveit::core::MoveItErrorCode::SUCCESS)
-            p.set_value(MotionStatus::SUCCEEDED);
-        else
-            p.set_value(MotionStatus::FAILED); })
+        p.set_value(ec == moveit::core::MoveItErrorCode::SUCCESS
+                        ? MotionStatus::SUCCEEDED
+                        : MotionStatus::FAILED); })
             .detach();
 
         return arm_task_future_;
@@ -237,14 +198,14 @@ namespace cr::motion_core
             return MotionStatus::RUNNING;
 
         MotionStatus status = arm_task_future_.get();
-        arm_task_future_ = std::shared_future<MotionStatus>(); // invalida
+        arm_task_future_ = std::shared_future<MotionStatus>();
         return status;
     }
 
     std::shared_future<MotionStatus> MotionCommander::async_cartesian_move(
         const geometry_msgs::msg::Pose &target_pose)
     {
-        // se c'è già un task in corso => ignora
+        // Reject if a motion is already running
         if (arm_task_future_.valid() &&
             arm_task_future_.wait_for(0s) == std::future_status::timeout)
         {
@@ -253,7 +214,6 @@ namespace cr::motion_core
             return std::shared_future<MotionStatus>();
         }
 
-        // Pianifica
         moveit_msgs::msg::RobotTrajectory traj;
         if (!plan_cartesian_path(target_pose, traj))
         {
@@ -263,7 +223,6 @@ namespace cr::motion_core
             return arm_task_future_;
         }
 
-        // Promise/Future per il task asincrono
         std::promise<MotionStatus> task_promise;
         arm_task_future_ = task_promise.get_future().share();
 
@@ -271,7 +230,7 @@ namespace cr::motion_core
                     {
         auto ec = arm_group_->execute(traj);
         p.set_value(ec == moveit::core::MoveItErrorCode::SUCCESS ? MotionStatus::SUCCEEDED
-                                                                : MotionStatus::FAILED); })
+                                                                 : MotionStatus::FAILED); })
             .detach();
 
         return arm_task_future_;
@@ -294,11 +253,12 @@ namespace cr::motion_core
     }
 
     //---------------------------------------------------------------------
-    //  METODI GRIPPER
+    //  GRIPPER METHODS
     //---------------------------------------------------------------------
 
     std::shared_future<MotionStatus> MotionCommander::async_set_gripper_joint(double target)
     {
+        // Ignore if already moving
         if (gripper_task_future_.valid() &&
             gripper_task_future_.wait_for(0s) == std::future_status::timeout)
         {
@@ -324,7 +284,7 @@ namespace cr::motion_core
                     {
         auto ec = gripper_group_->execute(plan);
         p.set_value(ec == moveit::core::MoveItErrorCode::SUCCESS ? MotionStatus::SUCCEEDED
-                                                                : MotionStatus::FAILED); })
+                                                                 : MotionStatus::FAILED); })
             .detach();
 
         return gripper_task_future_;

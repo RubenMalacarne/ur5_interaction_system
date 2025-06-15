@@ -6,7 +6,6 @@ namespace cr::bt::common
     GuiLog::GuiLog(const std::string &name, const BT::NodeConfig &config)
         : BT::SyncActionNode(name, config)
     {
-        // Recupera il nodo ROS dalla blackboard
         auto blackboard = config.blackboard;
         auto node = blackboard->get<rclcpp::Node::SharedPtr>("ros_node");
 
@@ -29,41 +28,34 @@ namespace cr::bt::common
     BT::NodeStatus GuiLog::tick()
     {
         cr_interfaces::msg::Log m;
-        m.target_id = -1; // default “none”
-        m.severity = 0;   // default INFO
+        m.target_id = -1; // default "none"
+        m.severity = 0;   // default "INFO"
 
-        // richiesti
+        // Required ports
         if (!getInput("main_msg", m.main_msg))
-            throw BT::RuntimeError("GuiLog: missing port [main_msg]");
+            throw BT::RuntimeError("GuiLog: missing input port [main_msg]");
         if (!getInput("log_msg", m.log_msg))
-            throw BT::RuntimeError("GuiLog: missing port [log_msg]");
+            throw BT::RuntimeError("GuiLog: missing input port [log_msg]");
 
-        // phase + percentage insieme
+        // Optional ports
+        std::string phase;
+        uint8_t pct = 0;
+        if (getInput("phase", phase) && getInput("percentage", pct))
         {
-            std::string phase;
-            uint8_t pct = 0;
-            if (getInput("phase", phase) && getInput("percentage", pct))
-            {
-                m.phase = phase;
-                m.percentage = pct;
-            }
+            m.phase = phase;
+            m.percentage = pct;
         }
 
-        // target_id opzionale
+        int8_t tid = -1;
+        if (getInput("target_id", tid))
         {
-            int8_t tid = -1;
-            if (getInput("target_id", tid))
-            {
-                m.target_id = tid;
-            }
+            m.target_id = tid;
         }
 
+        std::string target_label;
+        if (getInput("target_label", target_label))
         {
-            std::string target_label;
-            if (getInput("target_label", target_label))
-            {
-                m.target_label = target_label;
-            }
+            m.target_label = target_label;
         }
 
         pub_->publish(m);

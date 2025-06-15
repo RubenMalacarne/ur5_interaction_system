@@ -1,9 +1,22 @@
-# 🤖 Projects SDCR
+# Course Project: Software Development for Collaborative Robotics - AY 2024/2025
 
-Welcome to the **UR5 Pick and Place** project!  
-This project involves controlling a **UR5 robotic arm** equipped with a **2F-85 Robotiq gripper** to autonomously pick, place and scanning objects based on visual detection.
+## Project Overview
+Con l'obiettivo di sviluppare un'applicazione per la collaborazione human-robot in un contesto altamente dinamico, il nostro progetto consiste nella realizzazione di un flusso di lavoro in cui vengono integrati diversi componenti.
+L'idea di base è quella di mettere a disposizione dell'utente una serie di cubetti di colori differenti e permettere di scegliere tramite Alexa di quale colore svolgere un semplice workflow di pick and place, in cui il cubetto desiderato verrà leggermente spostato orizzontalmente.
 
-## 📋 Project Overview
+
+## How to install
+
+## How to start
+### Local Machine
+### Docker
+
+## How to use
+### Interaction with Alexa
+### GUI
+
+
+## Project Structure
 
 - **Robot:** UR5 manipulator
 - **Gripper:** Robotiq 2F-85

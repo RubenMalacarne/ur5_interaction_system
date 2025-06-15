@@ -6,6 +6,8 @@
 /BehaviorTree.CPP/
 /BehaviorTree.ROS2/
 llama-2-7b-chat.Q4_K_M.gguf
+**/docs
+
 # File temporanei generici
 *.log
 *.pyc
