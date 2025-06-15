@@ -28,3 +28,16 @@ __pycache__/
 
 # File di sistema
 Thumbs.db
+
+# documentazione generata
+/cr_bringup/docs
+/cr_bt_common/docs
+/cr_bt_pick_plave/docs
+/cr_controller/docs
+/cr_gui/docs
+/cr_hw_interface/docs
+/cr_interfaces/docs
+/cr_motion_core/docs
+/cr_remote_assistant/docs
+/cr_scene_management/docs
+/cr_vision/docs

@@ -29,6 +29,8 @@ RUN apt-get update && apt-get install -y \
     ros-humble-gazebo-ros-pkgs \
     ros-humble-gazebo-ros2-control \
     libxcb-xinerama0 \  
+    python3-markdown \
+    doxygen \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 
@@ -67,6 +69,10 @@ ENV PATH=$COPPELIASIM_ROOT_DIR:$PATH
 ENV LD_LIBRARY_PATH=$COPPELIASIM_ROOT_DIR
 ENV QT_QPA_PLATFORM_PLUGIN_PATH=/usr/lib/x86_64-linux-gnu/qt5/plugins/platforms
 ENV QT_QPA_PLATFORM=xcb
+
+#generate the documentation
+RUN cd /ros2_ws/src_CR && chmod +x generate_doc.sh && ./generate_doc.sh
+
 
 RUN echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> ~/.bashrc
 
