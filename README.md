@@ -1,15 +1,13 @@
 # Course Project: Software Development for Collaborative Robotics - AY 2024/2025
 
 ## Project Overview
-Designed for dynamic environments involving close human-robot interaction, this project integrates natural voice commands, visual perception, and intelligent motion planning to enable intuitive and safe collaboration.
+Designed for dynamic environments involving human-robot interaction, this project combines natural voice commands and visual perception within a robotic system to ensure easy and safe collaboration.
 
-Users can select one of several tall, square-based colored blocks, specifically designed for robotic manipulation, by simply interacting with Amazon Alexa. Upon receiving the voice command, the robot detects the specified object and performs a controlled horizontal displacement.
+Users can select one of several colored blocks, specifically designed for robotic manipulation, by simply interacting with Amazon Alexa. Upon receiving the voice command, the robot detects the specified object and performs a controlled horizontal displacement.
 
 To ensure safety, the system continuously monitors a designated area around the robot. If a person enters this zone, the robot halts its execution immediately and resumes only when the area is clear.
 
-The result is a cohesive robotic workflow where voice interaction, perception, and safety are tightly integrated to support collaborative tasks.
-
-- To see and example click here: [Demo Video](https://drive.google.com/file/d/1UDiQOxL4sO0ssUpsXL1aLrQIR0Jx1Poy/view?usp=drive_link)
+This [Demo Video](https://drive.google.com/file/d/1UDiQOxL4sO0ssUpsXL1aLrQIR0Jx1Poy/view?usp=drive_link) shows a complete example of the project.
 
 ## Technologies Used
 - **Robot**: [UR5e manipulator](https://github.com/UniversalRobots/Universal_Robots_ROS_Driver)
@@ -17,6 +15,7 @@ The result is a cohesive robotic workflow where voice interaction, perception, a
 - **Programming Languages**: C++ (core ROS 2 nodes), Python (image stream processing, voice interaction)
 - **Robotic Framework**: [ROS 2](https://docs.ros.org/en/humble/index.html)
 - **Simulation Environment**: [CoppeliaSim](https://www.coppeliarobotics.com/)
+- **Control Algorithms**: [Standard ROS2 Controllers](https://github.com/ros-controls/ros2_control)
 - **Motion Planning**: [MoveIt2](https://moveit.picknik.ai/main/index.html#)
 - **Task Planning**: [Behavior Trees](https://www.behaviortree.dev) and [Behavior Trees ROS2](https://github.com/BehaviorTree/BehaviorTree.ROS2)
 - **Object Detection**: [Ultralytics YOLO](https://www.ultralytics.com/it)
@@ -26,7 +25,7 @@ The result is a cohesive robotic workflow where voice interaction, perception, a
 ## Simulation Scene
 The simulation scene includes the following key components:
 
-- A robotic workbench equipped with a UR5 manipulator and a Robotiq 2F-85 gripper  
+- A robotic workbench equipped with a UR5e manipulator and a Robotiq 2F-85 gripper  
 - Three colored blocks (green, red and blue), each available for pick-and-place operations  
 - A randomly moving human to simulate unpredictable behavior in shared spaces  
 - A second human following a predefined path, repeatedly approaching and leaving the workspace to demonstrate the system's responsiveness to human presence  
@@ -45,11 +44,11 @@ To issue a command, the user must first activate the assistant by saying:
 followed by one of the supported intents.
 
 Alexa can be used to:
-- Select a colored block to manipulate by specifying its color (e.g., “pick the red block”)
+- Select a colored block to manipulate by specifying its color
 - Pause the execution, temporarily halting the workflow until resumed
 - Cancel the current task, stopping the ongoing operation, returning the robot to its home position and resetting the system to an idle state.
 
-This natural language interface simplifies coordination in the collaborative environment.
+This natural language interface simplifies coordination in our collaborative environment.
 
 ### GUI
 The GUI is designed to assist the operator in monitoring system execution and status, offering the following features:
@@ -72,37 +71,21 @@ Leveraging an RGB-D camera, the system performs both object detection and 3D loc
 
 ## Installation
 
-0. Tutorial Video:[click here](https://drive.google.com/file/d/1OCiY79zKw5pEY-AEaQqU6TcGRgGThvL9/view?usp=drive_link)
+You can follow the [tutorial video](https://drive.google.com/file/d/1OCiY79zKw5pEY-AEaQqU6TcGRgGThvL9/view?usp=drive_link) to see exactly what needs to be done. Alternatively, follow these steps:
 
-1. Install Ngrok following step by step the instructions on the web site: [link_website](ttps://ngrok.com/)
+0. If you use Alexa install Ngrok on your local machine, following step by step the instructions on the web site: [link_website](https://ngrok.com/)
 
-2. Clone our repository inside your workspace (also before create src file):
-```bash
-git clone https://github.com/SwDev4Cobots/2024-25-Final-Project-Group-1.git src
-```
-3. Run the file `./install.sh` on the termial to install all the necessary dependencies for the project and if you don't already dowloaded CoppeliaSim, add `-d`.
+1. Clone our repository inside your workspace (also before create src file):
+  ```bash
+  git clone https://github.com/SwDev4Cobots/2024-25-Final-Project-Group-1.git src
+  ```
+2. Run the ./install.sh script in a terminal to install all necessary project dependencies. If you haven’t already downloaded CoppeliaSim, add the -d flag.
 
-When you will asked "*Do you want to copy the YOLO model for object detection*" press:
-- `yes` -> copy the model already tested
-- `no` -> to re-train your of pre-set model
+When prompted _Do you want to copy the YOLO model for object detection?_, respond with:
+- `yes` → to copy the pre-tested model
+- `no` → to use your own model or select one of our pre-configured options
 
-**If you're using Docker Compose, follow these steps:**
->Note: docker use 16 GB
-4. Build docker-compose: 
-```bash
-docker compose -f 'src/docker-compose.yml' up -d --build 'ros2'
-```
-5. Run Docker with the following commands:
-```bash
-docker exec -it cr_project_container bash
-```
->Note: if you shutdown the system you can restart docker with this command:
-```bash
-docker start -ai cr_project_container
-```
-
-
-6. Add the following lines information inside 'sim_ros2_interface/meta/interfaces.txt':
+3. Add the following lines information inside _sim_ros2_interface/meta/interfaces.txt_:
 ```bash
 sensor_msgs/msg/JointState
 rosgraph_msgs/msg/Clock
@@ -112,21 +95,40 @@ std_msgs/msg/MultiArrayLayout
 tf2_msgs/msg/TFMessage
 geometry_msgs/msg/PoseArray
 ```
-8. Execute colcon build of ros2
+
+We highly recommend using Docker for the following steps to ensure a fully prepared environment. If you prefer not to use Docker, make sure all dependencies listed in the Dockerfile are installed on your system, and then proceed directly to step 6.
+>Note: docker use 16 GB
+4. Build the Docker container:
+```bash
+docker compose -f 'src/docker-compose.yml' up -d --build 'ros2'
+```
+5. Access the running Docker container:
+```bash
+docker exec -it cr_project_container bash
+```
+>Note: If the system is restarted, you can relaunch Docker with:
+```bash
+docker start -ai cr_project_container
+```
+>Note: If you are using Docker, all terminal commands from this point onward must be executed inside the container.
+
+6. In a terminal, build the ROS 2 workspace:
 ```bash
 colcon build
 ```
 
-9. source install/setup.bash
+7. Source the workspace setup script:
 ```bash
 source install/setup.bash 
 ```
 
 ## Running the System
 
+**_NOTE:_** If you are using Docker, all terminal commands must be executed inside the container. 
+
 After completing the steps in the **Installation** section:
 
-- In a terminal, navigate to the directory where you installed CoppeliaSim and run `./coppeliaSim.sh` to launch CoppeliaSim and open the provided scene.
+- In a terminal, navigate to the directory where you installed CoppeliaSim, run `./coppeliaSim` to launch CoppeliaSim and open the provided scene.
   
 >Note: if you are using Docker, you find the CoppeliaSim here: 
 ```bash
@@ -159,13 +161,13 @@ In both cases, RViz should launch automatically with the MoveIt scene and the co
 
 ## How to use
 
-[Demo Video](https://drive.google.com/file/d/1UDiQOxL4sO0ssUpsXL1aLrQIR0Jx1Poy/view?usp=drive_link)
-
-Important Note for Alexa Users:
-Before using any command, you must first activate the custom skill by saying:
-**Alexa, attiva simulazione**
+You can watch the [Demo Video](https://drive.google.com/file/d/1UDiQOxL4sO0ssUpsXL1aLrQIR0Jx1Poy/view?usp=drive_link)
 
 The system supports the following interactions, which can be triggered either via voice commands with Alexa or through the ROS2 command-line interface.
+
+ **_NOTE:_** If you use Alexa before using any commands, you must first activate the custom skill by saying _Alexa, attiva simulazione_
+
+**_NOTE:_** If you are using Docker, all terminal commands must be executed inside the container. 
 
 ### Execute Workflow
 This command initiates the primary workflow, instructing the robot to pick and place a specified object.
@@ -189,7 +191,7 @@ This command temporarily halts the execution of the current workflow. The robot 
   ros2 topic pub /cr/pause_command std_msgs/msg/Bool "{data: true}"
   ```
 
-#### Resume Workflow 
+### Resume Workflow 
 This command resumes a workflow that has been previously paused.
 - With Alexa: "Alexa, riprendi."
 - Via ROS2 CLI: Publish a false message to the /cr/pause_command topic.
@@ -211,7 +213,7 @@ If you **switch it on** (the green LED will **turn on**), the system will restar
 
 
 ## Project Structure
-```bash
+```
 .
 └── workspace/
     ├── cr_bringup            --> Launch files for system startup and emergency stop handling  
