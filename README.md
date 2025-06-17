@@ -94,7 +94,7 @@ docker compose -f 'src/docker-compose.yml' up -d --build 'ros2'
 ```
 5. Run Docker with the following commands:
 ```bash
-docker start -ai cr_project_container
+docker exec -it cr_project_container bash
 ```
 >Note: if you shutdown the system you can restart docker with this command:
 ```bash
