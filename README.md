@@ -9,16 +9,18 @@ To ensure safety, the system continuously monitors a designated area around the 
 
 The result is a cohesive robotic workflow where voice interaction, perception, and safety are tightly integrated to support collaborative tasks.
 
+- To see and example click here: [Demo Video](https://drive.google.com/file/d/1UDiQOxL4sO0ssUpsXL1aLrQIR0Jx1Poy/view?usp=drive_link)
+
 ## Technologies Used
-- **Robot**: UR5e manipulator
-- **Gripper**: Robotiq 2F-85
+- **Robot**: [UR5e manipulator](https://github.com/UniversalRobots/Universal_Robots_ROS_Driver)
+- **Gripper**: [Robotiq 2F-85](https://github.com/PickNikRobotics/ros2_robotiq_gripper)
 - **Programming Languages**: C++ (core ROS 2 nodes), Python (image stream processing, voice interaction)
-- **Robotic Framework**: ROS 2
-- **Simulation Environment**: CoppeliaSim
-- **Motion Planning**: MoveIt2
-- **Task Planning**: Behavior Trees (https://www.behaviortree.dev and https://github.com/BehaviorTree/BehaviorTree.ROS2)
-- **Object Detection**: Ultralytics YOLO
-- **Voice Interface**: Amazon Alexa
+- **Robotic Framework**: [ROS 2](https://docs.ros.org/en/humble/index.html)
+- **Simulation Environment**: [CoppeliaSim](https://www.coppeliarobotics.com/)
+- **Motion Planning**: [MoveIt2](https://moveit.picknik.ai/main/index.html#)
+- **Task Planning**: [Behavior Trees](https://www.behaviortree.dev) and [Behavior Trees ROS2](https://github.com/BehaviorTree/BehaviorTree.ROS2)
+- **Object Detection**: [Ultralytics YOLO](https://www.ultralytics.com/it)
+- **Voice Interface**: [Amazon Alexa](https://developer.amazon.com/it-IT/alexa/alexa-skills-kit)
 
 
 ## Simulation Scene
@@ -70,33 +72,38 @@ Leveraging an RGB-D camera, the system performs both object detection and 3D loc
 
 ## Installation
 
-_Tutorial Video: https://drive.google.com/file/d/1UDiQOxL4sO0ssUpsXL1aLrQIR0Jx1Poy/view?usp=sharing_
+0. Tutorial Video:[click here](https://drive.google.com/file/d/1OCiY79zKw5pEY-AEaQqU6TcGRgGThvL9/view?usp=drive_link)
 
-1. Install Ngrok seguendo step by step le istruzioni sul sito ufficiale: https://ngrok.com/
+1. Install Ngrok following step by step the instructions on the web site: [link_website](ttps://ngrok.com/)
 
-2. Clone the repository:
-git clone https://github.com/SwDev4Cobots/2024-25-Final-Project-Group-1.git
+2. Clone our repository inside your workspace (also before create src file):
+```bash
+git clone https://github.com/SwDev4Cobots/2024-25-Final-Project-Group-1.git src
+```
+3. Run the file `./install.sh` on the termial to install all the necessary dependencies for the project and if you don't already dowloaded CoppeliaSim, add `-d`.
 
-3. Run the file install.sh on the termial to install all the necessary dependencies for the project and if you don't already dowloaded CoppeliaSim, add "-d".
+When you will asked "*Do you want to copy the YOLO model for object detection*" press:
+- `yes` -> copy the model already tested
+- `no` -> to re-train your of pre-set model
 
-When you will asked "Do you want to copy the YOLO model for object detection" presse:
-- yes -> copy the model already tested
-- no -> to re-train your of pre-set model
-
-4. Build docker-compose:
+**If you're using Docker Compose, follow these steps:**
+>Note: docker use 16 GB
+4. Build docker-compose: 
+```bash
 docker compose -f 'src/docker-compose.yml' up -d --build 'ros2'
-
+```
 5. Run Docker with the following commands:
-docker exec -it cr_project_container.bash
+```bash
+docker start -ai cr_project_container
+```
+>Note: if you shutdown the system you can restart docker with this command:
+```bash
+docker start -ai cr_project_container
+```
 
-6. Add information inside 'sim_ros2_interface'
 
-7. Execute colcon build of ros2
-
-8. source install/setup.bash
-
-## TODO: mettere questo: 
-
+6. Add the following lines information inside 'sim_ros2_interface/meta/interfaces.txt':
+```bash
 sensor_msgs/msg/JointState
 rosgraph_msgs/msg/Clock
 std_msgs/msg/MultiArrayDimension
@@ -104,38 +111,58 @@ std_msgs/msg/Float64MultiArray
 std_msgs/msg/MultiArrayLayout
 tf2_msgs/msg/TFMessage
 geometry_msgs/msg/PoseArray
+```
+8. Execute colcon build of ros2
+```bash
+colcon build
+```
 
+9. source install/setup.bash
+```bash
+source install/setup.bash 
+```
 
 ## Running the System
 
-After completing the steps in the **Installation** section, open:
+After completing the steps in the **Installation** section:
 
 - In a terminal, navigate to the directory where you installed CoppeliaSim and run `./coppeliaSim.sh` to launch CoppeliaSim and open the provided scene.
-
-#### If you do **not** have the Turtle Pet joystick:
-- In another terminal: 
+  
+>Note: if you are using Docker, you find the CoppeliaSim here: 
 ```bash
+cd /opt/CoppeliaSim_Edu_V4_10_0_rev0_Ubuntu22_04/
+#run with this: 
+./coppeliaSim
+```
+open the scene `simulation_scene.ttt` located in the `src/cr_hw_configuration/scene/` directory.
+
+#### If you do **not** have the Turtle Pet, you can start the system without it:
+- open new terminal: 
+```bash
+cd ros2_ws
+source install/setup.bash
 ros2 launch cr_bringup system_bringup.launch.py
 ```
-
 This will start the full system.
 
-#### If you do have the Turtle Pet joystick:
+#### If you do have the Turtle Pet:
 - In another terminal: 
 ```bash
+cd ros2_ws
+source install/setup.bash
 ros2 launch cr_bringup emergency_stop_controller.launch.py
 ```
-Then, move the joystick to activate the system.
+Then, move the switch to activate/disactivate(kill) the system.
 
 In both cases, RViz should launch automatically with the MoveIt scene and the corresponding GUI.
 
 
 ## How to use
 
-_Demo Video: https://drive.google.com/file/d/1OCiY79zKw5pEY-AEaQqU6TcGRgGThvL9/view?usp=sharing_
+[Demo Video](https://drive.google.com/file/d/1UDiQOxL4sO0ssUpsXL1aLrQIR0Jx1Poy/view?usp=drive_link)
 
 Important Note for Alexa Users:
-Before issuing any command, you must first activate the custom skill by saying:
+Before using any command, you must first activate the custom skill by saying:
 **Alexa, attiva simulazione**
 
 The system supports the following interactions, which can be triggered either via voice commands with Alexa or through the ROS2 command-line interface.
@@ -145,10 +172,10 @@ This command initiates the primary workflow, instructing the robot to pick and p
 
 - With Alexa:
   Use the intent to request picking up a cube, specifying its color. For example:
-  "Alexa, ask simulation to get the green cube."
+  `Alexa, prendi cubo verde.`
 
 - Via ROS2 CLI:
-  Send a goal to the /cr/execute_workflow action server. Specify the desired object_label which must match one of the labels displayed in the GUI.
+  Send a goal to the `/cr/execute_workflow` action server. Specify the desired object_label which must match one of the labels displayed in the GUI.
   ```bash
   ros2 action send_goal /cr/execute_workflow cr_interfaces/action/ExecuteWorkflow "{object_label: 'green_cube'}"
   ```
@@ -156,15 +183,15 @@ This command initiates the primary workflow, instructing the robot to pick and p
 
 ### Pause Workflow
 This command temporarily halts the execution of the current workflow. The robot will stop its motion and wait for a resume command.
-- With Alexa: "Alexa, ask simulation to pause."
-- Via ROS2 CLI: Publish a true message to the /cr/pause_command topic.
+- With Alexa: "Alexa, metti in pausa."
+- Via ROS2 CLI: Publish a true message to the `/cr/pause_command topic`.
   ```bash
   ros2 topic pub /cr/pause_command std_msgs/msg/Bool "{data: true}"
   ```
 
 #### Resume Workflow 
 This command resumes a workflow that has been previously paused.
-- With Alexa: "Alexa, ask simulation to resume."
+- With Alexa: "Alexa, riprendi."
 - Via ROS2 CLI: Publish a false message to the /cr/pause_command topic.
   ```bash
   ros2 topic pub /cr/pause_command std_msgs/msg/Bool "{data: false}"
@@ -172,14 +199,15 @@ This command resumes a workflow that has been previously paused.
 
 ### Cancel Worflow
 This command completely stops and cancels the current workflow. This action is final and cannot be undone for the current task.
-- With Alexa: "Alexa, ask simulation to stop."
+- With Alexa: "Alexa, ferma l'esecuzione."
 - Via ROS2 CLI: Publish a true message to the /cr/stop_command topic.
   ```bash
   ros2 topic pub /cr/stop_command std_msgs/msg/Bool "{data: true}"
   ```
 
 ### Emergency Stop Worflow
-TODO
+If you are using the Turtle Pet, you can immediately **stop** the robot by **switch it off** the emergency switching (led green turn **off** and red turn **on**). This action will halt all robot movements and kill the system to a safe state.
+If you **switch it on** (the green LED will **turn on**), the system will restart and you can continue your session.
 
 
 ## Project Structure
@@ -203,7 +231,7 @@ TODO
 
 ## Documentation
 
-To generate the complete project documentation, make sure all required dependencies (`doxygen`, `python3`) are installed, then follow these steps:
+To generate the complete project documentation, make sure all required dependencies (`doxygen`, `python3`,`markdown`) are installed, then follow these steps:
 
 1. **Run the documentation generation script**:
    ```bash
@@ -218,7 +246,11 @@ This will create a `docs/` folder inside each package, containing the Doxygen-ge
 When prompted, select option `2`.
 This will start a local server accessible at `http://localhost:6001/index_documentation.html`.
 
+
 ## Contributors
+
 This project was developed by:
 - Ruben Malacarne - ruben.malacarne@studenti.unitn.it
 - Sabrina Vinco - sabrina.vinco@studenti.unitn.it
+
+Enjoy the project! :D
