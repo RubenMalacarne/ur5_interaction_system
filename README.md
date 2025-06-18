@@ -163,7 +163,8 @@ Clone our repository inside your workspace (also before create src file):
 Navigate into the cloned repository and run:
 
 ```bash
-./install.sh # If you haven’t already downloaded CoppeliaSim, add the -d flag.
+# If you haven’t already downloaded CoppeliaSim, add the -d flag.
+./install.sh
 ```
 
 When prompted _Do you want to copy the YOLO model for object detection?_, respond with:
