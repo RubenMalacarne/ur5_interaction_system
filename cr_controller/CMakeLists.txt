@@ -14,13 +14,12 @@ find_package(controller_manager REQUIRED)
 find_package(ros2_control REQUIRED)
 find_package(cr_hw_configuration REQUIRED)
 
-# Installa i file di configurazione
 install(
   DIRECTORY config/
   DESTINATION share/${PROJECT_NAME}/config
 )
 
-# Installa i file di launch
+
 install(
   DIRECTORY launch/
   DESTINATION share/${PROJECT_NAME}/launch

@@ -22,10 +22,9 @@ target_include_directories(cr_bt_common_nodes
     $<INSTALL_INTERFACE:include>
 )
 
-# <<< qui: usa ament_target_dependencies invece di linkare 'std_msgs' a mano >>>
 ament_target_dependencies(cr_bt_common_nodes
   rclcpp
-  behaviortree_cpp      # il nome del pacchetto BehaviorTree.CPP
+  behaviortree_cpp
   cr_interfaces
 )
 
