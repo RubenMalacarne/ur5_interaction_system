@@ -76,94 +76,54 @@ This guide explains how to set up the project on your local machine:
 - Ubuntu 22.04 or WSL2 with Ubuntu 22.04
 - ROS 2 Humble: [Installation Guide](https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debs.html)
 
-> Note: don’t forget to source your ROS environment after installation: 
-  ```bash
-  source /opt/ros/humble/setup.bash
-  ```
-
 ### Dependencies
-CoppeliaSim
-Download and install CoppeliaSim Edu for Ubuntu:
-CoppeliaSim Download
+#### CoppeliaSim
+Download and install CoppeliaSim for Ubuntu: 
+- [CoppeliaSim Download](https://www.coppeliarobotics.com/) 
+- Follow the official [ROS 2 integration guide](https://manual.coppeliarobotics.com/en/ros2Tutorial.htm)
 
-Set the environment variable:
+> Note: Make sure to copy the package _sim_ros2_interface_ correctly in your ROS2 workspace.
 
-bash
-Copia
-Modifica
-export COPPELIASIM_ROOT_DIR=~/CoppeliaSim_Edu_V4_9_0_rev2_Ubuntu22_04/
-Follow the official ROS 2 integration guide
+#### Additional ROS Packages
+- ros2_control: [ros2_control Setup](https://control.ros.org/humble/doc/getting_started/getting_started.html)
+- MoveIt 2: [MoveIt Humble Guide](https://moveit.picknik.ai/humble/doc/tutorials/getting_started/getting_started.html)
+> Note: Always source the MoveIt workspace as needed.
 
-⚠️ Make sure to include the sim_ros2_interface plugin correctly in your workspace.
-
-Additional ROS Packages
-ros2_control (required):
-ros2_control Setup
-
-MoveIt 2 (if used):
-MoveIt Humble Guide
-
-⚠️ Always source the MoveIt workspace as needed.
-
-ZMQ support:
-
-bash
-Copia
-Modifica
+#### ZMQ support
+```bash
 sudo apt update
 sudo apt install libzmq3-dev
-Other required tools:
+```
 
-bash
-Copia
-Modifica
-pip3 install xmlschema
+#### Other required tools:
+```bash
+pip3 install xmlschema notebook ultralytics pyyaml
 sudo apt install xsltproc
-3. Project Setup
-Clone the Repository
-Use SSH to clone the repository into your ROS 2 workspace:
+```
 
-bash
-Copia
-Modifica
-git clone git@github.com:your_org/your_repo.git
-Run Installation Script
+#### Ngrok
+If you use Alexa install Ngrok, following step by step the instructions on the [web site](https://ngrok.com/).
+
+### Project Setup
+#### Clone the Repository
+Clone this repository inside `src` folder of your workspace:
+```bash
+git clone https://github.com/SwDev4Cobots/2024-25-Final-Project-Group-1.git
+```
+
+#### Run Installation Script
 Navigate into the cloned repository and run:
 
-bash
-Copia
-Modifica
+```bash
 ./install.sh
-Register Custom Messages
-Ensure that any custom message packages are properly listed in your meta file or package.xml.
-
-Build the Workspace
-Navigate back to the root of your workspace and build:
-
-bash
-Copia
-Modifica
-colcon build
-source install/setup.bash
-
-
-## Installation
-
-You can follow the [tutorial video](https://drive.google.com/file/d/1OCiY79zKw5pEY-AEaQqU6TcGRgGThvL9/view?usp=drive_link) to see exactly what needs to be done. Alternatively, follow these steps:
-
-0. If you use Alexa install Ngrok on your local machine, following step by step the instructions on the web site: [link_website](https://ngrok.com/)
-
-1. Clone our repository inside your workspace (also before create src file):
-  ```bash
-  git clone https://github.com/SwDev4Cobots/2024-25-Final-Project-Group-1.git src
-  ```
-2. Run the ./install.sh script in a terminal to install all necessary project dependencies. If you haven’t already downloaded CoppeliaSim, add the -d flag.
+```
 
 When prompted _Do you want to copy the YOLO model for object detection?_, respond with:
-- `yes` → to copy the pre-tested model
+- `yes` → to copy the default model
 - `no` → to use your own model or select one of our pre-configured options
 
-3. Add the following lines information inside _sim_ros2_interface/meta/interfaces.txt_:
+#### Register Custom Messages
+Add the following custom custom messages inside _sim_ros2_interface/meta/interfaces.txt_:
 ```bash
 sensor_msgs/msg/JointState
 rosgraph_msgs/msg/Clock
@@ -174,35 +134,83 @@ tf2_msgs/msg/TFMessage
 geometry_msgs/msg/PoseArray
 ```
 
-We highly recommend using Docker for the following steps to ensure a fully prepared environment. If you prefer not to use Docker, make sure all dependencies listed in the Dockerfile are installed on your system, and then proceed directly to step 6.
+#### Build the Workspace
+Navigate back to the root of your workspace and build:
+
+```bash
+colcon build
+source install/setup.bash
+```
+
+
+## Installing with Docker
+
 >Note: docker use 16 GB
-4. Build the Docker container:
+
+To simplify the setup process and ensure all ROS 2 and project dependencies are correctly installed, we recommend using Docker.
+You can also follow this step-by-step [tutorial video](https://drive.google.com/file/d/1OCiY79zKw5pEY-AEaQqU6TcGRgGThvL9/view?usp=drive_link).
+
+#### (Optional) Alexa Users Only
+If you're using Alexa, install Ngrok on your local machine by following the official guide: [Ngrok Installation](https://ngrok.com/)
+
+#### Clone the Repository
+Clone our repository inside your workspace (also before create src file):
+  ```bash
+  git clone https://github.com/SwDev4Cobots/2024-25-Final-Project-Group-1.git src
+  ```
+  
+#### Run Installation Script
+Navigate into the cloned repository and run:
+
+```bash
+./install.sh # If you haven’t already downloaded CoppeliaSim, add the -d flag.
+```
+
+When prompted _Do you want to copy the YOLO model for object detection?_, respond with:
+- `yes` → to copy the default model
+- `no` → to use your own model or select one of our pre-configured options
+
+
+#### Register Custom Messages
+Add the following custom custom messages inside _sim_ros2_interface/meta/interfaces.txt_:
+```bash
+sensor_msgs/msg/JointState
+rosgraph_msgs/msg/Clock
+std_msgs/msg/MultiArrayDimension
+std_msgs/msg/Float64MultiArray
+std_msgs/msg/MultiArrayLayout
+tf2_msgs/msg/TFMessage
+geometry_msgs/msg/PoseArray
+```
+
+#### Build the Docker container
+From the workspace root:
 ```bash
 docker compose -f 'src/docker-compose.yml' up -d --build 'ros2'
 ```
-5. Access the running Docker container:
+
+#### Access the Docker Container
+To enter the container:
 ```bash
 docker exec -it cr_project_container bash
 ```
->Note: If the system is restarted, you can relaunch Docker with:
+If your system restarts, you can relaunch the container with:
 ```bash
 docker start -ai cr_project_container
 ```
->Note: If you are using Docker, all terminal commands from this point onward must be executed inside the container.
-
-6. In a terminal, build the ROS 2 workspace:
+#### Build the ROS 2 Workspace
+Inside the container:
 ```bash
 colcon build
 ```
-
-7. Source the workspace setup script:
+Still inside the container:
 ```bash
 source install/setup.bash 
 ```
 
 ## Running the System
 
-**_NOTE:_** If you are using Docker, all terminal commands must be executed inside the container. 
+> Note: When using Docker, all terminal commands should be executed inside the running container.
 
 After completing the steps in the **Installation** section:
 
@@ -239,13 +247,13 @@ In both cases, RViz should launch automatically with the MoveIt scene and the co
 
 ## How to use
 
-You can watch the [Demo Video](https://drive.google.com/file/d/1UDiQOxL4sO0ssUpsXL1aLrQIR0Jx1Poy/view?usp=drive_link)
+[Demo Video](https://drive.google.com/file/d/1UDiQOxL4sO0ssUpsXL1aLrQIR0Jx1Poy/view?usp=drive_link)
 
 The system supports the following interactions, which can be triggered either via voice commands with Alexa or through the ROS2 command-line interface.
 
- **_NOTE:_** If you use Alexa before using any commands, you must first activate the custom skill by saying _Alexa, attiva simulazione_
+> Note: If you use Alexa before using any commands, you must first activate the custom skill by saying _Alexa, attiva simulazione_
 
-**_NOTE:_** If you are using Docker, all terminal commands must be executed inside the container. 
+> Note: When using Docker, all terminal commands should be executed inside the running container.
 
 ### Execute Workflow
 This command initiates the primary workflow, instructing the robot to pick and place a specified object.
@@ -265,6 +273,7 @@ This command initiates the primary workflow, instructing the robot to pick and p
 This command temporarily halts the execution of the current workflow. The robot will stop its motion and wait for a resume command.
 - With Alexa: "Alexa, metti in pausa."
 - Via ROS2 CLI: Publish a true message to the `/cr/pause_command topic`.
+
   ```bash
   ros2 topic pub /cr/pause_command std_msgs/msg/Bool "{data: true}"
   ```
@@ -273,6 +282,7 @@ This command temporarily halts the execution of the current workflow. The robot 
 This command resumes a workflow that has been previously paused.
 - With Alexa: "Alexa, riprendi."
 - Via ROS2 CLI: Publish a false message to the /cr/pause_command topic.
+
   ```bash
   ros2 topic pub /cr/pause_command std_msgs/msg/Bool "{data: false}"
   ```
@@ -281,6 +291,7 @@ This command resumes a workflow that has been previously paused.
 This command completely stops and cancels the current workflow. This action is final and cannot be undone for the current task.
 - With Alexa: "Alexa, ferma l'esecuzione."
 - Via ROS2 CLI: Publish a true message to the /cr/stop_command topic.
+
   ```bash
   ros2 topic pub /cr/stop_command std_msgs/msg/Bool "{data: true}"
   ```
