@@ -234,14 +234,18 @@ ros2 launch cr_bringup system_bringup.launch.py
 ```
 This will start the full system.
 
-#### If you do have the Turtle Pet:
-- In another terminal: 
+#### If you do have the Turtle Pet or you want to simulate it:
+- open new terminal: 
 ```bash
 cd ros2_ws
 source install/setup.bash
 ros2 launch cr_bringup emergency_stop_controller.launch.py
 ```
-Then, move the switch to activate/disactivate(kill) the system.
+Then, use the switch to activate/deactivate (kill) the system, or send a command via socket:
+```bash
+echo "TRUE" | nc localhost 6002  # to activate (bring up) the system
+echo "FALSE" | nc localhost 6002 # to immediately shut down the system
+```
 
 In both cases, RViz should launch automatically with the MoveIt scene and the corresponding GUI.
 
@@ -252,7 +256,7 @@ In both cases, RViz should launch automatically with the MoveIt scene and the co
 
 The system supports the following interactions, which can be triggered either via voice commands with Alexa or through the ROS2 command-line interface.
 
-> Note: If you use Alexa before using any commands, you must first activate the custom skill by saying _Alexa, attiva simulazione_
+> Note: If you use Alexa before using any commands, you must first activate the custom skill by saying _Alexa, attiva esecuzione_
 
 > Note: When using Docker, all terminal commands should be executed inside the running container.
 
@@ -300,6 +304,13 @@ This command completely stops and cancels the current workflow. This action is f
 ### Emergency Stop Worflow
 If you are using the Turtle Pet, you can immediately **stop** the robot by **switch it off** the emergency switching (led green turn **off** and red turn **on**). This action will halt all robot movements and kill the system to a safe state.
 If you **switch it on** (the green LED will **turn on**), the system will restart and you can continue your session.
+
+If you don’t have the Turtle Pet, you can use the command line instead:
+```bash
+echo "TRUE" | nc localhost 6002   # start the system
+echo "FALSE" | nc localhost 6002  # stop the system
+```
+
 
 
 ## Project Structure
