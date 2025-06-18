@@ -69,6 +69,84 @@ Leveraging an RGB-D camera, the system performs both object detection and 3D loc
 ![alt text](Images/Block%20Center.png)
 
 
+## Local Installation Guide
+This guide explains how to set up the project on your local machine:
+
+### System Requirements
+- Ubuntu 22.04 or WSL2 with Ubuntu 22.04
+- ROS 2 Humble: [Installation Guide](https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debs.html)
+
+> Note: don’t forget to source your ROS environment after installation: 
+  ```bash
+  source /opt/ros/humble/setup.bash
+  ```
+
+### Dependencies
+CoppeliaSim
+Download and install CoppeliaSim Edu for Ubuntu:
+CoppeliaSim Download
+
+Set the environment variable:
+
+bash
+Copia
+Modifica
+export COPPELIASIM_ROOT_DIR=~/CoppeliaSim_Edu_V4_9_0_rev2_Ubuntu22_04/
+Follow the official ROS 2 integration guide
+
+⚠️ Make sure to include the sim_ros2_interface plugin correctly in your workspace.
+
+Additional ROS Packages
+ros2_control (required):
+ros2_control Setup
+
+MoveIt 2 (if used):
+MoveIt Humble Guide
+
+⚠️ Always source the MoveIt workspace as needed.
+
+ZMQ support:
+
+bash
+Copia
+Modifica
+sudo apt update
+sudo apt install libzmq3-dev
+Other required tools:
+
+bash
+Copia
+Modifica
+pip3 install xmlschema
+sudo apt install xsltproc
+3. Project Setup
+Clone the Repository
+Use SSH to clone the repository into your ROS 2 workspace:
+
+bash
+Copia
+Modifica
+git clone git@github.com:your_org/your_repo.git
+Run Installation Script
+Navigate into the cloned repository and run:
+
+bash
+Copia
+Modifica
+./install.sh
+Register Custom Messages
+Ensure that any custom message packages are properly listed in your meta file or package.xml.
+
+Build the Workspace
+Navigate back to the root of your workspace and build:
+
+bash
+Copia
+Modifica
+colcon build
+source install/setup.bash
+
+
 ## Installation
 
 You can follow the [tutorial video](https://drive.google.com/file/d/1OCiY79zKw5pEY-AEaQqU6TcGRgGThvL9/view?usp=drive_link) to see exactly what needs to be done. Alternatively, follow these steps:

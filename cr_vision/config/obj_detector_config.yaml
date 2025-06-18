@@ -1,4 +1,4 @@
-obj_detector_node:
+object_detector_node:
   ros__parameters:
     target_labels: 
       - green_cube
