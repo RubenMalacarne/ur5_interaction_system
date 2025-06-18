@@ -56,7 +56,6 @@ ament_target_dependencies(${PROJECT_NAME}_components
   cr_interfaces
 )
 
-# Registrazione dei nodi componenti (assicurarsi che i namespace e nomi dei plugin coincidano con quelli definiti nei file sorgenti)
 rclcpp_components_register_nodes(${PROJECT_NAME}_components
   "cr::scene_management::StaticScenePublisher"
   "cr::scene_management::PlanningSceneModifier"

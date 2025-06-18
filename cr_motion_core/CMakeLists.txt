@@ -9,7 +9,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(moveit_ros_planning_interface REQUIRED)
 
-# Dichiariamo la libreria
+
 add_library(motion_commander
   src/motion_commander.cpp
 )
@@ -18,7 +18,6 @@ set_target_properties(motion_commander PROPERTIES
   POSITION_INDEPENDENT_CODE ON
 )
 
-# Link e include
 ament_target_dependencies(motion_commander
   rclcpp
   moveit_ros_planning_interface
@@ -30,7 +29,7 @@ target_include_directories(motion_commander
     $<INSTALL_INTERFACE:include>
 )
 
-# Install della libreria
+
 install(
   TARGETS motion_commander
   ARCHIVE DESTINATION lib
@@ -38,17 +37,14 @@ install(
   RUNTIME DESTINATION bin
 )
 
-# Install degli header
+
 install(
   DIRECTORY include/
   DESTINATION include
 )
 
-# ———– QUI AGGIUNGI ———–
-# Esporto la libreria perché find_package(cr_motion_core)
-# porti dentro anche motion_commander.so
 ament_export_libraries(motion_commander)
-# ————————————
+
 
 ament_export_dependencies(
   rclcpp

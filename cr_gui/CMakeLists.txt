@@ -21,7 +21,6 @@ add_executable(gui_viewer
   src/main.cpp
   src/gui_node.cpp
   src/image_widget.cpp
-  # Aggiungi qui i tuoi file header che contengono Q_OBJECT
   include/cr_gui/gui_node.hpp
   include/cr_gui/image_widget.hpp
 )
