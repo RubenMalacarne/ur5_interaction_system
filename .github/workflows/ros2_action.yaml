@@ -2,9 +2,9 @@ name: Build and Compile ROS2 workspace
 #add git actions
 on:
   push:
-    branches: [ feat/README ]
+    branches: [ main]
   pull_request:
-    branches: [ feat/README ]
+    branches: [ main ]
 
 jobs:
   ROS_CI:
