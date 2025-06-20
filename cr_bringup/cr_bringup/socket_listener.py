@@ -1,8 +1,4 @@
 #!/usr/bin/env python3
-"""
-@file socket_listener.py
-@brief ROS 2 node to test communication socket.
-"""
 import socket
 import rclpy
 from rclpy.node import Node

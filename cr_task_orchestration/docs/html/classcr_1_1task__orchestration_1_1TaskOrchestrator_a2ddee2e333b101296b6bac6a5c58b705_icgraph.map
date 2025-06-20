@@ -1,0 +1,4 @@
+<map id="cr::task_orchestration::TaskOrchestrator::pick_feedback_callback" name="cr::task_orchestration::TaskOrchestrator::pick_feedback_callback">
+<area shape="rect" id="node1" title="Callback for pick action feedback." alt="" coords="232,5,407,61"/>
+<area shape="rect" id="node2" href="$classcr_1_1task__orchestration_1_1TaskOrchestrator.html#a9767914da36ab8e9be19e2fbf6f91eb6" title="Sends a pick goal to the pick action server." alt="" coords="5,5,184,61"/>
+</map>

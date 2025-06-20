@@ -2,17 +2,23 @@
 
 # cr_vision
 
-`cr_vision` is a package for managing perception using visual data from an RGB-D camera and simulation input from CoppeliaSim.
+`cr_vision` is a ROS 2 package for vision-based perception and human-aware manipulation.
 
-It handles all tasks related to vision and scene understanding:
-- Object recognition and tracking (with YOLO)
-- Monitoring human proximity around the robot
+It includes:
+- Object detection (YOLO)
+- Pose estimation (YOLO)
+- Object selection and filtering
+- Human proximity monitoring 
+
+the system is integrated with publishers, subscribers, and TF of ROS2
 
 ## Node list
 - `mirror_camera_node`
 - `object_detection_node`
+- `pose_estimation_node`
+- `obj_selection_node`
 - `human_proximity_monitor`
 - `object_state_manager`
 
-## Authors
+## Author
 Sabrina Vinco and Ruben Malacarne

@@ -1,0 +1,5 @@
+pick_action_server:
+  ros__parameters:
+    pre_approach_distance: 0.30 #[m]
+    approach_distance: 0.11 #[m]
+    retreat_offset: 0.20 #[m]

@@ -8,6 +8,24 @@ from launch_ros.substitutions import FindPackageShare
 from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
 
+##
+# @file robot_setup.launch.py
+# @brief Launch file for setting up the UR5e robot with ROS 2 Control.
+#
+# This launch file loads the URDF, starts the robot_state_publisher, and launches the ROS 2 controller manager 
+# along with the necessary controllers (joint state broadcaster, trajectory controller, and gripper controller).
+#
+# @package cr_hw_configuration
+# @dependencies
+# - robot_state_publisher
+# - controller_manager
+# - cr_controller (for controller configuration)
+#
+# @param is_sim (bool) Whether to use simulation time (default: True)
+#
+# @author Sabrina Vinco and Ruben Malacarne
+##
+
 def generate_launch_description():
     pkg_share = get_package_share_directory('cr_hw_configuration')
     urdf_file = os.path.join(pkg_share, 'urdf', 'ur5e.urdf')

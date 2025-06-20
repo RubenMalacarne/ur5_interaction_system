@@ -23,8 +23,7 @@ Main Features:
 ROS 2 Communication:
 --------------------
 - Subscribes to: `/cr/scene_objects` (cr_interfaces.msg.ObjectInfoArray)
-- Publishes to: `/cr/pause_command` (std_msgs.msg.Bool)
-- Publishes to: `/cr/stop_command` (std_msgs.msg.Bool)
+- Publishes to: `/cr/pause_command` (std_msgs.msg.String)
 - Sends goals to: `/cr/execute_workflow` (cr_interfaces.action.ExecuteWorkflow)
 """
 from flask import Flask
@@ -41,25 +40,15 @@ from rclpy.node import Node
 from rclpy.action import ActionClient
 from std_msgs.msg import String
 import threading
-from std_msgs.msg import Bool
+
 from cr_interfaces.msg import ObjectInfoArray
 from cr_interfaces.action import ExecuteWorkflow
-from rclpy.action.client import GoalStatus
 
 threading.Thread(target=lambda: rclpy.init()).start()
 
-class AlexaNode(Node):
-    """
-    @class AlexaNode
-    @brief A ROS 2 node that manages interaction with scene object information and robot commands.
 
-    @details
-    - Subscribes to `/cr/scene_objects` to get visible objects
-    - Publishes pause/resume commands
-    - Publishes stop command
-    @description: you can use this node to interact with the robot's scene objects and control its actions.
-    @note: This node is designed to be run within a Flask application to handle Alexa skill requests.
-    """
+
+class AlexaNode(Node):
     def __init__(self):
         super().__init__('alexa_interface')
         self.latest_objects = []
@@ -71,13 +60,8 @@ class AlexaNode(Node):
             10
         )
         self.publishers_cr_command = self.create_publisher(
-            Bool,
+            String,
             '/cr/pause_command',
-            10
-        )
-        self.publishers_cr_stop_command = self.create_publisher(
-            Bool,
-            '/cr/stop_command',
             10
         )
 
@@ -87,46 +71,17 @@ class AlexaNode(Node):
 alexa_node = AlexaNode()
 action_client = ActionClient(alexa_node, ExecuteWorkflow, '/cr/execute_workflow')
 
-def exists_label(objects, target_label): 
-    """
-    @brief Checks whether a specific object label exists in the given list of objects.
-    @return True if at least one object with the specified label is found; otherwise, False.
-    """
-    return any(obj.label == target_label for obj in objects)
-
-# Funzione helper per gestire l'invio del goal e controllare se viene rifiutato
-def send_goal_and_check_reject(object_label, color_name):
-    """
-    @brief Sends a workflow execution goal and checks if it's accepted.
-    @param object_label The label of the object to manipulate (e.g., "green_cube").
-    @param color_name Spoken name of the object (for response).
-    @return Tuple (bool accepted, string response_text)
-    """
-    goal = ExecuteWorkflow.Goal()
-    goal.object_label = object_label
-    
-    future = action_client.send_goal_async(goal)
-    rclpy.spin_until_future_complete(alexa_node, future, timeout_sec=2.0)
-    
-    if future.result() is not None:
-        goal_handle = future.result()
-        if goal_handle.accepted:
-            alexa_node.get_logger().info(f"Goal accettato per {color_name}")
-            return True, f"Il robot andrà a prendere il cubetto {color_name}"
-        else:
-            alexa_node.get_logger().warn(f"Goal rifiutato per {color_name}")
-            return False, "Non posso, sto già prendendo un altro cubo!"
-    else:
-        alexa_node.get_logger().error("Timeout nell'invio del goal")
-        return False, "Errore di comunicazione con il robot."
+#function to take the lowest id of an object with a specific label
+def get_lowest_id_by_label(objects, target_label):
+    filtered = [obj for obj in objects if obj.label == target_label]
+    if not filtered:
+        return None
+    return min(filtered, key=lambda x: x.id).id
 
 app = Flask(__name__)
 
-
+# first function --> used when the skill is launched
 class LaunchRequestHandler(AbstractRequestHandler):
-    """
-    @brief Handles the initial Alexa skill launch. "alexa attiva simulazione"
-    """
     def can_handle(self, handler_input):
         return is_request_type("LaunchRequest")(handler_input)
 
@@ -138,132 +93,136 @@ class LaunchRequestHandler(AbstractRequestHandler):
         
         return handler_input.response_builder.response
 
+# second function --> used when the user asks to pick a green cube
 class PickGreenIntentHandler(AbstractRequestHandler):
-    """
-    @brief Handles requests to pick up the green cube.
-    """
     def can_handle(self, handler_input):
         return is_intent_name("PrendiCuboVerdeIntent")(handler_input)
 
     def handle(self, handler_input):
-        rclpy.spin_once(alexa_node, timeout_sec=1.0)
-        object_exists = exists_label(alexa_node.latest_objects, "green_cube")
-        
-        if object_exists is False:
-            speech_text = "Nessun cubetto verde trovato."
-            alexa_node.get_logger().error("Nessun cubetto verde trovato.")
-        else:
-            accepted, response_msg = send_goal_and_check_reject("green_cube", "verde")
-            speech_text = response_msg
+        # Rispondi subito ad Alexa
+        speech_text = "Ok, prendo il cubetto verde..."
+
+        # Esegui il resto in background (thread)
+        def ros_action():
+            nonlocal speech_text #usato per aggiornare quello che deve dire alexa
+            rclpy.spin_once(alexa_node, timeout_sec=1.0)
+            object_id = get_lowest_id_by_label(alexa_node.latest_objects, "green_cube")
+            if object_id is None:
+                speech_text = "Nessun cubetto verde trovato."
+                alexa_node.get_logger().error("Nessun cubetto verde trovato.")
+                return
+
+            speech_text = f"Il robot andrà a prendere il cubetto verde con id {object_id}."
+            alexa_node.get_logger().info(speech_text)
+
+            goal = ExecuteWorkflow.Goal()
+            goal.object_id = object_id
+            action_client.send_goal_async(goal)
+
+        threading.Thread(target=ros_action).start()
 
         handler_input.response_builder.speak(speech_text).set_card(
             SimpleCard("Pick", speech_text)).set_should_end_session(True)
 
         return handler_input.response_builder.response
     
+# second function --> used when the user asks to pick a red cube    
 class PickRedIntentHandler(AbstractRequestHandler):
-    """
-    @brief Handles requests to pick up the red cube.
-    """
     def can_handle(self, handler_input):
         return is_intent_name("PrendiCuboRossoIntent")(handler_input)
 
     def handle(self, handler_input):
-        rclpy.spin_once(alexa_node, timeout_sec=1.0)
-        object_exists = exists_label(alexa_node.latest_objects, "red_cube")
-        
-        if object_exists is False:
-            speech_text = "Nessun cubetto rosso trovato."
-            alexa_node.get_logger().error("Nessun cubetto rosso trovato.")
-        else:
-            accepted, response_msg = send_goal_and_check_reject("red_cube", "rosso")
-            speech_text = response_msg
+        # Rispondi subito ad Alexa
+        speech_text = "Ok, ora cerco il cubetto rosso..."
+
+        # Esegui il resto in background
+        def ros_action():
+            nonlocal speech_text #usato per aggiornare quello che deve dire alexa
+            rclpy.spin_once(alexa_node, timeout_sec=1.0)
+            object_id = get_lowest_id_by_label(alexa_node.latest_objects, "red_cube")
+            if object_id is None:
+                speech_text = "Nessun cubetto rosso trovato."
+                alexa_node.get_logger().error("Nessun cubetto rosso trovato.")
+                return
+
+            speech_text = f"Il robot andrà a prendere il cubetto rosso con id {object_id}."
+            alexa_node.get_logger().info(speech_text)
+
+            goal = ExecuteWorkflow.Goal()
+            goal.object_id = object_id
+            action_client.send_goal_async(goal)
+
+        threading.Thread(target=ros_action).start()
 
         handler_input.response_builder.speak(speech_text).set_card(
             SimpleCard("Pick", speech_text)).set_should_end_session(True)
 
         return handler_input.response_builder.response
-
-class PickBluIntentHandler(AbstractRequestHandler):
     
-    """
-    @brief Handles requests to pick up the blue cube.
-    """
+# second function --> used when the user asks to pick a color cube    
+class PickColorIntentHandler(AbstractRequestHandler):
     def can_handle(self, handler_input):
-        return is_intent_name("PrendiCuboBluIntent")(handler_input)
+        return is_intent_name("PrendiCuboColoratoIntent")(handler_input)
 
     def handle(self, handler_input):
-        rclpy.spin_once(alexa_node, timeout_sec=1.0)
-        object_exists = exists_label(alexa_node.latest_objects, "blue_cube")
-        
-        if object_exists is False:
-            speech_text = "Nessun cubetto blu trovato."
-            alexa_node.get_logger().error("Nessun cubetto blu trovato.")
-        else:
-            accepted, response_msg = send_goal_and_check_reject("blue_cube", "blu")
-            speech_text = response_msg
+        # Rispondi subito ad Alexa
+        speech_text = "Ok, prendo il cubetto colorato..."
+
+        # Esegui il resto in background
+        def ros_action():
+            nonlocal speech_text
+            rclpy.spin_once(alexa_node, timeout_sec=1.0)
+            object_id = get_lowest_id_by_label(alexa_node.latest_objects, "red_cube")
+            if object_id is None:
+                speech_text = "Nessun cubetto colorato trovato."
+                alexa_node.get_logger().error("Nessun cubetto rosso trovato.")
+                return
+
+            speech_text = f"Il robot andrà a prendere il cubetto colorato con id {object_id}."
+            alexa_node.get_logger().info(speech_text)
+
+            goal = ExecuteWorkflow.Goal()
+            goal.object_id = object_id
+            action_client.send_goal_async(goal)
+
+        threading.Thread(target=ros_action).start()
 
         handler_input.response_builder.speak(speech_text).set_card(
             SimpleCard("Pick", speech_text)).set_should_end_session(True)
 
         return handler_input.response_builder.response
-
+# stop the robot (pause)
 class StopIntentHandler(AbstractRequestHandler):
-    """
-    @brief Handles requests to stop current robot action.
-    """
     def can_handle(self, handler_input):
         return is_intent_name("StopIntent")(handler_input)
 
     def handle(self, handler_input):
-        speech_text = "ok, annullamento esecuzione"
+        speech_text = "il robot si sta per fermare"
         
         def ros_action():
-            msg= Bool()
-            msg.data = True
-            alexa_node.publishers_cr_stop_command.publish(msg)
+        
+            msg = String()
+            msg.data = 'pause'
+            alexa_node.publishers_cr_command.publish(msg)
             alexa_node.get_logger().info('Publishing: "%s"' % msg.data)
-            
+
         threading.Thread(target=ros_action).start()
         handler_input.response_builder.speak(speech_text).set_card(
             SimpleCard("Stop", speech_text)).set_should_end_session(True)
         return handler_input.response_builder.response
-
-class PauseIntentHandler(AbstractRequestHandler):
-    """
-    @brief Handles requests to pause the robot.
-    """
-    def can_handle(self, handler_input):
-        return is_intent_name("PauseIntent")(handler_input)
-
-    def handle(self, handler_input):
-        speech_text = "ok, pausa dell'esecuzione in corso"
-        
-        def ros_action():
-            msg= Bool()
-            msg.data = True
-            alexa_node.publishers_cr_command.publish(msg)
-            alexa_node.get_logger().info('Publishing: "%s"' % msg.data)
-            
-        threading.Thread(target=ros_action).start()
-        handler_input.response_builder.speak(speech_text).set_card(
-            SimpleCard("Pause", speech_text)).set_should_end_session(True)
-        return handler_input.response_builder.response
-
+# resume the robot (with the last action)
 class ResumeIntentHandler(AbstractRequestHandler):
-    """
-    @brief Handles requests to resume the robot's workflow.
-    """
     def can_handle(self, handler_input):
         return is_intent_name("ResumeIntent")(handler_input)
 
     def handle(self, handler_input):
+        # type: (HandlerInput) -> Response
         speech_text = "il robot si muove, riparte dall'ultima esecuzione"
         
         def ros_action():
             
-            msg= Bool()
-            msg.data = False
+            msg = String()
+            msg.data = 'resume'
             alexa_node.publishers_cr_command.publish(msg)
             alexa_node.get_logger().info('Publishing: "%s"' % msg.data)
 
@@ -272,11 +231,8 @@ class ResumeIntentHandler(AbstractRequestHandler):
         handler_input.response_builder.speak(speech_text).set_card(
             SimpleCard("Resume", speech_text)).set_should_end_session(True)
         return handler_input.response_builder.response
-
+#if the command is wrong
 class AllExceptionHandler(AbstractExceptionHandler):
-    """
-    @brief Catches all unhandled exceptions during intent processing.
-    """
     def can_handle(self, handler_input, exception):
         return True
 
@@ -287,20 +243,16 @@ class AllExceptionHandler(AbstractExceptionHandler):
         handler_input.response_builder.speak(speech).ask(speech)
         return handler_input.response_builder.response
 
-
-# ==================== Alexa Skill Setup ====================
-
 skill_builder = SkillBuilder()
 skill_builder.add_request_handler(LaunchRequestHandler())
 skill_builder.add_request_handler(PickGreenIntentHandler())
 skill_builder.add_request_handler(PickRedIntentHandler())
-skill_builder.add_request_handler(PickBluIntentHandler())
+skill_builder.add_request_handler(PickColorIntentHandler())
 skill_builder.add_request_handler(StopIntentHandler())
 skill_builder.add_request_handler(ResumeIntentHandler())
-skill_builder.add_request_handler(PauseIntentHandler())
 skill_builder.add_exception_handler(AllExceptionHandler())
 
-# Register your intent handlers to the skill_builder object
+
 SKILL_ID = "amzn1.ask.skill.3ad3dd7c-03cb-4a11-94af-0ac3b027efe2"
 
 skill_adapter = SkillAdapter(
@@ -311,11 +263,8 @@ skill_adapter = SkillAdapter(
 
 @app.route("/")
 def invoke_skill():
-    """
-    @brief Flask route to dispatch Alexa requests.
-    @return Alexa response
-    """
     return skill_adapter.dispatch_request()
+
 
 skill_adapter.register(app=app, route="/")
 

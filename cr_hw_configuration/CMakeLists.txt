@@ -13,6 +13,7 @@ find_package(rclcpp REQUIRED)
 find_package(rclcpp_lifecycle REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
+# find_package(moveit_task_constructor_core REQUIRED)
 find_package(moveit_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(shape_msgs REQUIRED)
@@ -40,20 +41,34 @@ ament_target_dependencies(${PROJECT_NAME}
 )
 
 
+# add_executable(scene_publisher src/scene_publisher.cpp)
+# ament_target_dependencies(scene_publisher
+#   rclcpp
+#   moveit_core
+#   moveit_ros_planning
+#   moveit_msgs
+#   geometry_msgs
+#   shape_msgs
+#   geometric_shapes
+# )
+
 pluginlib_export_plugin_description_file(hardware_interface coppelia_description.xml)
 
 
 install(TARGETS ${PROJECT_NAME}
+  # scene_publisher
   ARCHIVE DESTINATION lib/${PROJECT_NAME}
   LIBRARY DESTINATION lib/${PROJECT_NAME}
   RUNTIME DESTINATION lib/${PROJECT_NAME}
 )
 
+# Installa i file header
 install(
   DIRECTORY include/
   DESTINATION include
 )
 
+# Installa il file XML del plugin
 install(FILES coppelia_description.xml
   DESTINATION share/${PROJECT_NAME}
 )

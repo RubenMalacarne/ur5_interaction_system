@@ -2,8 +2,15 @@
 
 # cr_hw_configuration
 
-`cr_hw_configuration` package defines and manages the hardware interface between ROS 2 controllers and the CoppeliaSim simulated environment.  
-It includes URDF descriptions, hardware plugins, visualization assets, and the simulation scene of the project.
+`cr_hw_configuration` is a ROS 2 package that contains everything related to the connection between the robot and the simulator or hardware.
 
-## Authors
-Ruben Malacarne and Sabrina Vinco
+In addition to the code located in the `include`, `src`, and `launch` directories,  
+this package also contains the following folders:
+
+## Folders
+- `meshes` → contains the mesh of the table  
+- `rviz` → contains the saved RViz scene  
+- `urdf` → contains the robot's URDF file(s)
+
+## Author
+Sabrina Vinco and Ruben Malacarne

@@ -1,0 +1,5 @@
+<map id="include/cr_action_servers/place_action_server.hpp" name="include/cr_action_servers/place_action_server.hpp">
+<area shape="rect" id="node1" title=" " alt="" coords="118,5,305,47"/>
+<area shape="rect" id="node2" href="$place__action__server_8cpp.html" title="Implementation of the PlaceActionServer, a ROS 2 action server for placing objects using MoveIt." alt="" coords="5,102,207,129"/>
+<area shape="rect" id="node3" href="$place__action__server__main_8cpp.html" title=" " alt="" coords="231,95,405,136"/>
+</map>

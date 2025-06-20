@@ -1,0 +1,5 @@
+<map id="cr::action_servers::PickActionServer::execute" name="cr::action_servers::PickActionServer::execute">
+<area shape="rect" id="node1" title="Main execution logic for the pick action. Performs each stage of the pick process: pre&#45;grasp height,..." alt="" coords="397,5,545,61"/>
+<area shape="rect" id="node2" href="$classcr_1_1action__servers_1_1PickActionServer.html#a3b50df4839ee937d18d633afb0e19d85" title="Callback executed when a goal is accepted for execution." alt="" coords="201,5,349,61"/>
+<area shape="rect" id="node3" href="$classcr_1_1action__servers_1_1PickActionServer.html#a295b5ed19bafc461ff3f0973105eff7b" title=" " alt="" coords="5,5,153,61"/>
+</map>

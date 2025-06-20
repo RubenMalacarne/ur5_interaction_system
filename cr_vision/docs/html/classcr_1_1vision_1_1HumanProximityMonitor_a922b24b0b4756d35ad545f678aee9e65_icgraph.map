@@ -1,0 +1,4 @@
+<map id="cr::vision::HumanProximityMonitor::human_poses_callback" name="cr::vision::HumanProximityMonitor::human_poses_callback">
+<area shape="rect" id="node1" title="Callback function that processes an array of human poses." alt="" coords="293,5,524,47"/>
+<area shape="rect" id="node2" href="$classcr_1_1vision_1_1HumanProximityMonitor.html#a4a8e8da6d2b5ed3258af20bcbd006eff" title="Implementation for the HumanProximityMonitor node." alt="" coords="5,5,245,47"/>
+</map>

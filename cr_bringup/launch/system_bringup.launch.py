@@ -1,17 +1,3 @@
-"""
-@file cr_system_bringup.launch.py
-@brief Launch file to bring up the full CR robotic system in stages.
-
-This script sequentially launches various subsystems of the robot of each pkg, with 2 second delay for each other.
-Launch file are:
-1- Moveit
-2- Scene management
-3- Vision
-4- GUI
-5- Alexa integration
-6- Behavior Tree orchestrator
-"""
-
 from launch import LaunchDescription
 from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
@@ -41,14 +27,9 @@ def generate_launch_description():
         # 3) Vision
         include('cr_vision', 'cr_vision.launch.py', delay=4.0),
 
-        # 4) Gui
-        include('cr_gui', 'gui.launch.py', delay=6.0),
-        
-        # # 5) Alexa
-        include('cr_remote_assistant', 'alexa.launch.py', delay=8.0),
-        
-        # # 6) BT
-        include('cr_bt_orchestrator', 'orchestrator.launch.py', delay=10.0),
-        
+        # 4) Pick / Place / Scan action-servers
+        include('cr_action_servers', 'action_servers.launch.py', delay=6.0),
 
+        # 5) Task-orchestrator
+        include('cr_task_orchestration', 'task_orchestrator.launch.py', delay=8.0),
     ])

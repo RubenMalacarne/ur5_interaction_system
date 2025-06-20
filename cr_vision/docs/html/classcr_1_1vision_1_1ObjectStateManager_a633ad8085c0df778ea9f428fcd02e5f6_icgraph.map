@@ -1,0 +1,4 @@
+<map id="cr::vision::ObjectStateManager::update_frozen_scene" name="cr::vision::ObjectStateManager::update_frozen_scene">
+<area shape="rect" id="node1" title="Callback to update the frozen state of the scene." alt="" coords="276,5,499,47"/>
+<area shape="rect" id="node2" href="$classcr_1_1vision_1_1ObjectStateManager.html#a60bbd7f12d614fbccc8aed334e8cd25e" title="Constructor for the ObjectStateManager node." alt="" coords="5,5,228,47"/>
+</map>

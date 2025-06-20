@@ -71,12 +71,9 @@ git submodule update --init --recursive
 echo "Submodules cloned successfully."
 # ----------------------------------------------------------------------------------------
 
-git clone https://github.com/BehaviorTree/BehaviorTree.CPP.git
-git clone https://github.com/BehaviorTree/BehaviorTree.ROS2.git
-# -------------------------------------------------------------------------
 
 # Create data directory if it doesn't exist
-mkdir -p ./cr_vision/data
+mkdir -p /cr_vision/data
 
 # Download YOLO model if not exists
 check_download "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolo11n-pose.pt" "./cr_vision/data/yolo11n-pose.pt"
@@ -86,17 +83,17 @@ echo "Do you want to copy the YOLO model for object detection? (y/n)"
 read -r user_input
 
 if [ "$user_input" = "y" ]; then
-    echo "Copying color_cube.pt to ./cr_vision/data..."
-    cp ./yolo_pipline_customdata_basic/color_cube.pt ./cr_vision/data/color_cube.pt
+    echo "Copying yolo_cubi.pt to ./cr_vision/data..."
+    cp ./yolo_pipline_customdata_basic/yolo_cubi.pt ./cr_vision/data/yolo_cubi.pt
     echo "File copied successfully."
 else
     echo "Running training for YOLO models..."
     pip install notebook ultralytics pyyaml
     cd yolo_pipline_customdata_basic
     python3 python_train_yolo_model.py
-    echo "Copying trained model (best.pt) to ./cr_vision/data as color_cube.pt..."
+    echo "Copying trained model (best.pt) to ./cr_vision/data as yolo_cubi.pt..."
     cd ..
-    cp ./yolo_pipline_customdata_basic/runs/train/weights/best.pt ./cr_vision/data/color_cube.pt
+    cp ./yolo_pipline_customdata_basic/runs/train/weights/best.pt ./cr_vision/data/yolo_cubi.pt
     echo "Trained model copied successfully."
 fi
 

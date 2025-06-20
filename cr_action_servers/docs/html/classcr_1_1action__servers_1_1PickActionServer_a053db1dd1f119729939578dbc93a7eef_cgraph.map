@@ -1,0 +1,8 @@
+<map id="cr::action_servers::PickActionServer::execute" name="cr::action_servers::PickActionServer::execute">
+<area shape="rect" id="node1" title="Main execution logic for the pick action. Performs each stage of the pick process: pre&#45;grasp height,..." alt="" coords="5,165,153,221"/>
+<area shape="rect" id="node2" href="$classcr_1_1action__servers_1_1PickActionServer.html#a03b658de45dded4dfa5e616297997edd" title="Lowers the end&#45;effector closer to the object to prepare for grasping." alt="" coords="216,5,364,61"/>
+<area shape="rect" id="node3" href="$classcr_1_1action__servers_1_1PickActionServer.html#ab6611f8c58ae5626653d0b8fad10216c" title="Closes the gripper and attaches the object to the robot. Also calls collision/attachment services." alt="" coords="216,85,364,141"/>
+<area shape="rect" id="node4" href="$classcr_1_1action__servers_1_1PickActionServer.html#a2443a6a4645702e196dc55ac95b3a9ae" title="Moves the end&#45;effector above the object, in the XY plane." alt="" coords="216,165,364,221"/>
+<area shape="rect" id="node5" href="$classcr_1_1action__servers_1_1PickActionServer.html#a35300c88be6de785fe9c0a623ec6a1ce" title="Moves the robot end&#45;effector to a height above the target object." alt="" coords="201,245,379,301"/>
+<area shape="rect" id="node6" href="$classcr_1_1action__servers_1_1PickActionServer.html#a0102e12efef2e1ce416d4f02250f9001" title=" " alt="" coords="216,325,364,381"/>
+</map>

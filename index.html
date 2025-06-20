@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Project for Software developer for collaborative robot</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      background-color: #f4f4f4;
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    .main-header {
+      background-color: #007bff;
+      color: white;
+      padding: 20px;
+      text-align: center;
+      margin-bottom: 0;
+    }
+
+    .main-header h1 {
+        margin: 0;
+        color: white;
+    }
+
+    .container {
+      display: flex;
+      flex-grow: 1;
+      padding: 20px;
+      gap: 20px;
+      overflow: hidden;
+    }
+
+    .sidebar {
+      flex: 0 0 280px;
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      position: relative; /* Necessario per posizionare l'anteprima rispetto alla sidebar */
+    }
+
+    .sidebar h2 {
+        color: #007bff;
+        margin-top: 0;
+        margin-bottom: 15px;
+        font-size: 1.5em;
+        flex-shrink: 0;
+    }
+
+    .sidebar ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      overflow-y: auto;
+      flex-grow: 1;
+    }
+
+    .sidebar li {
+      padding: 0;
+      border-bottom: 1px solid #eee;
+      position: relative; /* Per posizionare l'anteprima relativa all'elemento li */
+    }
+
+    .sidebar li:last-child {
+      border-bottom: none;
+    }
+
+    .sidebar li a {
+      display: block;
+      padding: 12px 15px;
+      color: #007bff;
+      text-decoration: none;
+      font-weight: bold;
+      transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out, border-radius 0.2s ease-in-out; /* Aggiunta transizione per border-radius */
+    }
+
+    .sidebar li a:hover {
+      background-color: #007bff;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 6px; /* <<< MODIFICA QUI: Angoli arrotondati per l'hover */
+    }
+
+    .content-area {
+      flex-grow: 1;
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .content-area h2 {
+        color: #333;
+        margin-top: 0;
+        border-bottom: 2px solid #eee;
+        padding: 20px;
+        padding-bottom: 10px;
+        margin-bottom: 0;
+        flex-shrink: 0;
+    }
+
+    .readme-iframe {
+        width: 100%;
+        flex-grow: 1;
+        border: none;
+    }
+
+    /* Stili per il box di anteprima */
+    #link-preview {
+      position: absolute;
+      display: none;
+      background-color: #fff;
+      border: 1px solid #ccc;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      padding: 15px;
+      z-index: 1000;
+      max-width: 350px; /* Larghezza massima dell'anteprima */
+      max-height: 250px; /* Altezza massima dell'anteprima */
+      overflow-y: auto; /* Scroll se il contenuto è troppo lungo */
+      font-size: 0.9em;
+      line-height: 1.4;
+      border-radius: 6px;
+    }
+    #link-preview h1, #link-preview h2, #link-preview h3 {
+        font-size: 1.1em;
+        margin-top: 0;
+        margin-bottom: 8px;
+        color: #007bff;
+    }
+    #link-preview p {
+        margin-top: 0;
+        margin-bottom: 8px;
+    }
+    #link-preview img { /* Rendi le immagini nell'anteprima responsive */
+        max-width: 100%;
+        height: auto;
+        display: block;
+        margin-top: 5px;
+        margin-bottom: 5px;
+    }
+
+  </style>
+</head>
+<body>
+
+  <header class="main-header">
+    <h1>🤖 Project for Software developer for collaborative robot</h1>
+  </header>
+
+  <div class="container">
+    <nav class="sidebar">
+      <h2>Documentation Index</h2>
+      <ul>
+        <li><a href="cr_vision/docs/html/index.html" data-previewable="true">cr_vision</a></li>
+        <li><a href="cr_remote_assistant/docs/html/index.html" data-previewable="true">cr_remote_assistant</a></li>
+        <li><a href="cr_scene_management/docs/html/index.html" data-previewable="true">cr_scene_management</a></li>
+        <li><a href="cr_task_orchestration/docs/html/index.html" data-previewable="true">cr_task_orchestration</a></li>
+        <li><a href="cr_hw_configuration/docs/html/index.html" data-previewable="true">cr_hw_configuration</a></li>
+        <li><a href="cr_interfaces/docs/html/index.html" data-previewable="true">cr_interfaces</a></li>
+        <li><a href="cr_controller/docs/html/index.html" data-previewable="true">cr_controller</a></li>
+        <li><a href="cr_action_servers/docs/html/index.html" data-previewable="true">cr_action_servers</a></li>
+        <!-- Aggiungi data-previewable="true" ai link per cui vuoi l'anteprima -->
+      </ul>
+    </nav>
+
+    <main class="content-area">
+      <h2>README Content</h2>
+      <iframe src="README.html" class="readme-iframe" title="README Content">
+        Il tuo browser non supporta gli iframe. Controlla se il file README.html esiste.
+      </iframe>
+    </main>
+  </div>
+
+  <!-- Box per l'anteprima, inizialmente nascosto -->
+  <div id="link-preview"></div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const previewBox = document.getElementById('link-preview');
+      const sidebarLinks = document.querySelectorAll('.sidebar a[data-previewable="true"]');
+      let hoverTimeout;
+      const previewCache = {}; // Oggetto per memorizzare le anteprime caricate
+
+      sidebarLinks.forEach(link => {
+        link.addEventListener('mouseenter', (event) => {
+          // Cancella timeout precedenti per evitare più anteprime
+          clearTimeout(hoverTimeout);
+
+          // Imposta un piccolo ritardo prima di mostrare l'anteprima
+          hoverTimeout = setTimeout(() => {
+            const url = link.href;
+
+            // Posiziona l'anteprima prima di caricarne il contenuto
+            positionPreviewBox(event.target, previewBox);
+            previewBox.innerHTML = 'Loading preview...'; // Messaggio temporaneo
+            previewBox.style.display = 'block';
+
+            if (previewCache[url]) {
+              // Usa l'anteprima dalla cache se disponibile
+              previewBox.innerHTML = previewCache[url];
+              positionPreviewBox(event.target, previewBox); // Riposiziona dopo aver impostato il contenuto
+            } else {
+              // Altrimenti, carica il contenuto
+              fetch(url)
+                .then(response => {
+                  if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                  }
+                  return response.text();
+                })
+                .then(htmlText => {
+                  const parser = new DOMParser();
+                  const doc = parser.parseFromString(htmlText, 'text/html');
+                  
+                  // Strategia di estrazione dell'anteprima:
+                  // Prova a prendere il contenuto da un div "main", "content", "article" o i primi 3 paragrafi del body
+                  let previewContent = '';
+                  const mainContent = doc.querySelector('main, article, .content, .main-content, #main, #content');
+                  
+                  if (mainContent) {
+                    const elements = Array.from(mainContent.children).slice(0, 5); // Prendi i primi 5 figli
+                    elements.forEach(el => {
+                      if (el.tagName === 'P' || el.tagName === 'H1' || el.tagName === 'H2' || el.tagName === 'H3' || el.tagName === 'UL' || el.tagName === 'OL') {
+                        // Rimuovi eventuali script o stili inline per sicurezza (base)
+                        el.querySelectorAll('script, style').forEach(s => s.remove());
+                        previewContent += el.outerHTML;
+                      }
+                    });
+                    if (!previewContent) { // Fallback se non trova elementi adatti
+                        previewContent = mainContent.textContent.substring(0, 300) + '...';
+                    }
+                  } else {
+                    // Fallback: prendi i primi 2-3 paragrafi dal body
+                    const paragraphs = doc.body.querySelectorAll('p');
+                    for (let i = 0; i < Math.min(paragraphs.length, 3); i++) {
+                      paragraphs[i].querySelectorAll('script, style').forEach(s => s.remove());
+                      previewContent += paragraphs[i].outerHTML;
+                    }
+                    if (!previewContent) { // Ulteriore fallback se non ci sono paragrafi
+                        previewContent = doc.body.textContent.substring(0, 300) + '...';
+                    }
+                  }
+
+                  if (previewContent.length > 500) { // Limita la lunghezza
+                      previewContent = previewContent.substring(0, 500) + "...";
+                  }
+                  
+                  previewCache[url] = previewContent || 'No preview available.'; // Salva in cache
+                  previewBox.innerHTML = previewCache[url];
+                  positionPreviewBox(event.target, previewBox); // Riposiziona
+                })
+                .catch(error => {
+                  console.error('Error fetching preview:', error);
+                  previewBox.innerHTML = 'Error loading preview.';
+                  previewCache[url] = 'Error loading preview.'; // Cache dell'errore per evitare tentativi ripetuti
+                });
+            }
+          }, 300); // Ritardo di 300ms
+        });
+
+        link.addEventListener('mouseleave', () => {
+          clearTimeout(hoverTimeout);
+          // Nascondi l'anteprima con un piccolo ritardo per permettere di spostare il mouse sull'anteprima stessa
+          // (se volessimo che l'anteprima rimanga visibile quando ci si passa sopra)
+          // Per ora, nascondiamola subito o con un ritardo minimo.
+          setTimeout(() => {
+             // Controlla se il mouse non è sopra l'anteprima stessa
+             if (!previewBox.matches(':hover')) {
+                previewBox.style.display = 'none';
+             }
+          }, 50);
+        });
+      });
+
+      // Nascondi l'anteprima se il mouse esce anche dall'anteprima stessa
+      previewBox.addEventListener('mouseleave', () => {
+        previewBox.style.display = 'none';
+      });
+
+      function positionPreviewBox(targetElement, previewElement) {
+        const rect = targetElement.getBoundingClientRect();
+        const sidebarRect = targetElement.closest('.sidebar').getBoundingClientRect();
+
+        // Posiziona a destra del link, all'interno della viewport
+        let top = rect.top + window.scrollY;
+        let left = sidebarRect.right + 10; // 10px di spazio dalla sidebar
+
+        previewElement.style.top = `${top}px`;
+        previewElement.style.left = `${left}px`;
+
+        // Aggiustamenti per rimanere nella viewport (semplificati)
+        const previewRect = previewElement.getBoundingClientRect();
+        if (previewRect.right > window.innerWidth - 10) { // -10 per un piccolo margine
+          left = sidebarRect.left - previewRect.width - 10; // Prova a sinistra
+          previewElement.style.left = `${left}px`;
+        }
+        if (previewRect.bottom > window.innerHeight - 10) {
+          top = window.innerHeight - previewRect.height - 10 + window.scrollY; // Sposta in alto
+          previewElement.style.top = `${top}px`;
+        }
+         if (top < window.scrollY + 10) { // Non andare troppo in alto
+            top = window.scrollY + 10;
+            previewElement.style.top = `${top}px`;
+        }
+      }
+    });
+  </script>
+
+</body>
+</html>

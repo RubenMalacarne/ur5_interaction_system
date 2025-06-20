@@ -1,23 +1,23 @@
 import http.server
 import socketserver
 import os
-import markdown 
+import markdown # Assicurati di aver fatto: pip3 install markdown
 import webbrowser
-import sys 
+import sys # Per sys.exit()
 
-
+# --- Configurazione ---
 MARKDOWN_FILENAME = "README.md"
-HTML_OUTPUT_FILENAME = "README.html" 
-PORT = 6001
+HTML_OUTPUT_FILENAME = "README.html" # MODIFICATO: Questo sarà il file servito di default
+PORT = 8000
 HOST = "localhost"
 
-
+# --- Funzione per convertire Markdown in HTML (identica a prima) ---
 def convert_md_to_html(md_file_path, html_file_output_path):
     try:
         output_dir = os.path.dirname(html_file_output_path)
         if output_dir and not os.path.exists(output_dir):
             os.makedirs(output_dir)
-            print(f"Created directory: {output_dir}")
+            print(f"Creata directory: {output_dir}")
 
         with open(md_file_path, 'r', encoding='utf-8') as f_md:
             md_text = f_md.read()
@@ -25,9 +25,12 @@ def convert_md_to_html(md_file_path, html_file_output_path):
         extensions = ['extra', 'fenced_code', 'codehilite', 'toc', 'nl2br']
         html_content = markdown.markdown(md_text, extensions=extensions)
 
+        # Potresti voler cambiare <title> se HTML_OUTPUT_FILENAME è "index.html"
+        # ma "README" va ancora bene se il contenuto è quello del README.md
         title_tag_content = os.path.splitext(os.path.basename(html_file_output_path))[0].replace("_", " ").title()
-        if HTML_OUTPUT_FILENAME == "index_documentation.html" and MARKDOWN_FILENAME.endswith("README.md"):
+        if HTML_OUTPUT_FILENAME == "index.html" and MARKDOWN_FILENAME.endswith("README.md"):
             title_tag_content = "README"
+
 
         full_html = f"""<!DOCTYPE html>
 <html lang="en">
@@ -46,17 +49,16 @@ def convert_md_to_html(md_file_path, html_file_output_path):
 
         with open(html_file_output_path, 'w', encoding='utf-8') as f_html:
             f_html.write(full_html)
-        print(f"Successfully converted '{md_file_path}' to '{html_file_output_path}'.")
+        print(f"Convertito '{md_file_path}' in '{html_file_output_path}' con successo.")
         return True
     except FileNotFoundError:
-        print(f"ERROR: Markdown file '{md_file_path}' not found.")
+        print(f"ERRORE: File Markdown '{md_file_path}' non trovato.")
         return False
     except Exception as e:
-        print(f"ERROR during Markdown conversion: {e}")
+        print(f"ERRORE durante la conversione di Markdown: {e}")
         return False
 
-
-# --- Function for CSS styles ---
+# --- Funzione per gli stili CSS (identica a prima) ---
 def get_basic_styles():
     return """
     <style>
@@ -120,73 +122,77 @@ def get_basic_styles():
     </style>
     """
 
-# --- Function to start the HTTP server ---
+# --- Funzione per avviare il server HTTP ---
 def start_server():
     Handler = http.server.SimpleHTTPRequestHandler
     socketserver.TCPServer.allow_reuse_address = True
 
     project_root = os.path.dirname(os.path.abspath(__file__))
     os.chdir(project_root)
-    print(f"Server will serve files from directory: {os.getcwd()}")
+    print(f"Il server servirà i file dalla directory: {os.getcwd()}")
 
-    # Server URL will be http://localhost:8000/
-    # If index_documentation.html is present in the directory, it will be served automatically.
-    server_url_base =  f"http://{HOST}:{PORT}/index_documentation.html"
-    # No need to specify index_documentation.html in the URL; the server will handle that
-    target_url = server_url_base
+    # L'URL del server sarà http://localhost:8000/
+    # Se index.html è presente nella directory di servizio,
+    # SimpleHTTPRequestHandler lo servirà automaticamente.
+    server_url_base = f"http://{HOST}:{PORT}"
+    # Non è necessario specificare index.html nell'URL, il server lo fa di default
+    # target_url = f"{server_url_base}/{HTML_OUTPUT_FILENAME}" # Meno ideale
+    target_url = server_url_base # Ideale, lascia che il server trovi index.html
 
     with socketserver.TCPServer((HOST, PORT), Handler) as httpd:
-        print(f"Server started at {server_url_base}")
-        print(f"The main page should be: {server_url_base}")
-        print("Press Ctrl+C to stop the server.")
+        print(f"Server avviato su {server_url_base}")
+        # Se HTML_OUTPUT_FILENAME è "index.html", aprendo server_url_base si aprirà index.html
+        print(f"La pagina principale dovrebbe essere: {server_url_base}")
+        print("Premi Ctrl+C per fermare il server.")
 
         try:
             webbrowser.open_new_tab(target_url)
         except Exception as e:
-            print(f"Unable to open browser automatically: {e}")
-            print(f"Please open manually: {target_url}")
+            print(f"Impossibile aprire il browser automaticamente: {e}")
+            print(f"Per favore, apri manualmente: {target_url}")
 
         try:
             httpd.serve_forever()
         except KeyboardInterrupt:
-            print("\nServer stopped by user.")
+            print("\nServer fermato dall'utente.")
             httpd.server_close()
 
-
+# --- Esecuzione principale dello script ---
 if __name__ == "__main__":
     script_dir = os.path.dirname(os.path.abspath(__file__))
     markdown_file_full_path = os.path.join(script_dir, MARKDOWN_FILENAME)
     html_output_full_path = os.path.join(script_dir, HTML_OUTPUT_FILENAME)
 
-    print("\nChoose an action:")
-    print(f"1. Convert '{MARKDOWN_FILENAME}' to '{HTML_OUTPUT_FILENAME}' and start server")
-    print("2. Start server (skip conversion, use existing HTML file)")
-    print(f"3. Only convert '{MARKDOWN_FILENAME}' to '{HTML_OUTPUT_FILENAME}'")
-    print("4. Exit")
-    choice = input("Enter your choice (1-4): ")
+    while True:
+        print("\nScegli un'azione:")
+        print(f"1. Converti '{MARKDOWN_FILENAME}' in '{HTML_OUTPUT_FILENAME}' e avvia server")
+        print("2. Avvia server (salta conversione, usa file HTML esistente)")
+        print(f"3. Solo converti '{MARKDOWN_FILENAME}' in '{HTML_OUTPUT_FILENAME}'")
+        print("4. Esci")
+        choice = input("Inserisci la tua scelta (1-4): ")
 
-    if choice == '1':
-        print(f"\n--- Converting {MARKDOWN_FILENAME} ---")
-        if convert_md_to_html(markdown_file_full_path, html_output_full_path):
-            print("\n--- Starting server ---")
+        if choice == '1':
+            print(f"\n--- Conversione di {MARKDOWN_FILENAME} ---")
+            if convert_md_to_html(markdown_file_full_path, html_output_full_path):
+                print("\n--- Avvio del server ---")
+                start_server()
+            else:
+                print("Conversione fallita. Impossibile avviare il server.")
+            break
+        elif choice == '2':
+            print("\n--- Avvio del server (conversione saltata) ---")
+            # Verifica se il file HTML di output (index.html) esiste, altrimenti avvisa
+            if not os.path.exists(html_output_full_path):
+                print(f"ATTENZIONE: Il file '{html_output_full_path}' non esiste.")
+                print("Il server potrebbe non mostrare la pagina attesa o mostrare un elenco di directory.")
             start_server()
+            break
+        elif choice == '3':
+            print(f"\n--- Solo conversione di {MARKDOWN_FILENAME} ---")
+            convert_md_to_html(markdown_file_full_path, html_output_full_path)
+            print("Operazione completata. Puoi chiudere lo script o scegliere un'altra opzione.")
+        elif choice == '4':
+            print("Uscita dallo script.")
+            sys.exit(0)
         else:
-            print("Conversion failed. Unable to start server.")
-        
-    elif choice == '2':
-        print("\n--- Starting server (conversion skipped) ---")
-        # Check if the output HTML file (index_documentation.html) exists, otherwise warn
-        if not os.path.exists(html_output_full_path):
-            print(f"WARNING: File '{html_output_full_path}' does not exist.")
-            print("The server may not display the expected page or may show a directory listing.")
-        start_server()
-        
-    elif choice == '3':
-        print(f"\n--- Only converting {MARKDOWN_FILENAME} ---")
-        convert_md_to_html(markdown_file_full_path, html_output_full_path)
-        print("Operation completed. You can close the script or choose another option.")
-    elif choice == '4':
-        print("Exiting script.")
-        sys.exit(0)
-    else:
-        print("Invalid choice. Please enter a number between 1 and 4.")
+            print("Scelta non valida. Per favore, inserisci un numero da 1 a 4.")

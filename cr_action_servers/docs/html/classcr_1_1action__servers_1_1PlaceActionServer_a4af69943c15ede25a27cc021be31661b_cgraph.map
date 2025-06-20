@@ -1,0 +1,7 @@
+<map id="cr::action_servers::PlaceActionServer::execute" name="cr::action_servers::PlaceActionServer::execute">
+<area shape="rect" id="node1" title=" " alt="" coords="5,125,153,181"/>
+<area shape="rect" id="node2" href="$classcr_1_1action__servers_1_1PlaceActionServer.html#a7ba845b8efae5acc4ae3ceb506855afb" title="Moves the robot downward toward the final place position." alt="" coords="213,5,384,61"/>
+<area shape="rect" id="node3" href="$classcr_1_1action__servers_1_1PlaceActionServer.html#a769d9b04379d066c57f7a1888127d0c1" title="Lifts the object vertically to a pre&#45;defined height before placing." alt="" coords="225,85,373,141"/>
+<area shape="rect" id="node4" href="$classcr_1_1action__servers_1_1PlaceActionServer.html#a0e4c90ce23a2cf8aaf034f63ff70e322" title="Moves the robot above the target place position (XY plane)." alt="" coords="201,165,396,221"/>
+<area shape="rect" id="node5" href="$classcr_1_1action__servers_1_1PlaceActionServer.html#abcd3baaaa9806bed59f6ed7d2762af1b" title="Opens the gripper and detaches the object in the MoveIt scene." alt="" coords="225,245,373,301"/>
+</map>

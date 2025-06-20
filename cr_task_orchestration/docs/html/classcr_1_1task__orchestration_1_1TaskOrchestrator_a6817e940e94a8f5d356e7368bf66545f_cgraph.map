@@ -1,0 +1,7 @@
+<map id="cr::task_orchestration::TaskOrchestrator::TaskOrchestrator" name="cr::task_orchestration::TaskOrchestrator::TaskOrchestrator">
+<area shape="rect" id="node1" title="Constructor for the TaskOrchestrator class." alt="" coords="5,93,264,134"/>
+<area shape="rect" id="node2" href="$classcr_1_1task__orchestration_1_1TaskOrchestrator.html#a0e197cb5a0368d6a3a5ae94b888d64af" title="Callback triggered when a goal is accepted." alt="" coords="329,5,521,61"/>
+<area shape="rect" id="node4" href="$classcr_1_1task__orchestration_1_1TaskOrchestrator.html#aef912b70fc37c53127fc03639dc1945e" title="Callback for handling goal cancellation." alt="" coords="329,85,521,141"/>
+<area shape="rect" id="node5" href="$classcr_1_1task__orchestration_1_1TaskOrchestrator.html#ae106312a07d4c4ef8d386290342205a3" title="Callback for handling incoming workflow execution goals." alt="" coords="312,166,539,207"/>
+<area shape="rect" id="node3" href="$classcr_1_1task__orchestration_1_1TaskOrchestrator.html#a6eb2777128494851e43bb911b8cc3eb1" title="Fetches object information from the service." alt="" coords="587,5,756,61"/>
+</map>

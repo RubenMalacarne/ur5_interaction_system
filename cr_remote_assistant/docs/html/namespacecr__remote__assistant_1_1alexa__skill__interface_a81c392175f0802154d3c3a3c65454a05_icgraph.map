@@ -1,0 +1,6 @@
+<map id="cr_remote_assistant.alexa_skill_interface.get_lowest_id_by_label" name="cr_remote_assistant.alexa_skill_interface.get_lowest_id_by_label">
+<area shape="rect" id="node1" title=" " alt="" coords="283,85,479,141"/>
+<area shape="rect" id="node2" href="$classcr__remote__assistant_1_1alexa__skill__interface_1_1PickGreenIntentHandler.html#a75b6391fdcec7ccaecfff03956c6222a" title=" " alt="" coords="5,5,235,61"/>
+<area shape="rect" id="node3" href="$classcr__remote__assistant_1_1alexa__skill__interface_1_1PickRedIntentHandler.html#ae7c4919f5f84401260e63ddbf38b107d" title=" " alt="" coords="13,85,227,141"/>
+<area shape="rect" id="node4" href="$classcr__remote__assistant_1_1alexa__skill__interface_1_1PickColorIntentHandler.html#a2ca21572dfaf8bbc893224ed1bd74bdd" title=" " alt="" coords="8,165,232,221"/>
+</map>

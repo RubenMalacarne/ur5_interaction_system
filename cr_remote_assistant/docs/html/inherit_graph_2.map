@@ -1,0 +1,9 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="node1" title=" " alt="" coords="5,220,185,247"/>
+<area shape="rect" id="node2" href="$classcr__remote__assistant_1_1alexa__skill__interface_1_1LaunchRequestHandler.html" title=" " alt="" coords="255,5,479,61"/>
+<area shape="rect" id="node3" href="$classcr__remote__assistant_1_1alexa__skill__interface_1_1PickColorIntentHandler.html" title=" " alt="" coords="255,85,479,141"/>
+<area shape="rect" id="node4" href="$classcr__remote__assistant_1_1alexa__skill__interface_1_1PickGreenIntentHandler.html" title=" " alt="" coords="252,165,481,221"/>
+<area shape="rect" id="node5" href="$classcr__remote__assistant_1_1alexa__skill__interface_1_1PickRedIntentHandler.html" title=" " alt="" coords="259,245,474,301"/>
+<area shape="rect" id="node6" href="$classcr__remote__assistant_1_1alexa__skill__interface_1_1ResumeIntentHandler.html" title=" " alt="" coords="233,326,500,367"/>
+<area shape="rect" id="node7" href="$classcr__remote__assistant_1_1alexa__skill__interface_1_1StopIntentHandler.html" title=" " alt="" coords="245,391,488,433"/>
+</map>

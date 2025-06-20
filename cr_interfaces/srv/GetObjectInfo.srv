@@ -1,4 +1,4 @@
-string label
+uint8 id
 ---
 bool success
 cr_interfaces/ObjectInfo object_info

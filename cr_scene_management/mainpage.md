@@ -1,14 +1,30 @@
-<!-- mainpage.md -->
+# Scene Management Module
 
-# cr_scene_management
+## Overview
+The `scene_management` module handles interaction with the MoveIt planning scene.  
+It allows dynamic updates such as adding detected objects, attaching/detaching them to the robot, and setting collision permissions.
 
-The `cr_scene_management` package handles the dynamic and static management of the MoveIt planning scene.
+## Components
+- **PlanningSceneModifier**  
+  Publishes objects, attaches them to the robot, and manages collision rules via services.
+- **StaticScenePublisher**  
+  Publishes static elements (e.g., tables) once or periodically.
+- **SceneManager**  
+  Class that provides access to a shared `PlanningSceneMonitor`.
 
-It provides nodes to publish static elements, and to update the scene in real-time based on perception and interaction events.
+## Interfaces
+- **Topic (published)**: `/planning_scene`  
+- **Topic (subscribed)**: `/cr/scene_objects`  
+- **Services**:  
+  - `/allow_collision`  
+  - `/attach_object`
 
-## Node list
-- `planning_scene_modifier`: manages dynamic updates (spawn, attach, collisions) 
-- `static_scene_publisher`: publishes static objects once at startup. 
+## Dependencies
+- ROS 2  
+- MoveIt 2  
+- `cr_interfaces`  
+- `geometric_shapes`  
+- `cr_hw_configuration` (for meshes)
 
-## Authors
-Ruben Malacarne and Sabrina Vinco
+## Author
+Sabrina Vinco and Ruben Malacarne

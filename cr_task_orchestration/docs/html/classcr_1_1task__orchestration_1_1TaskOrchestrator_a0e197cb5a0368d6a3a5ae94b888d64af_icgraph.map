@@ -1,0 +1,4 @@
+<map id="cr::task_orchestration::TaskOrchestrator::handle_accepted" name="cr::task_orchestration::TaskOrchestrator::handle_accepted">
+<area shape="rect" id="node1" title="Callback triggered when a goal is accepted." alt="" coords="312,5,504,61"/>
+<area shape="rect" id="node2" href="$classcr_1_1task__orchestration_1_1TaskOrchestrator.html#a6817e940e94a8f5d356e7368bf66545f" title="Constructor for the TaskOrchestrator class." alt="" coords="5,13,264,54"/>
+</map>

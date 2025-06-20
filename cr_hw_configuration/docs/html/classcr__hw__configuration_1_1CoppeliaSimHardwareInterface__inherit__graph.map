@@ -1,0 +1,4 @@
+<map id="cr_hw_configuration::CoppeliaSimHardwareInterface" name="cr_hw_configuration::CoppeliaSimHardwareInterface">
+<area shape="rect" id="node1" title="Implements SystemInterface for integrating CoppeliaSim with ROS 2 control." alt="" coords="5,95,239,136"/>
+<area shape="rect" id="node2" title=" " alt="" coords="48,5,196,47"/>
+</map>

@@ -1,0 +1,4 @@
+<map id="cr::action_servers::PickActionServer" name="cr::action_servers::PickActionServer">
+<area shape="rect" id="node1" title="Action server for executing pick operations using MoveIt and ROS 2 actions." alt="" coords="5,80,145,121"/>
+<area shape="rect" id="node2" title=" " alt="" coords="24,5,127,32"/>
+</map>

@@ -1,0 +1,4 @@
+<map id="cr::scene_management::StaticScenePublisher::publishStaticScene" name="cr::scene_management::StaticScenePublisher::publishStaticScene">
+<area shape="rect" id="node1" title="Publishes a static collision object (e.g., a table) to the MoveIt planning scene." alt="" coords="228,5,403,61"/>
+<area shape="rect" id="node2" href="$classcr_1_1scene__management_1_1StaticScenePublisher.html#a6f04a7ae14dd4f4e1ed8cbca9acc0c84" title="Constructor for the StaticScenePublisher node. Initializes the planning scene publisher and starts a ..." alt="" coords="5,5,180,61"/>
+</map>

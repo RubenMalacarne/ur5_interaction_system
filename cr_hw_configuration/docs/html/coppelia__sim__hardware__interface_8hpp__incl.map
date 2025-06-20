@@ -1,0 +1,8 @@
+<map id="include/cr_hw_configuration/coppelia_sim_hardware_interface.hpp" name="include/cr_hw_configuration/coppelia_sim_hardware_interface.hpp">
+<area shape="rect" id="node1" title="Hardware Interface of ROS2 for controlling and monitoring a robot in CoppeliaSim." alt="" coords="332,5,605,47"/>
+<area shape="rect" id="node2" title=" " alt="" coords="5,95,172,136"/>
+<area shape="rect" id="node3" title=" " alt="" coords="196,95,379,136"/>
+<area shape="rect" id="node4" title=" " alt="" coords="403,102,535,129"/>
+<area shape="rect" id="node5" title=" " alt="" coords="559,95,741,136"/>
+<area shape="rect" id="node6" title=" " alt="" coords="766,95,963,136"/>
+</map>

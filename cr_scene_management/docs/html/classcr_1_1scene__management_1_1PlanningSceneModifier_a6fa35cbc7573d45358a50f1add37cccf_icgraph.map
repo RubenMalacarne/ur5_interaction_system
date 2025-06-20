@@ -1,0 +1,4 @@
+<map id="cr::scene_management::PlanningSceneModifier::allowCollision" name="cr::scene_management::PlanningSceneModifier::allowCollision">
+<area shape="rect" id="node1" title="Service callback to modify the Allowed Collision Matrix (ACM)." alt="" coords="232,5,411,61"/>
+<area shape="rect" id="node2" href="$classcr_1_1scene__management_1_1PlanningSceneModifier.html#a4831a5eaca80b3226fbaf2f1a86f3bca" title="Constructor for the PlanningSceneModifier class." alt="" coords="5,5,184,61"/>
+</map>

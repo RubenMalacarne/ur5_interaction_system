@@ -29,8 +29,6 @@ RUN apt-get update && apt-get install -y \
     ros-humble-gazebo-ros-pkgs \
     ros-humble-gazebo-ros2-control \
     libxcb-xinerama0 \  
-    python3-markdown \
-    doxygen \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 
@@ -41,12 +39,8 @@ RUN pip3 install pyzmq cbor2 \
     flask \
     flask-ask-sdk \
     ask-sdk \
-    notebook \ 
-    ultralytics \ 
-    pyyaml \
     xmlschema
-# Downgrade NumPy to fix compatibility issues with cv_bridge etc.
-RUN pip3 install "numpy<2"
+
 # ROS workspace
 WORKDIR /ros2_ws
 COPY . /ros2_ws/src_CR
@@ -66,13 +60,9 @@ RUN rm -rf /ros2_ws/src_CR/download
 
 ENV COPPELIASIM_ROOT_DIR=/opt/CoppeliaSim_Edu_V4_10_0_rev0_Ubuntu22_04
 ENV PATH=$COPPELIASIM_ROOT_DIR:$PATH
-ENV LD_LIBRARY_PATH=$COPPELIASIM_ROOT_DIR
+ENV LD_LIBRARY_PATH=$COPPELIASIM_ROOT_DIR:$LD_LIBRARY_PATH
 ENV QT_QPA_PLATFORM_PLUGIN_PATH=/usr/lib/x86_64-linux-gnu/qt5/plugins/platforms
 ENV QT_QPA_PLATFORM=xcb
-
-#generate the documentation
-RUN cd /ros2_ws/src_CR && chmod +x generate_doc.sh && ./generate_doc.sh
-
 
 RUN echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> ~/.bashrc
 

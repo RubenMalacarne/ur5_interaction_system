@@ -1,0 +1,12 @@
+<map id="cr::action_servers::PickActionServer::PickActionServer" name="cr::action_servers::PickActionServer::PickActionServer">
+<area shape="rect" id="node1" title=" " alt="" coords="5,245,153,301"/>
+<area shape="rect" id="node2" href="$classcr_1_1action__servers_1_1PickActionServer.html#a3b50df4839ee937d18d633afb0e19d85" title="Callback executed when a goal is accepted for execution." alt="" coords="201,165,349,221"/>
+<area shape="rect" id="node9" href="$classcr_1_1action__servers_1_1PickActionServer.html#acd11058fa0e2397c2268170200e43af4" title="Callback executed when a cancel request is received." alt="" coords="201,245,349,301"/>
+<area shape="rect" id="node10" href="$classcr_1_1action__servers_1_1PickActionServer.html#a02c0da5cf6c5874d1798be9b9188e96b" title="Callback executed when a new goal is received." alt="" coords="201,325,349,381"/>
+<area shape="rect" id="node3" href="$classcr_1_1action__servers_1_1PickActionServer.html#a053db1dd1f119729939578dbc93a7eef" title="Main execution logic for the pick action. Performs each stage of the pick process: pre&#45;grasp height,..." alt="" coords="397,165,545,221"/>
+<area shape="rect" id="node4" href="$classcr_1_1action__servers_1_1PickActionServer.html#a03b658de45dded4dfa5e616297997edd" title="Lowers the end&#45;effector closer to the object to prepare for grasping." alt="" coords="608,5,756,61"/>
+<area shape="rect" id="node5" href="$classcr_1_1action__servers_1_1PickActionServer.html#ab6611f8c58ae5626653d0b8fad10216c" title="Closes the gripper and attaches the object to the robot. Also calls collision/attachment services." alt="" coords="608,85,756,141"/>
+<area shape="rect" id="node6" href="$classcr_1_1action__servers_1_1PickActionServer.html#a2443a6a4645702e196dc55ac95b3a9ae" title="Moves the end&#45;effector above the object, in the XY plane." alt="" coords="608,165,756,221"/>
+<area shape="rect" id="node7" href="$classcr_1_1action__servers_1_1PickActionServer.html#a35300c88be6de785fe9c0a623ec6a1ce" title="Moves the robot end&#45;effector to a height above the target object." alt="" coords="593,245,771,301"/>
+<area shape="rect" id="node8" href="$classcr_1_1action__servers_1_1PickActionServer.html#a0102e12efef2e1ce416d4f02250f9001" title=" " alt="" coords="608,325,756,381"/>
+</map>

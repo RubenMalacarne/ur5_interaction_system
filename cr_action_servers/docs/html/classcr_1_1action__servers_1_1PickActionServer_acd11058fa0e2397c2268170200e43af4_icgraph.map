@@ -1,0 +1,4 @@
+<map id="cr::action_servers::PickActionServer::handle_cancel" name="cr::action_servers::PickActionServer::handle_cancel">
+<area shape="rect" id="node1" title="Callback executed when a cancel request is received." alt="" coords="201,5,349,61"/>
+<area shape="rect" id="node2" href="$classcr_1_1action__servers_1_1PickActionServer.html#a295b5ed19bafc461ff3f0973105eff7b" title=" " alt="" coords="5,5,153,61"/>
+</map>

@@ -1,0 +1,6 @@
+<map id="cr::vision::ObjectStateManager::ObjectStateManager" name="cr::vision::ObjectStateManager::ObjectStateManager">
+<area shape="rect" id="node1" title="Constructor for the ObjectStateManager node." alt="" coords="5,71,228,112"/>
+<area shape="rect" id="node2" href="$classcr_1_1vision_1_1ObjectStateManager.html#a112ed0e78410bdc604bcae6fbac9598e" title="Service callback to provide details of a specific object by its ID." alt="" coords="276,5,499,47"/>
+<area shape="rect" id="node3" href="$classcr_1_1vision_1_1ObjectStateManager.html#a633ad8085c0df778ea9f428fcd02e5f6" title="Callback to update the frozen state of the scene." alt="" coords="276,71,499,112"/>
+<area shape="rect" id="node4" href="$classcr_1_1vision_1_1ObjectStateManager.html#aea24fd6179dce83ce6db02d0d07c3c3c" title="Updates the internal object state and republishes the entire scene if the scene is not frozen." alt="" coords="276,136,499,177"/>
+</map>

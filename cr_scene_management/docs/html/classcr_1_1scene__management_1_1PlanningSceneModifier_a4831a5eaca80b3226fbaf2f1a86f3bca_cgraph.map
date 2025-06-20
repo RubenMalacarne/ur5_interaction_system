@@ -1,0 +1,8 @@
+<map id="cr::scene_management::PlanningSceneModifier::PlanningSceneModifier" name="cr::scene_management::PlanningSceneModifier::PlanningSceneModifier">
+<area shape="rect" id="node1" title="Constructor for the PlanningSceneModifier class." alt="" coords="5,85,184,141"/>
+<area shape="rect" id="node2" href="$classcr_1_1scene__management_1_1PlanningSceneModifier.html#a6fa35cbc7573d45358a50f1add37cccf" title="Service callback to modify the Allowed Collision Matrix (ACM)." alt="" coords="232,5,411,61"/>
+<area shape="rect" id="node5" href="$classcr_1_1scene__management_1_1PlanningSceneModifier.html#ae3919d68774cb831d74ffbb7a7ceabf7" title="Service callback to attach or detach a collision object to/from the robot." alt="" coords="232,85,411,141"/>
+<area shape="rect" id="node6" href="$classcr_1_1scene__management_1_1PlanningSceneModifier.html#a2f82b2d89ba65ef8af3026bd96815b47" title="Callback for spawning new collision objects into the planning scene." alt="" coords="232,165,411,221"/>
+<area shape="rect" id="node3" href="$classcr_1_1scene__management_1_1SceneManager.html#ad1f692d3b83f7a77ebec1286ca6bfa2e" title="Use to create and istance of the scene management." alt="" coords="459,13,648,54"/>
+<area shape="rect" id="node4" href="$classcr_1_1scene__management_1_1SceneManager.html#a2776cee9798ce735f48a66de2855d907" title=" " alt="" coords="696,13,927,54"/>
+</map>

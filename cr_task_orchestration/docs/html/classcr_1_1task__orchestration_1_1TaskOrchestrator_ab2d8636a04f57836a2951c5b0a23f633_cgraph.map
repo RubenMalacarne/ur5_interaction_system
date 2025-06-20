@@ -1,0 +1,7 @@
+<map id="cr::task_orchestration::TaskOrchestrator::pick_result_callback" name="cr::task_orchestration::TaskOrchestrator::pick_result_callback">
+<area shape="rect" id="node1" title="Callback for the result of the pick action." alt="" coords="5,85,180,141"/>
+<area shape="rect" id="node2" href="$classcr_1_1task__orchestration_1_1TaskOrchestrator.html#a6dbf4826639fa3ed10ec9c1b82d9bb6d" title="Sends a place goal to the place action server." alt="" coords="228,85,407,141"/>
+<area shape="rect" id="node3" href="$classcr_1_1task__orchestration_1_1TaskOrchestrator.html#a47992be3eee890e717366d14ec9adf44" title="Callback for place action feedback." alt="" coords="455,5,638,61"/>
+<area shape="rect" id="node4" href="$classcr_1_1task__orchestration_1_1TaskOrchestrator.html#ac5d401f431546b6124f123350bd06c57" title="Callback for the place goal response." alt="" coords="455,85,639,141"/>
+<area shape="rect" id="node5" href="$classcr_1_1task__orchestration_1_1TaskOrchestrator.html#a66382604f804a6cc56b06c3770b989b2" title="Callback for the result of the place action." alt="" coords="455,165,638,221"/>
+</map>

@@ -6,34 +6,49 @@
 #include <ament_index_cpp/get_package_share_directory.hpp>
 #include <cr_scene_management/scene_manager.hpp>
 
-namespace cr::scene_management
-{
+namespace cr {
+namespace scene_management {
 
-    StaticScenePublisher::StaticScenePublisher(const rclcpp::NodeOptions &options)
-        : Node("static_scene_publisher", options)
+    /**
+     * @brief Constructor for the StaticScenePublisher node.
+     * Initializes the planning scene publisher and starts a timer to periodically publish a static planning scene.
+     * 
+     * @param options Optional node configuration parameters.
+     */
+    StaticScenePublisher::StaticScenePublisher(const rclcpp::NodeOptions& options)
+    : Node("static_scene_publisher", options)
     {
         planning_scene_pub_ = create_publisher<moveit_msgs::msg::PlanningScene>("planning_scene", 10);
 
-        // Delay publication to ensure all components are ready
         timer_ = create_wall_timer(
             std::chrono::seconds(2),
             std::bind(&StaticScenePublisher::publishStaticScene, this));
 
-        RCLCPP_INFO(get_logger(), "StaticScenePublisher initialized.");
+        RCLCPP_INFO(get_logger(), "StaticScenePublisher inizializzato.");
     }
 
+    /**
+     * @brief Publishes a static collision object (e.g., a table) to the MoveIt planning scene.
+     * 
+     * This method:
+     * - Retrieves the current PlanningSceneMonitor.
+     * - Loads a mesh for a table object.
+     * - Adds the object as a collision object to the scene.
+     * - Updates the Allowed Collision Matrix (ACM) to allow collisions with a specific link.
+     * - Publishes the planning scene diff.
+     */
     void StaticScenePublisher::publishStaticScene()
     {
-        auto &manager = cr::scene_management::SceneManager::instance(shared_from_this());
+        // 1) Ottengo il PlanningSceneMonitor dal SceneManager
+        auto& manager = cr::scene_management::SceneManager::instance(shared_from_this());
         auto psm = manager.getPlanningSceneMonitor();
 
-        if (!psm || !psm->getPlanningScene())
-        {
-            RCLCPP_ERROR(get_logger(), "PlanningSceneMonitor not available.");
+        if (!psm || !psm->getPlanningScene()) {
+            RCLCPP_ERROR(get_logger(), "PlanningSceneMonitor non disponibile!");
             return;
         }
 
-        // Create a collision object representing the table
+        // 2) Creare un collision object per un tavolo
         moveit_msgs::msg::CollisionObject table;
         table.id = "table";
         table.header.frame_id = "world";
@@ -42,16 +57,14 @@ namespace cr::scene_management
         geometry_msgs::msg::Pose table_pose;
         table_pose.orientation.w = 1.0;
 
-        // Load the mesh from the package
+        // Carico una mesh
         std::string pkg_share = ament_index_cpp::get_package_share_directory("cr_hw_configuration");
         std::string mesh_path = pkg_share + "/meshes/lab_table_mesh.stl";
-        shapes::Mesh *shape_mesh = shapes::createMeshFromResource("file://" + mesh_path);
-        if (!shape_mesh)
-        {
-            RCLCPP_ERROR(get_logger(), "Failed to load mesh: %s", mesh_path.c_str());
+        shapes::Mesh* shape_mesh = shapes::createMeshFromResource("file://" + mesh_path);
+        if (!shape_mesh) {
+            RCLCPP_ERROR(get_logger(), "Impossibile caricare la mesh %s", mesh_path.c_str());
             return;
         }
-
         shapes::ShapeMsg shape_msg;
         shapes::constructMsgFromShape(shape_mesh, shape_msg);
         shape_msgs::msg::Mesh mesh_msg = boost::get<shape_msgs::msg::Mesh>(shape_msg);
@@ -59,28 +72,30 @@ namespace cr::scene_management
         table.meshes.push_back(mesh_msg);
         table.mesh_poses.push_back(table_pose);
 
-        // Build a PlanningScene diff
+        // 3) Creiamo un PlanningScene diff
         moveit_msgs::msg::PlanningScene scene_msg;
         scene_msg.is_diff = true;
         scene_msg.world.collision_objects.push_back(table);
 
-        // Allow collisions between table and base link
+        // Creiamo un lock in scrittura sulla planning scene
         planning_scene_monitor::LockedPlanningSceneRW locked_scene(psm);
-        collision_detection::AllowedCollisionMatrix &acm =
+        collision_detection::AllowedCollisionMatrix& acm =
             locked_scene->getAllowedCollisionMatrixNonConst();
+
         acm.setEntry("base_link_inertia", "table", true);
+
+        // Convertiamo l'ACM in un msg e lo mettiamo in scene_msg
         acm.getMessage(scene_msg.allowed_collision_matrix);
 
-        // Publish the planning scene
+        // 5) Pubblicazione diff
         planning_scene_pub_->publish(scene_msg);
 
-        RCLCPP_INFO(get_logger(), "Static scene (table) published.");
-
-        // Publish only once
-        timer_->cancel();
+        RCLCPP_INFO(get_logger(), "Pubblicata scena statica (tavolo).");
+        timer_->cancel(); // se vuoi pubblicarlo solo una volta
     }
 
-} // namespace cr::scene_management
+}  // namespace scene_management
+}  // namespace cr
 
 #include "rclcpp_components/register_node_macro.hpp"
 RCLCPP_COMPONENTS_REGISTER_NODE(cr::scene_management::StaticScenePublisher)

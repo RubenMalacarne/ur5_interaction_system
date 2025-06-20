@@ -1,0 +1,11 @@
+<map id="cr::action_servers::PlaceActionServer::PlaceActionServer" name="cr::action_servers::PlaceActionServer::PlaceActionServer">
+<area shape="rect" id="node1" title=" " alt="" coords="5,205,153,261"/>
+<area shape="rect" id="node2" href="$classcr_1_1action__servers_1_1PlaceActionServer.html#a1f9fe7d2fa17b04ef23dba9169c8ed2d" title="Called when a goal is accepted for execution." alt="" coords="201,125,349,181"/>
+<area shape="rect" id="node8" href="$classcr_1_1action__servers_1_1PlaceActionServer.html#afa2a9eaccebbf44bb376bedd1c7281ba" title="Called when a cancel request is received." alt="" coords="201,205,349,261"/>
+<area shape="rect" id="node9" href="$classcr_1_1action__servers_1_1PlaceActionServer.html#a798a5b31044bc6a395d9e5372c77c52c" title="Called when a new goal is received." alt="" coords="201,285,349,341"/>
+<area shape="rect" id="node3" href="$classcr_1_1action__servers_1_1PlaceActionServer.html#a4af69943c15ede25a27cc021be31661b" title=" " alt="" coords="397,125,545,181"/>
+<area shape="rect" id="node4" href="$classcr_1_1action__servers_1_1PlaceActionServer.html#a7ba845b8efae5acc4ae3ceb506855afb" title="Moves the robot downward toward the final place position." alt="" coords="605,5,776,61"/>
+<area shape="rect" id="node5" href="$classcr_1_1action__servers_1_1PlaceActionServer.html#a769d9b04379d066c57f7a1888127d0c1" title="Lifts the object vertically to a pre&#45;defined height before placing." alt="" coords="617,85,765,141"/>
+<area shape="rect" id="node6" href="$classcr_1_1action__servers_1_1PlaceActionServer.html#a0e4c90ce23a2cf8aaf034f63ff70e322" title="Moves the robot above the target place position (XY plane)." alt="" coords="593,165,788,221"/>
+<area shape="rect" id="node7" href="$classcr_1_1action__servers_1_1PlaceActionServer.html#abcd3baaaa9806bed59f6ed7d2762af1b" title="Opens the gripper and detaches the object in the MoveIt scene." alt="" coords="617,245,765,301"/>
+</map>

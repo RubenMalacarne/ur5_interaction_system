@@ -1,0 +1,6 @@
+<map id="cr::action_servers::PlaceActionServer::lift_from_table" name="cr::action_servers::PlaceActionServer::lift_from_table">
+<area shape="rect" id="node1" title="Lifts the object vertically to a pre&#45;defined height before placing." alt="" coords="593,5,741,61"/>
+<area shape="rect" id="node2" href="$classcr_1_1action__servers_1_1PlaceActionServer.html#a4af69943c15ede25a27cc021be31661b" title=" " alt="" coords="397,5,545,61"/>
+<area shape="rect" id="node3" href="$classcr_1_1action__servers_1_1PlaceActionServer.html#a1f9fe7d2fa17b04ef23dba9169c8ed2d" title="Called when a goal is accepted for execution." alt="" coords="201,5,349,61"/>
+<area shape="rect" id="node4" href="$classcr_1_1action__servers_1_1PlaceActionServer.html#a8c2d2941148e76e900a7491939ad077c" title=" " alt="" coords="5,5,153,61"/>
+</map>

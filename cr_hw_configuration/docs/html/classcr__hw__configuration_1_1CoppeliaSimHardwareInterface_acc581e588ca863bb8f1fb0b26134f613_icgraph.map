@@ -1,0 +1,4 @@
+<map id="cr_hw_configuration::CoppeliaSimHardwareInterface::jointStateCallback" name="cr_hw_configuration::CoppeliaSimHardwareInterface::jointStateCallback">
+<area shape="rect" id="node1" title="Callback for receiving the UR5 joint states from CoppeliaSim." alt="" coords="287,5,520,61"/>
+<area shape="rect" id="node2" href="$classcr__hw__configuration_1_1CoppeliaSimHardwareInterface.html#a1498db818a7e9daed6f731fa0dcd7f56" title="configure the publisher/subscriber ROS2 to interact with CoppeliaSim." alt="" coords="5,5,239,61"/>
+</map>
